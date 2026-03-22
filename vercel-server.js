@@ -235,7 +235,9 @@ function buildApp() {
 
             const isAllowed = allowed.includes(origin) || 
                               allowed.some(domain => origin.startsWith(domain)) ||
-                              (process.env.NODE_ENV !== 'production' && (origin.endsWith('.vercel.app') || origin.startsWith('http://localhost')));
+                              origin.endsWith('okigo.net') ||
+                              origin.endsWith('.vercel.app') ||
+                              (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost'));
 
             if (isAllowed) {
                  return callback(null, true);
