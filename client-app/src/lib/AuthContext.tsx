@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState, createContext, useContext, ReactNode, useCallback } from 'react';
+import { api } from '@/lib/api';
 
 /**
  * واجهة بيانات المستخدم
@@ -108,9 +109,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [clearAuth, clearCookies]);
 
+    // التحقق من الجلسة وتحديث نبض الاتصال (Heartbeat)
     useEffect(() => {
         checkExistingLogin();
-    }, [checkExistingLogin]);
+
+        // إرسال إشارة نبضكل دقيقة لإبلاغ السيرفر أن المستخدم متصل (Online)
+        let heartbeatInterval: NodeJS.Timeout;
+        if (user) {
+            const sendHeartbeat = () => {
+                api.users.heartbeat().catch(() => {});
+            };
+            sendHeartbeat(); // إرسال نبض فوري عند تسجيل الدخول أو التحديث
+            heartbeatInterval = setInterval(sendHeartbeat, 60000); // 60 ثانية
+        }
+
+        return () => {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+        };
+    }, [checkExistingLogin, user]);
 
     function refreshUser() {
         checkExistingLogin();

@@ -148,6 +148,7 @@ export const api = {
             const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/users?${query}`);
         },
+        heartbeat: () => fetchAPI('/api/v2/users/heartbeat', { method: 'POST', body: JSON.stringify({}) }),
         getProfile: () => fetchAPI('/api/v2/users/profile'),
         updateProfile: (data: object) => fetchAPI('/api/v2/users/profile', {
             method: 'PUT',

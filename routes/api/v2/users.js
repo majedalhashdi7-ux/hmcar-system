@@ -40,14 +40,26 @@ router.get('/', requireAuthAPI, requirePermissionAPI('manage_users'), async (req
     const skip = (page - 1) * limit;
     const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
-    const [users, total] = await Promise.all([
+    const [usersFromDb, total] = await Promise.all([
       User.find(filter)
         .select(selectFields)
         .sort(sort)
         .limit(limit * 1)
-        .skip(skip),
+        .skip(skip)
+        .lean(),
       User.countDocuments(filter)
     ]);
+
+    // Calculate dynamic online status
+    const now = new Date();
+    const users = usersFromDb.map(user => {
+      let isOnline = false;
+      if (user.lastActiveAt) {
+        const diffMinutes = (now - new Date(user.lastActiveAt)) / 60000;
+        isOnline = diffMinutes <= 2; // Active in the last 2 minutes
+      }
+      return { ...user, isOnline };
+    });
 
     res.json({
       success: true,
@@ -72,6 +84,20 @@ router.get('/', requireAuthAPI, requirePermissionAPI('manage_users'), async (req
       error: 'Internal Server Error',
       message: 'An error occurred while fetching users'
     });
+  }
+});
+
+// Keep-alive heartbeat (called by frontend every minute)
+router.post('/heartbeat', requireAuthAPI, async (req, res) => {
+  try {
+    const User = getModel(req, 'User');
+    const userId = req.user.userId || req.user.id || req.user._id;
+    if (userId) {
+      await User.updateOne({ _id: userId }, { $set: { lastActiveAt: new Date(), isOnline: true } });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false });
   }
 });
 
