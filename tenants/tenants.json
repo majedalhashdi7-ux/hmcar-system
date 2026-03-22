@@ -1,0 +1,34 @@
+{
+  "defaultTenant": "hmcar",
+  "tenants": {
+    "hmcar": {
+      "id": "hmcar",
+      "name": "HM CAR",
+      "nameEn": "HM CAR",
+      "description": "منصة مزادات ومبيعات السيارات الفاخرة",
+      "descriptionEn": "Premium Car Auction & Sales Platform",
+      "domains": ["localhost:4002", "localhost:3000", "hmcar.vercel.app"],
+      "mongoUri": "ENV:MONGO_URI",
+      "logo": "/uploads/tenants/hmcar/logo.png",
+      "favicon": "/uploads/tenants/hmcar/favicon.ico",
+      "theme": {
+        "primaryColor": "#D4AF37",
+        "secondaryColor": "#1a1a2e",
+        "accentColor": "#e94560",
+        "backgroundColor": "#0f0f23",
+        "textColor": "#ffffff"
+      },
+      "contact": {
+        "whatsapp": "+967781007805",
+        "email": "info@hmcar.com",
+        "phone": "+967781007805"
+      },
+      "settings": {
+        "currency": "SAR",
+        "language": "ar",
+        "direction": "rtl"
+      },
+      "enabled": true
+    }
+  }
+}
