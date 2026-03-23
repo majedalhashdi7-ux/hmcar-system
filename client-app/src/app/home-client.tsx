@@ -66,6 +66,23 @@ interface HomeClientProps {
 function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boolean; deferredInstall: any; onInstall: () => void }) {
   const [showPopup, setShowPopup] = useState(false);
 
+  useEffect(() => {
+    // إظهار البطاقة تلقائياً بعد 2.5 ثانية لجذب انتباه العميل
+    const timer = setTimeout(() => {
+      const dismissed = localStorage.getItem('pwa_popup_dismissed');
+      if (!dismissed) {
+        setShowPopup(true);
+      }
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleClose = () => {
+    setShowPopup(false);
+    localStorage.setItem('pwa_popup_dismissed', 'true');
+  };
+
+
   return (
     <div className="relative">
       {/* أيقونة الهاتف الثابتة */}
@@ -81,47 +98,81 @@ function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boole
         <Smartphone className="w-5 h-5" />
       </motion.button>
 
-      {/* Popup النافذة المنبثقة */}
+      {/* Popup النافذة المنبثقة المميزة */}
       {showPopup && (
         <>
           {/* خلفية شفافة لإغلاق النافذة */}
-          <div className="fixed inset-0 z-[199]" onClick={() => setShowPopup(false)} />
+          <div className="fixed inset-0 z-[199]" onClick={handleClose} />
           <motion.div
-            initial={{ opacity: 0, scale: 0.85, x: isRTL ? -20 : 20 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.85, x: isRTL ? -20 : 20 }}
-            className={`absolute top-0 z-[200] w-72 rounded-3xl bg-black/95 border border-accent-gold/30 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8)] overflow-hidden ${isRTL ? 'right-16' : 'left-16'}`}
+            initial={{ opacity: 0, scale: 0.8, x: isRTL ? -30 : 30, y: 20 }}
+            animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, x: isRTL ? -20 : 20, y: 10 }}
+            transition={{ type: "spring", damping: 20, stiffness: 200 }}
+            className={`absolute top-0 z-[200] w-80 rounded-[2rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-accent-gold/40 p-1 shadow-[0_20px_60px_rgba(201,169,110,0.25)] overflow-hidden ${isRTL ? 'right-16' : 'left-16'}`}
             dir={isRTL ? 'rtl' : 'ltr'}
           >
-            {/* Header */}
-            <div className="px-6 pt-6 pb-4 border-b border-white/10 flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-accent-gold text-black flex items-center justify-center flex-shrink-0">
-                <Smartphone className="w-6 h-6" />
+            {/* لمعان ذهبي متحرك في الخلفية */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-accent-gold/0 via-accent-gold/10 to-transparent opacity-50 pointer-events-none" />
+            <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-gold/20 blur-[60px] rounded-full pointer-events-none" />
+
+            {/* زر إغلاق صغير */}
+            <button 
+              onClick={handleClose}
+              aria-label="Close"
+              title="Close"
+              className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white transition-all`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="relative z-10 p-5">
+              {/* Header */}
+              <div className="flex items-center gap-4 mb-5">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-accent-gold to-[#a98544] text-black flex items-center justify-center flex-shrink-0 shadow-[0_0_20px_rgba(201,169,110,0.4)] relative overflow-hidden">
+                  <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                  <Smartphone className="w-7 h-7 relative z-10" />
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-lg uppercase tracking-tight leading-tight">HM CAR</h3>
+                  <div className="flex items-center gap-1 mt-1">
+                    {[1,2,3,4,5].map(i => <Star key={i} className="w-3 h-3 text-accent-gold fill-accent-gold" />)}
+                  </div>
+                </div>
               </div>
-              <div>
-                <h3 className="text-white font-black text-base uppercase tracking-tight">{isRTL ? 'تطبيق HM CAR' : 'HM CAR App'}</h3>
-                <p className="text-white/40 text-[10px] uppercase tracking-widest">{isRTL ? 'تجربة أسرع وتنبيهات فورية' : 'Faster experience & instant alerts'}</p>
+
+              {/* Text Focus */}
+              <div className="mb-6">
+                <p className="text-white/90 text-sm font-bold leading-relaxed">
+                  {isRTL ? 'احصل على تجربة أسرع بـ 3 أضعاف وتنبيهات فورية للمزادات الحية!' : 'Get 3x faster experience & instant live auction alerts!'}
+                </p>
+                <p className="text-accent-gold/80 text-[11px] font-bold mt-2 uppercase tracking-widest">
+                  {isRTL ? 'تطبيق مجاني بالكامل' : '100% Free App'}
+                </p>
               </div>
-            </div>
-            {/* Body */}
-            <div className="px-6 py-5">
+
+              {/* Action Button */}
               {deferredInstall ? (
                 <button
-                  onClick={() => { onInstall(); setShowPopup(false); }}
-                  className="w-full py-3.5 bg-accent-gold text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-accent-gold/90 transition-all flex items-center justify-center gap-2 shadow-lg"
+                  onClick={() => { onInstall(); handleClose(); }}
+                  className="w-full py-4 bg-gradient-to-r from-accent-gold to-[#e8c97a] text-black rounded-xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(201,169,110,0.3)] relative overflow-hidden group"
                 >
-                  <Download className="w-4 h-4" />
-                  {isRTL ? 'تثبيت' : 'INSTALL'}
+                  <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                  <Download className="w-4 h-4 relative z-10" />
+                  <span className="relative z-10">{isRTL ? 'تثبيت التطبيق الآن' : 'INSTALL APP NOW'}</span>
                 </button>
               ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                    <ArrowUpRight className="w-4 h-4 text-accent-gold flex-shrink-0" />
-                    <span className="text-white/70 text-xs font-bold">{isRTL ? 'اضغط زر المشاركة ↗' : 'Tap Share button ↗'}</span>
+                <div className="space-y-3 bg-black/40 p-4 rounded-xl border border-white/5">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                      <ArrowUpRight className="w-4 h-4 text-accent-gold" />
+                    </div>
+                    <span className="text-white/80 text-xs font-bold leading-tight">{isRTL ? 'اضغط زر المشاركة أسفل المتصفح' : 'Tap Share button below'}</span>
                   </div>
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/10">
-                    <Plus className="w-4 h-4 text-accent-gold flex-shrink-0" />
-                    <span className="text-white/70 text-xs font-bold">{isRTL ? 'اختر: إضافة للشاشة الرئيسية' : 'Select: Add To Home Screen'}</span>
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+                      <Plus className="w-4 h-4 text-accent-gold" />
+                    </div>
+                    <span className="text-white/80 text-xs font-bold leading-tight">{isRTL ? 'اختر "إضافة للشاشة الرئيسية"' : 'Select "Add To Home Screen"'}</span>
                   </div>
                 </div>
               )}

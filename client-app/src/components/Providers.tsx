@@ -14,7 +14,6 @@ import { SocketProvider } from '@/lib/SocketContext';
 import { SettingsProvider } from '@/lib/SettingsContext';
 import { ToastProvider } from '@/lib/ToastContext';
 import { UIProvider } from '@/lib/UIContext';
-import PWAInstaller from './PWAInstaller';
 import PWAUpdater from './PWAUpdater';
 import PushNotificationManager from './PushNotificationManager';
 
@@ -26,7 +25,6 @@ export function Providers({ children }: { children: ReactNode }) {
                     <UIProvider>
                         <AuthProvider>
                             <SocketProvider>
-                                <PWAInstaller />
                                 <PWAUpdater />
                                 <PushNotificationManager />
                                 {children}
