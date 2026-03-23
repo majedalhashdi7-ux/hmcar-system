@@ -65,6 +65,7 @@ interface HomeClientProps {
 // ── مكون زر التطبيق العائم ──
 function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boolean; deferredInstall: any; onInstall: () => void }) {
   const [showPopup, setShowPopup] = useState(false);
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
 
   useEffect(() => {
     // إظهار البطاقة تلقائياً بعد 2.5 ثانية لجذب انتباه العميل
@@ -151,30 +152,46 @@ function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boole
               </div>
 
               {/* Action Button */}
-              {deferredInstall ? (
-                <button
-                  onClick={() => { onInstall(); handleClose(); }}
-                  className="w-full py-4 bg-gradient-to-r from-accent-gold to-[#e8c97a] text-black rounded-xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(201,169,110,0.3)] relative overflow-hidden group"
+              <button
+                onClick={() => { 
+                  if (deferredInstall) {
+                    onInstall(); 
+                    handleClose(); 
+                  } else {
+                    // For iOS or browsers without direct install prompt support
+                    setShowIOSGuide(true);
+                  }
+                }}
+                className="w-full py-4 bg-gradient-to-r from-accent-gold to-[#e8c97a] text-black rounded-xl font-black uppercase tracking-widest text-xs hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(201,169,110,0.3)] relative overflow-hidden group"
+              >
+                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
+                <Download className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">{isRTL ? 'تثبيت التطبيق الآن' : 'INSTALL APP NOW'}</span>
+              </button>
+
+              {/* iOS Guide Content (Appears only when clicking install on iOS) */}
+              {showIOSGuide && !deferredInstall && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }} 
+                  animate={{ opacity: 1, height: 'auto' }} 
+                  className="mt-4 space-y-3 bg-black/40 p-4 rounded-xl border border-white/10"
                 >
-                  <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700" />
-                  <Download className="w-4 h-4 relative z-10" />
-                  <span className="relative z-10">{isRTL ? 'تثبيت التطبيق الآن' : 'INSTALL APP NOW'}</span>
-                </button>
-              ) : (
-                <div className="space-y-3 bg-black/40 p-4 rounded-xl border border-white/5">
+                  <p className="text-accent-gold text-xs font-bold mb-2 pb-2 border-b border-white/5">
+                    {isRTL ? 'لتثبيت التطبيق في الايفون (Apple):' : 'To install on iOS (Apple):'}
+                  </p>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                       <ArrowUpRight className="w-4 h-4 text-accent-gold" />
                     </div>
-                    <span className="text-white/80 text-xs font-bold leading-tight">{isRTL ? 'اضغط زر المشاركة أسفل المتصفح' : 'Tap Share button below'}</span>
+                    <span className="text-white/80 text-xs font-bold leading-tight">{isRTL ? '1. اضغط زر المشاركة أسفل المتصفح' : '1. Tap Share button below'}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
                       <Plus className="w-4 h-4 text-accent-gold" />
                     </div>
-                    <span className="text-white/80 text-xs font-bold leading-tight">{isRTL ? 'اختر "إضافة للشاشة الرئيسية"' : 'Select "Add To Home Screen"'}</span>
+                    <span className="text-white/80 text-xs font-bold leading-tight">{isRTL ? '2. اختر "إضافة للشاشة الرئيسية"' : '2. Select "Add To Home Screen"'}</span>
                   </div>
-                </div>
+                </motion.div>
               )}
             </div>
           </motion.div>
@@ -221,10 +238,10 @@ export default function HomeClient({ latestCars }: HomeClientProps) {
   const isStandalone = useStandalone();
 
   useEffect(() => {
-    // إذا كان التطبيق يعمل كـ PWA مثبت والمستخدم مسجل دخول، يتم تحويله مباشرة للوحة التحكم
-    if (isStandalone && isLoggedIn) {
-      router.replace('/client/dashboard');
-    }
+    // تم إيقاف التحويل التلقائي لكي يبقى العميل في واجهة التطبيق المجملة (AppHome)
+    // if (isStandalone && isLoggedIn) {
+    //   router.replace('/client/dashboard');
+    // }
   }, [isStandalone, isLoggedIn, router]);
 
   useEffect(() => {
