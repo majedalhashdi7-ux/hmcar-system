@@ -180,7 +180,6 @@ export default function Login() {
                 const maxAge = rememberMe ? 604800 : 86400; // أسبوع في حال تذكرني، أو يوم واحد
                 document.cookie = `hm_token=${response.token}; path=/; max-age=${maxAge}; SameSite=Lax`;
                 document.cookie = `hm_user_role=${savedRole}; path=/; max-age=${maxAge}; SameSite=Lax`;
-
                 if (response.isNewUser) {
                     setSuccessMessage(isRTL ? 'تم إنشاء حسابك بنجاح! جاري الدخول...' : 'Account created! Logging in...');
                 } else {
@@ -197,9 +196,11 @@ export default function Login() {
                     } else if (userRole === 'admin' || userRole === 'super_admin' || userRole === 'manager') {
                         window.location.href = "/admin/dashboard";
                     } else {
-                        window.location.href = "/client/dashboard";
+                        // إذا كان العميل يستخدم التطبيق، نوجهه للرئيسية (AppHome) المخصصة للتطبيق
+                        const isApp = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+                        window.location.href = isApp ? "/" : "/client/dashboard";
                     }
-                }, 800);
+                }, 400);
 
             } else {
                 setError(response.error || (isRTL ? 'فشل تسجيل الدخول' : 'Login failed'));
@@ -261,9 +262,9 @@ export default function Login() {
 
             {/* بطاقة تسجيل الدخول أو بطاقة الحظر - LOGIN CARD OR BAN CARD */}
             <motion.div
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0.5, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className="relative z-10 w-full max-w-md px-2"
             >
                 {banInfo ? (
