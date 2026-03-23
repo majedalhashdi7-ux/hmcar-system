@@ -13,7 +13,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import PullToRefresh from './PullToRefresh';
 // CurrencySwitcher removed for cleaner UI
 
 /**
@@ -24,6 +26,12 @@ import { useAuth } from '@/lib/AuthContext';
  */
 export default function AppHome({ isRTL, latestCars, formatPrice }: { isRTL: boolean; latestCars: any[]; formatPrice: (p: number) => string }) {
     const { user, isLoggedIn } = useAuth();
+    const router = useRouter();
+
+    const handleRefresh = async () => {
+        router.refresh();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    };
 
     const quickActions = [
         { href: '/auctions/live', labelAr: 'المزاد المباشر', labelEn: 'Live Auction', icon: Gavel, color: 'bg-[#00f0ff]/10 text-[#00f0ff] border-[#00f0ff]/20' },
@@ -36,7 +44,8 @@ export default function AppHome({ isRTL, latestCars, formatPrice }: { isRTL: boo
     const userProfileImage = (user as any)?.image || null;
 
     return (
-        <div className="flex flex-col gap-8 pb-10 px-5 pt-8 max-w-lg mx-auto overflow-x-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
+        <PullToRefresh onRefresh={handleRefresh}>
+            <div className="flex flex-col gap-8 pb-10 px-5 pt-8 max-w-lg mx-auto overflow-x-hidden" dir={isRTL ? 'rtl' : 'ltr'}>
             
             {/* 1. ترحيب العميل (Header) */}
             <header className="flex items-center justify-between">
@@ -190,5 +199,6 @@ export default function AppHome({ isRTL, latestCars, formatPrice }: { isRTL: boo
             </section>
 
         </div>
+        </PullToRefresh>
     );
 }
