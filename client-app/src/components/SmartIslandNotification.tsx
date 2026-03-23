@@ -36,8 +36,11 @@ export default function SmartIslandNotification() {
         const handleAlert = (e: any) => {
             const data = e.detail as SmartAlert;
             setAlert(data);
-            // يتم إخفاء التنبيه تلقائياً بعد 6 ثوانٍ لضمان تجربة مستخدم غير مزعجة
-            setTimeout(() => setAlert(null), 6000);
+            // يتم إخفاء التنبيه تلقائياً بعد 6 ثوانٍ للرسائل العادية لضمان تجربة مستخدم غير مزعجة
+            // أما تنبيهات النظام (كتحديث التطبيق) فتبقى ظاهرة حتى يتخذ العميل قراراً
+            if (data.type !== 'system') {
+                setTimeout(() => setAlert(null), 6000);
+            }
         };
 
         // تسجيل المستمع للحدث المخصص 'hm_smart_alert'
