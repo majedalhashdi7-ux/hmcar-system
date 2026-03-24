@@ -439,45 +439,7 @@ export default function HomeClient({ latestCars }: HomeClientProps) {
           {/* 1. HERO SHOWCASE */}
           <LandingShowcase isRTL={isRTL} latestCars={latestCars} />
 
-          {/* 2.5 ANNOUNCEMENT RIBBON */}
-          {latestCars && latestCars.length > 0 && (
-            <section className="relative z-20 mb-24 overflow-hidden">
-              <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/5 to-transparent" />
-              <div className="relative py-4 border-y border-white/10 bg-black/50 backdrop-blur-xl">
-                <div
-                  className={cn(
-                    "flex gap-4 w-max px-6",
-                    isRTL ? "animate-marquee-rtl" : "animate-marquee",
-                    "pause-marquee"
-                  )}
-                  style={{ animationDuration: `${latestCars.length * 8}s` }}
-                >
-                  {[...latestCars, ...latestCars].map((car, index) => (
-                    <button
-                      key={index}
-                      onClick={() => router.push(`/cars/${car.id || (car as any)._id || index}`)}
-                      className="flex items-center gap-3 px-4 py-2 rounded-full border border-white/10 bg-white/[0.03] hover:border-accent-gold/40 transition-colors"
-                    >
-                      <span className="relative w-10 h-10 rounded-full overflow-hidden border border-white/10">
-                        <Image
-                          src={car.images?.[0] || "/images/placeholder.jpg"}
-                          alt={car.title || car.name || 'Car'}
-                          fill
-                          className="object-cover"
-                        />
-                      </span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
-                        {car.title || car.name || (isRTL ? 'سيارة' : 'Car')}
-                      </span>
-                      <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent-gold">
-                        {formatPrice(Number(car.price || car.priceSar || (Number(car.priceUsd || 0) * 3.75) || 0))}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </section>
-          )}
+          {/* 2.5 ANNOUNCEMENT RIBBON REMOVED: Replaced fully by SmartAdBanner */}
 
           {/* 4. LIVE MARKET TICKER */}
           {(homeContent?.showLiveMarket ?? true) && latestCars && latestCars.length > 0 && (

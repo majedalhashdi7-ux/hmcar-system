@@ -331,82 +331,74 @@ export default function SmartAdBanner() {
     const router = useRouter();
 
     // ── الحالة ──
-    const [adSettings, setAdSettings] = useState<AdvertisingSettings>({}); // إعدادات الإعلانات المجلوبة من السيرفر
-    const [cars, setCars] = useState<BannerCar[]>([]); // قائمة السيارات التي ستظهر في الشريط
-    const [loading, setLoading] = useState(true); // حالة التحميل
-    const [selectedCar, setSelectedCar] = useState<BannerCar | null>(null); // السيارة المختارة لعرض تفاصيلها
-    const [isPaused, setIsPaused] = useState(false); // هل الحركة متوقفة (عند مرور الماوس)؟
-    const [showroomType, setShowroomType] = useState<'live' | 'showroom'>('showroom'); // نوع العرض الحالي
+    const [adSettings, setAdSettings] = useState<AdvertisingSettings>({});
+    const [liveCars, setLiveCars] = useState<BannerCar[]>([]);
+    const [showroomCars, setShowroomCars] = useState<BannerCar[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedCar, setSelectedCar] = useState<BannerCar | null>(null);
 
     // ── تحميل إعدادات الإعلانات وسيارات الشريط ──
     useEffect(() => {
         const loadAllData = async () => {
             try {
-                // أولاً: جلب إعدادات الإعلانات
                 const settingsRes = await api.settings.getPublic();
                 const adsConfig: AdvertisingSettings = settingsRes?.data?.advertisingSettings || {};
                 setAdSettings(adsConfig);
 
-                const allCars: BannerCar[] = [];
+                const lCars: BannerCar[] = [];
+                const sCars: BannerCar[] = [];
 
-                // ثانياً: جلب سيارات المزاد المباشر إذا كانت مفعلة
                 if (adsConfig.showLiveAuction) {
                     try {
                         const liveRes = await api.liveAuctions.list({ limit: 20 });
                         if (liveRes.success && liveRes.data) {
-                            const liveCars = liveRes.data.flatMap((session: any) =>
-                                (session.cars || []).map((c: any) => ({
-                                    id: c._id || c.id || session._id,
-                                    title: c.title || session.title,
-                                    name: c.name,
-                                    images: c.images || [],
-                                    price: c.price || 0,
-                                    year: c.year,
-                                    make: c.make,
-                                    model: c.model,
-                                    mileage: c.mileage,
-                                    fuelType: c.fuelType,
-                                    transmission: c.transmission,
-                                    source: 'live' as const,
-                                    auctionUrl: `/auctions/live/${session._id}`,
-                                }))
-                            );
-                            // إضافة الجلسات نفسها كعناصر إذا لم يكن لديها سيارات محددة
-                            if (liveCars.length === 0) {
-                                liveRes.data.forEach((session: any) => {
-                                    allCars.push({
+                            liveRes.data.forEach((session: any) => {
+                                const sessionCars = session.cars || [];
+                                if (sessionCars.length > 0) {
+                                    sessionCars.forEach((c: any) => {
+                                        lCars.push({
+                                            id: c._id || c.id || session._id,
+                                            title: c.title || session.title,
+                                            name: c.name,
+                                            images: c.images || [],
+                                            price: c.price || 0,
+                                            year: c.year,
+                                            make: c.make,
+                                            model: c.model,
+                                            mileage: c.mileage,
+                                            fuelType: c.fuelType,
+                                            transmission: c.transmission,
+                                            source: 'live',
+                                            auctionUrl: `/auctions/live/${session._id}`,
+                                        });
+                                    });
+                                } else {
+                                    lCars.push({
                                         id: session._id,
                                         title: session.title,
-                                        images: session.cars?.[0]?.images || [],
+                                        images: session.images || [],
                                         price: 0,
                                         source: 'live',
                                         auctionUrl: `/auctions/live/${session._id}`,
                                     });
-                                });
-                            } else {
-                                allCars.push(...liveCars);
-                            }
+                                }
+                            });
                         }
                     } catch (e) {
                         console.warn('فشل جلب المزادات المباشرة:', e);
                     }
-                    setShowroomType('live');
                 }
 
-                // ثالثاً: جلب سيارات المعرض المحدد
                 const src = adsConfig.showroomSource || 'none';
                 if (src !== 'none') {
-                    setShowroomType('showroom');
                     try {
                         if (src === 'hmcar' || src === 'both') {
-                            // سيارات معرض HM Car من قاعدة البيانات الرئيسية
-                            const carsRes = await api.cars.list({ status: 'active', limit: 30 });
+                            const carsRes = await api.cars.list({ status: 'active', limit: 20 });
                             if (carsRes.success && carsRes.data?.cars) {
                                 carsRes.data.cars.forEach((c: any) => {
-                                    allCars.push({
+                                    sCars.push({
                                         id: c._id || c.id,
                                         title: c.title,
-                                        name: c.name,
                                         images: c.images || [],
                                         price: c.price || 0,
                                         year: c.year,
@@ -421,17 +413,13 @@ export default function SmartAdBanner() {
                             }
                         }
                         if (src === 'korean' || src === 'both') {
-                            // سيارات المعرض الكوري (Encar)
                             const korRes = await api.showroom.getCars(1);
-                            // [[ARABIC_COMMENT]] المعرض الكوري يرجع البيانات كمصفوفة مباشرة في data
                             const korCars = Array.isArray(korRes.data) ? korRes.data : (korRes.data?.cars || []);
-                            
                             if (korRes.success && korCars.length > 0) {
-                                korCars.slice(0, 20).forEach((c: any) => {
-                                    allCars.push({
+                                korCars.slice(0, 15).forEach((c: any) => {
+                                    sCars.push({
                                         id: c._id || c.id || String(Math.random()),
                                         title: c.title || c.name,
-                                        name: c.name,
                                         images: c.images || [],
                                         price: c.price || c.priceKrw || 0,
                                         year: c.year,
@@ -450,7 +438,8 @@ export default function SmartAdBanner() {
                     }
                 }
 
-                setCars(allCars);
+                setLiveCars(lCars);
+                setShowroomCars(sCars);
             } catch (err) {
                 console.error('فشل تحميل بيانات الشريط الإعلاني:', err);
             } finally {
@@ -461,135 +450,92 @@ export default function SmartAdBanner() {
         loadAllData();
     }, []);
 
-    // ── إذا لم يكن هناك سيارات أو إعدادات، لا نُظهر الشريط ──
     const isEnabled = adSettings.showLiveAuction || (adSettings.showroomSource && adSettings.showroomSource !== 'none');
-    if (!isEnabled || (!loading && cars.length === 0)) return null;
+    if (!isEnabled || (!loading && liveCars.length === 0 && showroomCars.length === 0)) return null;
 
-    // ── نسخة مضاعفة للتمرير اللانهائي ──
-    const displayCars = cars.length > 0 ? [...cars, ...cars] : [];
-
-    // ── رابط "عرض الكل" ──
-    const viewAllHref = showroomType === 'live' ? '/auctions/live' : '/cars';
-
-    // ── نص الشعار ──
     const bannerLabel = isRTL
-        ? (adSettings.bannerLabel || '⚡ عروض حصرية')
-        : (adSettings.bannerLabelEn || '⚡ EXCLUSIVE DEALS');
+        ? (adSettings.bannerLabel || 'الأفضل اليوم')
+        : (adSettings.bannerLabelEn || 'BEST TODAY');
 
-    return (
-        <>
-            {/* ── الشريط الإعلاني ── */}
-            <section
-                className="relative z-20 overflow-hidden my-8"
-                dir={isRTL ? 'rtl' : 'ltr'}
-            >
-                {/* خلفية الشريط */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black via-accent-gold/[0.03] to-black" />
-                <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
-                <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
+    const BannerRow = ({ cars, title, href, isLive }: { cars: BannerCar[], title: string, href: string, isLive: boolean }) => {
+        const [isPaused, setIsPaused] = useState(false);
+        if (cars.length === 0 && !loading) return null;
+        const displayCars = cars.length > 0 ? [...cars, ...cars] : [];
 
-                {/* ── رأس الشريط: الشعار + زر "عرض الكل" ── */}
-                <div className="relative z-20 flex items-center justify-between px-6 py-3 border-b border-white/[0.05]">
+        return (
+            <div className="relative mb-8" dir={isRTL ? 'rtl' : 'ltr'}>
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-white/[0.02] to-black" />
+                <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
+                <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
+
+                <div className="relative z-20 flex items-center justify-between px-6 py-2 border-b border-white/[0.05]">
                     <div className="flex items-center gap-2">
-                        {adSettings.showLiveAuction && showroomType === 'live' ? (
-                            <Radio className="w-4 h-4 text-[#00f0ff] animate-pulse" />
-                        ) : (
-                            <Zap className="w-4 h-4 text-accent-gold" />
-                        )}
+                        {isLive ? <Radio className="w-4 h-4 text-[#00f0ff] animate-pulse" /> : <Zap className="w-4 h-4 text-accent-gold" />}
                         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">
-                            {bannerLabel}
+                            {title}
                         </span>
                     </div>
-                    {/* زر "عرض الكل" */}
-                    <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => router.push(viewAllHref)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:border-accent-gold/30 hover:bg-white/10 transition-all group"
-                    >
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white/80 transition-colors">
-                            {isRTL ? 'عرض الكل' : 'View All'}
-                        </span>
-                        <ChevronRight className="w-3 h-3 text-white/30 group-hover:text-accent-gold transition-colors" />
+                    <motion.button onClick={() => router.push(href)} className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:border-accent-gold/40 transition-all group">
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white/80">{isRTL ? 'عرض الكل' : 'View All'}</span>
+                        <ChevronRight className="w-3 h-3 text-white/30 group-hover:text-accent-gold" />
                     </motion.button>
                 </div>
 
-                {/* ── بطاقات السيارات المتحركة ── */}
-                <div
-                    className="py-4 border-y border-white/[0.05] overflow-hidden"
-                    onMouseEnter={() => setIsPaused(true)}
-                    onMouseLeave={() => setIsPaused(false)}
-                >
+                <div className="py-4 border-y border-white/[0.05] overflow-hidden" onMouseEnter={() => setIsPaused(true)} onMouseLeave={() => setIsPaused(false)}>
                     {loading ? (
-                        // مؤشر التحميل
-                        <div className="flex gap-4 px-6">
-                            {[...Array(6)].map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="flex-shrink-0 w-48 h-24 rounded-2xl bg-white/5 animate-pulse border border-white/5"
-                                />
-                            ))}
+                        <div className="flex gap-4 px-6 animate-pulse">
+                            {[1, 2, 3, 4, 5].map(i => <div key={i} className="flex-shrink-0 w-52 h-24 rounded-2xl bg-white/5 border border-white/10" />)}
                         </div>
                     ) : (
-                        <div
-                            className={cn(
-                                "flex gap-4 w-max px-6",
-                                isRTL ? "animate-marquee-rtl" : "animate-marquee",
-                                "pause-marquee"
-                            )}
-                            style={{ 
-                                animationDuration: `${Math.max(15, cars.length * 6)}s`,
-                                animationPlayState: isPaused ? 'paused' : 'running'
-                            }}
-                        >
+                        <div className={cn("flex gap-4 w-max px-6", isRTL ? "animate-marquee-rtl" : "animate-marquee", "pause-marquee")} style={{ animationDuration: `${Math.max(20, cars.length * 7)}s`, animationPlayState: isPaused ? 'paused' : 'running' }}>
                             {displayCars.map((car, idx) => (
                                 <motion.button
                                     key={`${car.id}-${idx}`}
                                     onClick={() => setSelectedCar(car)}
                                     whileHover={{ y: -4, scale: 1.03 }}
                                     whileTap={{ scale: 0.97 }}
-                                    className="flex-shrink-0 relative w-52 h-28 rounded-2xl overflow-hidden border border-white/10 hover:border-accent-gold/40 transition-colors group cursor-pointer"
-                                    title={car.title || car.name || ''}
+                                    className="flex-shrink-0 relative w-56 h-32 rounded-3xl overflow-hidden border border-white/10 hover:border-accent-gold/40 transition-colors group cursor-pointer shadow-lg"
                                 >
-                                    {/* صورة السيارة */}
-                                    {car.images && car.images.length > 0 ? (
-                                        <Image
-                                            src={car.images[0]}
-                                            alt={car.title || 'سيارة'}
-                                            fill
-                                            className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110"
-                                        />
+                                    {car.images?.[0] ? (
+                                        <Image src={car.images[0]} alt={car.title || 'Car'} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110" />
                                     ) : (
-                                        <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                                            <Car className="w-8 h-8 text-white/20" />
-                                        </div>
+                                        <div className="w-full h-full bg-white/5 flex items-center justify-center"><Car className="w-8 h-8 text-white/20" /></div>
                                     )}
-
-                                    {/* طبقة التدرج السفلية */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-                                    {/* معلومات السيارة */}
-                                    <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
-                                        <p className="text-[9px] font-black uppercase text-white/60 truncate">
-                                            {car.title || car.name || (isRTL ? 'سيارة' : 'Car')}
-                                        </p>
-                                        <p className="text-[11px] font-black text-accent-gold">
-                                            {formatPrice(Number(car.price || 0))}
-                                        </p>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent" />
+                                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10 text-left" dir={isRTL ? 'rtl' : 'ltr'}>
+                                        <p className="text-[10px] sm:text-xs font-black uppercase text-white/80 line-clamp-1 mb-1">{car.title}</p>
+                                        <p className="text-xs sm:text-sm font-black text-accent-gold">{formatPrice(Number(car.price || 0))}</p>
                                     </div>
-
-                                    {/* شارة المزاد المباشر */}
-                                    {car.source === 'live' && (
-                                        <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#00f0ff] animate-pulse shadow-[0_0_6px_rgba(0,240,255,0.8)]" />
-                                    )}
+                                    {isLive && <div className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-[#00f0ff] animate-pulse shadow-[0_0_8px_rgba(0,240,255,1)]" />}
                                 </motion.button>
                             ))}
                         </div>
                     )}
                 </div>
-            </section>
+            </div>
+        );
+    };
 
-            {/* ── نافذة مواصفات السيارة ── */}
+    return (
+        <section className="relative z-20 my-10 overflow-hidden">
+            {adSettings.showLiveAuction && (
+                <BannerRow
+                    cars={liveCars}
+                    title={isRTL ? 'المزاد التفاعلي المباشر' : 'LIVE INTERACTIVE AUCTION'}
+                    href="/auctions/live"
+                    isLive={true}
+                />
+            )}
+            
+            {adSettings.showroomSource && adSettings.showroomSource !== 'none' && (
+                <BannerRow
+                    cars={showroomCars}
+                    title={bannerLabel}
+                    href="/cars"
+                    isLive={false}
+                />
+            )}
+
             <AnimatePresence>
                 {selectedCar && (
                     <CarModal
@@ -602,6 +548,6 @@ export default function SmartAdBanner() {
                     />
                 )}
             </AnimatePresence>
-        </>
+        </section>
     );
 }

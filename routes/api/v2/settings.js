@@ -176,7 +176,7 @@ router.put('/currency-settings', requireAuthAPI, requireAdmin, invalidateCache('
 });
 
 // تحديث ميزات "لماذا تختارنا"
-router.put('/features', requireAuthAPI, requireAdmin, async (req, res) => {
+router.put('/features', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { features } = req.body;
 
@@ -200,7 +200,7 @@ router.put('/features', requireAuthAPI, requireAdmin, async (req, res) => {
 });
 
 // تحديث محتوى الصفحة الرئيسية
-router.put('/home-content', requireAuthAPI, requireAdmin, async (req, res) => {
+router.put('/home-content', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { homeContent } = req.body;
 
