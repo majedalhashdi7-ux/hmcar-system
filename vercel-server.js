@@ -36,21 +36,18 @@ async function connectDB() {
         dbConnected = true;
         console.log('✅ MongoDB Connected');
 
-        // [[ARABIC_COMMENT]] Seeding يتم كعملية في الخلفية (Background) لتجنب المماطلة وتأخير استجابة الخوادم
+        // [[ARABIC_COMMENT]] Seeding يتم مرة واحدة فقط عند الحاجة. في سيرفر Vercel لا يجب استخدام الخلفية
+        // منعاً لتجمد الـ Socket عند الإيقاف المؤقت لـ Lambda
         if (!settingsInitialized && !isSeeding) {
             isSeeding = true;
-            Promise.all([
-                seedProductionAdmin(),
-                seedDefaultSettings(),
-                seedRealData()
-            ]).then(() => {
+            try {
+                await seedProductionAdmin();
+                await seedDefaultSettings();
+                await seedRealData();
                 settingsInitialized = true;
+            } finally {
                 isSeeding = false;
-                console.log('✅ Background seeding complete');
-            }).catch(e => {
-                console.error('❌ Background seeding failed:', e);
-                isSeeding = false;
-            });
+            }
         }
     } catch (err) {
         console.error('❌ MongoDB Connection Error:', err.message);
