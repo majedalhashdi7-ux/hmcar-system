@@ -282,10 +282,38 @@ export const api = {
         delete: (id: string) => fetchAPI(`/api/v2/invoices/${id}`, { method: 'DELETE' }),
     },
     upload: {
-        image: (formData: FormData) => fetchAPI('/api/v2/upload', {
-            method: 'POST',
-            body: formData,
-        }),
+        image: async (formData: FormData) => {
+            if (typeof window !== 'undefined') {
+                try {
+                    // Import dynamically to avoid SSR issues
+                    const imageCompression = (await import('browser-image-compression')).default;
+                    const imageFile = formData.get('image') as File;
+                    
+                    if (imageFile && imageFile.type.startsWith('image/')) {
+                        console.log(`Original image size: ${(imageFile.size / 1024 / 1024).toFixed(2)} MB`);
+                        
+                        const options = {
+                            maxSizeMB: 0.5,
+                            maxWidthOrHeight: 1600,
+                            useWebWorker: true,
+                        };
+                        
+                        const compressedFile = await imageCompression(imageFile, options);
+                        console.log(`Compressed image size: ${(compressedFile.size / 1024 / 1024).toFixed(2)} MB`);
+                        
+                        // Replace the old large file with the extremely optimized compressed version
+                        formData.set('image', compressedFile, compressedFile.name);
+                    }
+                } catch (error) {
+                    console.error('Image compression failed (Falling back to original upload):', error);
+                }
+            }
+            
+            return fetchAPI('/api/v2/upload', {
+                method: 'POST',
+                body: formData,
+            });
+        },
     },
 
     brands: {

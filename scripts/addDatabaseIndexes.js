@@ -131,9 +131,40 @@ async function addIndexes() {
       console.log('⚠️  جدول الإعدادات غير موجود');
     }
 
+    // Indexes لقطع الغيار (Spare Parts)
+    console.log('\n📊 إضافة Indexes لقطع الغيار...');
+    const sparePartsExists = await db.listCollections({ name: 'spareparts' }).hasNext();
+    if (sparePartsExists) {
+      await db.collection('spareparts').createIndex({ partName: 1 });
+      await db.collection('spareparts').createIndex({ partNumber: 1 });
+      await db.collection('spareparts').createIndex({ brand: 1 });
+      await db.collection('spareparts').createIndex({ model_name: 1 });
+      await db.collection('spareparts').createIndex({ source: 1 });
+      
+      // Text Index for Spare Parts
+      try {
+        const indexes = await db.collection('spareparts').indexes();
+        const textIndexExists = indexes.some(idx => idx.key._fts === 'text');
+        if (!textIndexExists) {
+          await db.collection('spareparts').createIndex({
+            partName: 'text',
+            partNameEn: 'text',
+            partNumber: 'text',
+            description: 'text'
+          });
+          console.log('  ✅ تم إنشاء text index لقطع الغيار');
+        } else {
+          console.log('  ⏭️  Text index لقطع الغيار موجود بالفعل');
+        }
+      } catch (error) {
+        if (error.code === 85) console.log('  ⏭️  Text index لقطع الغيار موجود بإعدادات مختلفة');
+      }
+      console.log('✅ تم إضافة Indexes لقطع الغيار');
+    }
+
     // عرض جميع الـ Indexes
     console.log('\n📋 قائمة الـ Indexes الحالية:');
-    const collections = ['users', 'cars', 'auctions', 'orders', 'settings'];
+    const collections = ['users', 'cars', 'auctions', 'orders', 'settings', 'spareparts'];
     
     for (const collectionName of collections) {
       const exists = await db.listCollections({ name: collectionName }).hasNext();
