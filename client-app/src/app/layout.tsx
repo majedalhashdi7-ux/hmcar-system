@@ -140,6 +140,24 @@ export default async function RootLayout({
             </AppShell>
           </SmartPrefetchProvider>
         </Providers>
+        {/* Force Clear PWA Caches Script */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                let unreg = false;
+                for(let registration of registrations) {
+                  registration.unregister();
+                  unreg = true;
+                }
+                if (unreg && !sessionStorage.getItem('sw_cleared')) {
+                  sessionStorage.setItem('sw_cleared', 'true');
+                  window.location.reload(true);
+                }
+              });
+            }
+          `
+        }} />
       </body>
     </html>
   );

@@ -79,34 +79,74 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-    const [currency, setCurrency] = useState<CurrencySettings>({ 
-        usdToSar: 3.75, 
-        usdToKrw: 1350, 
-        activeCurrency: 'SAR',
-        partsMultiplier: 1.0,
-        auctionMultiplier: 1.0
-    });
-    const [siteInfo, setSiteInfo] = useState<SiteInfo>({ siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' });
-    const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
-    const [homeContent, setHomeContent] = useState<HomeContent>({});
-    const [features, setFeatures] = useState<Feature[]>([]);
-    const [loading, setLoading] = useState(true);
+    // محلياً نقوم بجلب التخزين السابق لتجنب تأخير ظهور البيانات (الكاش)
+    const getInitialCache = () => {
+        if (typeof window !== 'undefined') {
+            try {
+                const stored = localStorage.getItem('hm_settings_cache');
+                if (stored) return JSON.parse(stored);
+            } catch (e) {
+                // Ignore parse errors
+            }
+        }
+        return null;
+    };
+    
+    const cachedData = getInitialCache();
+
+    const [currency, setCurrency] = useState<CurrencySettings>(
+        cachedData?.currencySettings || { 
+            usdToSar: 3.75, 
+            usdToKrw: 1350, 
+            activeCurrency: 'SAR',
+            partsMultiplier: 1.0,
+            auctionMultiplier: 1.0
+        }
+    );
+    const [siteInfo, setSiteInfo] = useState<SiteInfo>(
+        cachedData?.siteInfo || { siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' }
+    );
+    const [socialLinks, setSocialLinks] = useState<SocialLinks>(cachedData?.socialLinks || {});
+    const [homeContent, setHomeContent] = useState<HomeContent>(
+        cachedData?.homeContent || {
+            showLiveMarket: true,
+            showAdvertising: true,
+            showTrustHub: true,
+            showTestimonials: true,
+            showBrandCatalog: true
+        }
+    );
+    const [features, setFeatures] = useState<Feature[]>(cachedData?.features || []);
+    const [loading, setLoading] = useState(!cachedData); // إذا كان هناك كاش، لا نحتاج لشاشة تحميل
     const [displayCurrency, setDisplayCurrency] = useState<'SAR' | 'USD' | 'KRW'>('SAR');
 
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('displayCurrency');
+            if (stored === 'USD' || stored === 'SAR' || stored === 'KRW') {
+                setDisplayCurrency(stored as 'SAR' | 'USD' | 'KRW');
+            }
+        }
+    }, []);
+
     /**
-     * تحديث الإعدادات من الخادم
+     * تحديث الإعدادات من الخادم بصمت في الخلفية لدعم التغييرات المباشرة
      */
     const refreshSettings = useCallback(async () => {
         try {
             const res = await api.settings.getPublic();
             if (res.success && res.data) {
+                // حفظ في الكاش لضمان الظهور الفوري المرة القادمة (حل مشكلة تأخر ظهور البيانات)
+                if (typeof window !== 'undefined') {
+                    localStorage.setItem('hm_settings_cache', JSON.stringify(res.data));
+                }
+
                 if (res.data.currencySettings) setCurrency(res.data.currencySettings);
                 if (res.data.siteInfo) setSiteInfo(res.data.siteInfo);
                 if (res.data.socialLinks) setSocialLinks(res.data.socialLinks);
                 if (res.data.homeContent) setHomeContent(res.data.homeContent);
                 if (res.data.features) setFeatures(res.data.features);
 
-                // تحديد العملة المفضلة للمستخدم من التخزين المحلي أو الإعدادات الافتراضية
                 const stored = localStorage.getItem('displayCurrency');
                 if (stored === 'USD' || stored === 'SAR' || stored === 'KRW') {
                     setDisplayCurrency(stored as 'SAR' | 'USD' | 'KRW');
