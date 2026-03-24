@@ -350,19 +350,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 <ClientTopBar />
 
                 {/* المحتوى */}
-                <main className="flex-1 pb-24 lg:pb-0">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            key={pathname}
-                            initial={{ opacity: 0, y: 8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2, ease: 'easeOut' }}
-                            className="h-full"
-                        >
-                            {children}
-                        </motion.div>
-                    </AnimatePresence>
+                <main className="flex-1 pb-24 lg:pb-0 relative">
+                    <div className="h-full relative z-0 animate-in fade-in zoom-in-95 duration-500">
+                        {children}
+                    </div>
                 </main>
             </div>
 
