@@ -1,24 +1,7 @@
 import HomeClient, { type CarType } from "./home-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://car-auction-sand.vercel.app';
-
-async function getLatestCars(): Promise<CarType[]> {
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/v2/cars?limit=12&status=active`, {
-      headers: { Accept: "application/json" },
-      next: { revalidate: 15 },
-    });
-    if (!res.ok) return [];
-    const json = await res.json();
-    const carsList = json?.data?.cars || json?.cars || [];
-    return Array.isArray(carsList) ? carsList : [];
-  } catch {
-    return [];
-  }
+export default function Page() {
+  // SSR was causing a slow TTFB or hanging the Suspense boundary.
+  // Passing an empty array so the client fetches data asynchronously and instantly paints the layout.
+  return <HomeClient latestCars={[]} />;
 }
-
-export default async function Page() {
-  const latestCars = await getLatestCars();
-  return <HomeClient latestCars={latestCars} />;
-}
-
