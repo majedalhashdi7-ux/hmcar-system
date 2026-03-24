@@ -231,11 +231,15 @@ export default function PartsPage() {
 
     // اسم الوكالة حسب اللغة
     const getAgencyDisplayName = (agency: Agency) =>
-        !isRTL && agency.nameEn ? agency.nameEn : agency.name;
+        (!isRTL && agency.nameEn) ? agency.nameEn : agency.name;
 
     // اسم القطعة حسب اللغة
-    const getPartDisplayName = (part: Part) =>
-        !isRTL && part.nameEn ? part.nameEn : (part.nameAr || part.name);
+    const getPartDisplayName = (part: any) => {
+        if (!isRTL) {
+            return part.nameEn || part.name;
+        }
+        return part.nameAr || part.name;
+    };
 
     // [[ARABIC_COMMENT]] فتح مودال القطعة مع تحويل بياناتها لصيغة ProductModalData
     const openPartModal = (part: Part) => {
@@ -450,7 +454,7 @@ export default function PartsPage() {
                                                         src={agency.logo}
                                                         alt={getAgencyDisplayName(agency)}
                                                         fill
-                                                        className="object-contain p-4 group-hover:brightness-110 transition-all"
+                                                        className="object-contain p-4 group-hover:scale-110 transition-transform duration-700"
                                                         unoptimized
                                                         referrerPolicy="no-referrer"
                                                     />
@@ -461,7 +465,9 @@ export default function PartsPage() {
                                                 <h3 className="text-xl font-black uppercase tracking-widest group-hover:text-cinematic-neon-blue transition-colors">
                                                     {agency.name}
                                                 </h3>
-                                                <div className="text-[8px] font-bold uppercase tracking-[0.4em] text-white/20 mt-1 opacity-0 group-hover:opacity-100 transition-all">Select Brand</div>
+                                                <div className="text-[8px] font-bold uppercase tracking-[0.4em] text-white/20 mt-1 opacity-0 group-hover:opacity-100 transition-all">
+                                                    {isRTL ? 'اختر الماركة' : 'Select Brand'}
+                                                </div>
                                             </div>
                                         </motion.div>
                                     ))}

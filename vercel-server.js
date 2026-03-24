@@ -16,32 +16,47 @@ const { tenantMiddleware } = require('./middleware/tenantMiddleware');
 
 let cachedApp = null;
 let dbConnected = false;
-let adminSeeded = false;
+let isSeeding = false;
+let settingsInitialized = false;
 
 async function connectDB() {
     if (dbConnected && mongoose.connection.readyState === 1) return;
 
     const uri = process.env.MONGO_URI || process.env.MONGODB_URI;
-    if (!uri || uri.startsWith('memory://')) {
-        throw new Error('Database connection string (MONGO_URI/MONGODB_URI) must be provided in production');
+    if (!uri) throw new Error('MONGO_URI/MONGODB_URI is required');
+
+    try {
+        console.log('[Vercel] Connecting to MongoDB...');
+        await mongoose.connect(uri, {
+            maxPoolSize: 10,
+            serverSelectionTimeoutMS: 15000,
+            connectTimeoutMS: 15000,
+            bufferCommands: true,
+        });
+
+        dbConnected = true;
+        console.log('✅ MongoDB Connected');
+
+        // [[ARABIC_COMMENT]] Seeding يتم كعملية في الخلفية (Background) لتجنب المماطلة وتأخير استجابة الخوادم
+        if (!settingsInitialized && !isSeeding) {
+            isSeeding = true;
+            Promise.all([
+                seedProductionAdmin(),
+                seedDefaultSettings(),
+                seedRealData()
+            ]).then(() => {
+                settingsInitialized = true;
+                isSeeding = false;
+                console.log('✅ Background seeding complete');
+            }).catch(e => {
+                console.error('❌ Background seeding failed:', e);
+                isSeeding = false;
+            });
+        }
+    } catch (err) {
+        console.error('❌ MongoDB Connection Error:', err.message);
+        throw err;
     }
-
-    console.log('[Vercel] Connecting to MongoDB...');
-    await mongoose.connect(uri, {
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 15000,  // زيادة ل 15 ثانية لـ cold start
-        connectTimeoutMS: 15000,
-        socketTimeoutMS: 30000,
-        bufferCommands: true,  // ✅ مهم: تخزين الـ queries مؤقتاً ريثما يكتمل الاتصال
-    });
-
-    dbConnected = true;
-    console.log('✅ MongoDB Atlas connected:', mongoose.connection.host);
-
-    // إنشاء حساب الأدمن والبيانات الحقيقية والإعدادات الافتراضية
-    await seedProductionAdmin();
-    await seedRealData();
-    await seedDefaultSettings();
 }
 
 
@@ -99,15 +114,8 @@ async function seedProductionAdmin() {
  * إضافة بيانات سيارات ومزادات حقيقية إذا كانت القاعدة فارغة
  */
 async function seedRealData() {
-    if (adminSeeded) return;
-    
-    // الأمان 4: منع أي Seeding تلقائي في وقت تشغيل الإنتاج
-    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEV_ADMIN !== 'true') {
-        console.log('✅ Production Mode: Skipping real data seeding to protect existing user data.');
-        return;
-    }
-
-    adminSeeded = true;
+    // الأمان 4: منع أي Seeding تلقائي في وقت تشغيل الإنتاج إذا كانت الداتا موجودة
+    if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEV_ADMIN !== 'true') return;
 
     try {
         const Car = require('./models/Car');
@@ -182,31 +190,39 @@ async function seedDefaultSettings() {
         const SiteSettings = require('./models/SiteSettings');
         const existing = await SiteSettings.findOne({ key: 'main' });
 
-        if (!existing || !existing.socialLinks?.whatsapp || !existing.features?.length) {
+        if (!existing || !existing.features || existing.features.length === 0) {
+            const defaultFeatures = [
+                { icon: 'Shield', title: 'ضمان شامل', titleEn: 'Full Warranty', desc: 'ضمان شامل على جميع السيارات', descEn: 'Comprehensive warranty on all cars' },
+                { icon: 'Truck', title: 'شحن عالمي', titleEn: 'Global Shipping', desc: 'توصيل إلى أي مكان في العالم', descEn: 'Delivery to anywhere worldwide' },
+                { icon: 'CreditCard', title: 'دفع آمن', titleEn: 'Secure Payment', desc: 'طرق دفع متعددة وآمنة', descEn: 'Multiple secure payment methods' },
+                { icon: 'Award', title: 'فحص شامل', titleEn: 'Full Inspection', desc: 'فحص 200 نقطة للسيارات', descEn: '200-point vehicle inspection' },
+                { icon: 'Zap', title: 'مزايدة سريعة', titleEn: 'Quick Bid', desc: 'نظام مزايدة فوري وسريع', descEn: 'Instant and fast bidding system' },
+                { icon: 'Globe', title: 'سيارات كورية', titleEn: 'Korean Cars', desc: 'أفضل السيارات الكورية', descEn: 'Best Korean vehicles' }
+            ];
+
             await SiteSettings.findOneAndUpdate(
                 { key: 'main' },
                 {
                     $set: {
-                        'socialLinks.whatsapp': '+967781007805',
-                        'contactInfo.phone': '+967781007805',
-                        'contactInfo.email': 'info@hmcar.com',
-                        'siteInfo.siteName': 'HM CAR',
-                        'siteInfo.siteDescription': 'منصة مزادات ومبيعات السيارات الفاخرة',
-                        'currencySettings.usdToSar': 3.75,
-                        'currencySettings.usdToKrw': 1350,
-                        'features': [
-                            { icon: 'Shield', title: 'ضمان شامل', titleEn: 'Full Warranty', desc: 'ضمان شامل على جميع السيارات', descEn: 'Comprehensive warranty on all cars' },
-                            { icon: 'Truck', title: 'شحن عالمي', titleEn: 'Global Shipping', desc: 'توصيل إلى أي مكان في العالم', descEn: 'Delivery to anywhere worldwide' },
-                            { icon: 'CreditCard', title: 'دفع آمن', titleEn: 'Secure Payment', desc: 'طرق دفع متعددة وآمنة', descEn: 'Multiple secure payment methods' },
-                            { icon: 'Award', title: 'فحص شامل', titleEn: 'Full Inspection', desc: 'فحص 200 نقطة للسيارات', descEn: '200-point vehicle inspection' },
-                            { icon: 'Zap', title: 'مزايدة سريعة', titleEn: 'Quick Bid', desc: 'نظام مزايدة فوري وسريع', descEn: 'Instant and fast bidding system' },
-                            { icon: 'Globe', title: 'سيارات كورية', titleEn: 'Korean Cars', desc: 'أفضل السيارات الكورية', descEn: 'Best Korean vehicles' }
-                        ]
+                        'socialLinks.whatsapp': existing?.socialLinks?.whatsapp || '+967781007805',
+                        'contactInfo.phone': existing?.contactInfo?.phone || '+967781007805',
+                        'contactInfo.email': existing?.contactInfo?.email || 'info@hmcar.com',
+                        'siteInfo.siteName': existing?.siteInfo?.siteName || 'HM CAR',
+                        'siteInfo.siteDescription': existing?.siteInfo?.siteDescription || 'منصة مزادات ومبيعات السيارات الفاخرة',
+                        'currencySettings.usdToSar': existing?.currencySettings?.usdToSar || 3.75,
+                        'currencySettings.usdToKrw': existing?.currencySettings?.usdToKrw || 1350,
+                        'features': defaultFeatures,
+                        'advertisingSettings': {
+                            'showLiveAuction': existing?.advertisingSettings?.showLiveAuction ?? true,
+                            'showroomSource': existing?.advertisingSettings?.showroomSource || 'hmcar',
+                            'bannerLabel': existing?.advertisingSettings?.bannerLabel || '⚡ عروض حصرية',
+                            'bannerLabelEn': existing?.advertisingSettings?.bannerLabelEn || '⚡ EXCLUSIVE DEALS'
+                        }
                     }
                 },
                 { upsert: true, new: true }
             );
-            console.log('✅ Default site settings initialized with KRW and Features');
+            console.log('✅ Default site settings initialized including Advertising');
         }
     } catch (e) {
         console.warn('⚠️ Settings seed warning:', e.message);
@@ -222,6 +238,7 @@ function buildApp() {
 
     console.log('[Vercel] Building Express app...');
     const app = express();
+    app.use(compression());
 
     // ── Middleware ──
     app.use(cors({

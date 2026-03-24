@@ -1,6 +1,6 @@
 import HomeClient, { type CarType } from "./home-client";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4002";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://car-auction-sand.vercel.app';
 
 async function getLatestCars(): Promise<CarType[]> {
   try {

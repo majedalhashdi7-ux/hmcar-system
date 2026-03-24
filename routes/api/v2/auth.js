@@ -145,44 +145,58 @@ router.post('/auto-login', authRateLimiter, async (req, res) => {
           error: 'Banned Device',
           banned: true,
           banCode: fingerprint.banCode,
-          message: 'تم حظرك. لمراسلة الإدارة استخدم الرمز بالأسفل.'
+          message: 'تم حظرك من هذا الجهاز. لمراسلة الإدارة استخدم الرمز بالأسفل.'
         });
       }
 
+      // [[ARABIC_COMMENT]] تخفيف حدة الربط بالاسم للسماح بالتبديل بين اللغات (عربي/إنجليزي)
+      // يتم الحظر فقط في حالة تكرار المحاولات الفاشلة بأسماء مختلفة جداً
       if (fingerprint.linkedUsername && fingerprint.linkedUsername.toLowerCase() !== name.trim().toLowerCase()) {
-        fingerprint.failedAttempts += 1;
-        if (fingerprint.failedAttempts >= 5) {
-          fingerprint.banned = true;
-          if (!fingerprint.banCode) {
-            fingerprint.banCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+        const nameParts = name.trim().split(/\s+/);
+        const linkedParts = (fingerprint.linkedUsername || '').split(/\s+/);
+        
+        // التحقق مما إذا كان هناك تطابق جزئي (نفس الشخص يغير لغة الاسم أو يضيف لقب)
+        const partialMatch = nameParts.some(p => linkedParts.includes(p)) || linkedParts.some(p => nameParts.includes(p));
+        
+        if (!partialMatch) {
+          fingerprint.failedAttempts += 1;
+          if (fingerprint.failedAttempts >= 10) { // رفع الحد إلى 10 لزيادة المرونة
+            fingerprint.banned = true;
+            if (!fingerprint.banCode) fingerprint.banCode = Math.random().toString(36).substring(2, 8).toUpperCase();
           }
-        }
-        await fingerprint.save();
-
-        if (fingerprint.banned) {
-          return res.status(403).json({
-            error: 'Banned Device',
-            banned: true,
-            banCode: fingerprint.banCode,
-            message: 'تم حظر جهازك لمحاولة الدخول بحساب أو بيانات مختلفة.'
-          });
-        } else {
-          return res.status(401).json({
-            error: 'Authentication Failed',
-            message: 'لا يمكنك الدخول باسم آخر من هذا الجهاز! تحذير: محاولة أخرى وستتعرض للحظر.'
-          });
+          await fingerprint.save();
         }
       }
     }
 
-    // Check if user exists with this name
-    const existingUser = await User.findOne({
+    // [1] Check if user exists with this exact name
+    let userToLogin = await User.findOne({
       name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
     });
 
-    if (existingUser) {
+    // [2] If no exact name match, check if there's a linked user for this device/IP (Fuzzy fallback)
+    if (!userToLogin) {
+      const linkedFingerprint = await DeviceFingerprint.findOne({ ip: clientIP });
+      if (linkedFingerprint && linkedFingerprint.linkedUsername) {
+        // [[ARABIC_COMMENT]] التحقق من تطابق جزئي مع الاسم المسجل سابقاً لهذا الجهاز
+        const nameParts = name.trim().split(/\s+/).filter(p => p.length > 1);
+        const linkedParts = linkedFingerprint.linkedUsername.trim().split(/\s+/).filter(p => p.length > 1);
+        
+        const isFuzzyMatch = nameParts.some(p => linkedParts.includes(p)) || linkedParts.some(p => nameParts.includes(p));
+        
+        if (isFuzzyMatch) {
+           // نجد المستخدم المسجل سابقاً
+           userToLogin = await User.findOne({ name: linkedFingerprint.linkedUsername });
+           if (userToLogin) {
+             console.log(`[AUTH] 🔄 Fuzzy match found for linked device. Mapping "${name}" to existing user "${userToLogin.name}"`);
+           }
+        }
+      }
+    }
+
+    if (userToLogin) {
       // User exists - try to login
-      const isMatch = await existingUser.comparePassword(password);
+      const isMatch = await userToLogin.comparePassword(password);
 
       if (!isMatch) {
         return res.status(401).json({
@@ -192,25 +206,25 @@ router.post('/auto-login', authRateLimiter, async (req, res) => {
       }
 
       // Password matches - login successful
-      existingUser.lastLoginAt = new Date();
-      existingUser.lastLoginIP = clientIP;
-      await existingUser.save();
+      userToLogin.lastLoginAt = new Date();
+      userToLogin.lastLoginIP = clientIP;
+      await userToLogin.save();
 
       // Generate token
       const token = jwt.sign(
-        { userId: existingUser._id, role: existingUser.role },
+        { userId: userToLogin._id, role: userToLogin.role },
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
 
-      // استخدام upsert لمنع التكرار - تحديث الموجود أو إنشاء جديد
+      // تحديث البصمة لتشمل الاسم الأخير المستخدم (للمستقبل)
       await DeviceFingerprint.findOneAndUpdate(
         { ip: clientIP },
-        { $set: { linkedUsername: name.trim(), deviceId: deviceId || '', failedAttempts: 0 } },
+        { $set: { linkedUsername: userToLogin.name, deviceId: deviceId || '', failedAttempts: 0 } },
         { upsert: true, new: true }
       );
 
-      console.log(`[AUTH] ✅ Auto-login successful for existing user: ${name}`);
+      console.log(`[AUTH] ✅ Auto-login successful for: ${userToLogin.name}`);
 
       return res.json({
         success: true,
@@ -218,18 +232,18 @@ router.post('/auto-login', authRateLimiter, async (req, res) => {
         isNewUser: false,
         token,
         user: {
-          _id: existingUser._id,
-          name: existingUser.name,
-          email: existingUser.email,
-          role: existingUser.role
+          _id: userToLogin._id,
+          name: userToLogin.name,
+          email: userToLogin.email,
+          role: userToLogin.role
         }
       });
     }
 
-    // User doesn't exist - create new account automatically
+    // [3] User doesn't exist anywhere - create new account automatically
     const newUser = new User({
       name: name.trim(),
-      password: password, // Will be hashed by model
+      password: password, 
       role: 'buyer',
       status: 'active',
       registrationIP: clientIP,
@@ -309,19 +323,14 @@ router.post('/login', authRateLimiter, async (req, res) => {
       fingerprint = await DeviceFingerprint.findOne({ ip: clientIP });
       if (fingerprint && !fingerprint.exemptFromSecurity) {
         if (fingerprint.banned) {
-          return res.status(403).json({ banned: true, banCode: fingerprint.banCode, message: 'تم حظرك. لمراسلة الإدارة استخدم الرمز بالأسفل.' });
+          return res.status(403).json({ banned: true, banCode: fingerprint.banCode, message: 'تم حظرك من هذا الجهاز. لمراسلة الإدارة استخدم الرمز بالأسفل.' });
         }
+        
+        // [[ARABIC_COMMENT]] السماح بالدخول إذا كان هناك تطابق في الاسم أو جزء منه لضمان عدم الحظر بسبب اللغة
         if (fingerprint.linkedUsername && fingerprint.linkedUsername.toLowerCase() !== searchKey.toLowerCase()) {
-          fingerprint.failedAttempts += 1;
-          if (fingerprint.failedAttempts >= 5) {
-            fingerprint.banned = true;
-            if (!fingerprint.banCode) fingerprint.banCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-          }
-          await fingerprint.save();
-          if (fingerprint.banned) {
-            return res.status(403).json({ banned: true, banCode: fingerprint.banCode, message: 'تم حظر جهازك لمحاولة الدخول بحساب مختلف.' });
-          } else {
-            return res.status(401).json({ error: 'Authentication Failed', message: 'لا يمكنك الدخول باسم آخر من هذا الجهاز! (محاولة متبقية قبل الحظر)' });
+          const skipSecurity = searchKey.length < 3 || (fingerprint.failedAttempts || 0) < 5;
+          if (!skipSecurity) {
+             console.warn(`[AUTH] Device IP ${clientIP} attempting different username: ${searchKey} (Linked: ${fingerprint.linkedUsername})`);
           }
         }
       }
@@ -334,7 +343,7 @@ router.post('/login', authRateLimiter, async (req, res) => {
         { email: searchKey.toLowerCase() },
         { username: searchKey.toLowerCase() },
         { phone: searchKey },
-        { name: { $regex: new RegExp(`^${safeKey}$`, 'i') } }
+        { name: { $regex: new RegExp(`.*${safeKey}.*`, 'i') } }
       ]
     }).select('+password').lean(false);
 

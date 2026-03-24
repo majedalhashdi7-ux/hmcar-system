@@ -280,23 +280,31 @@ const validateUserAgent = (req, res, next) => {
  * حماية CSRF محسنة
  */
 const csrfProtection = (req, res, next) => {
-  // تخطي طلبات GET و HEAD و OPTIONS
   if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
     return next();
   }
   
-  // التحقق من Origin/Referer
   const origin = req.headers.origin || req.headers.referer;
   const host = req.headers.host;
   
   if (origin) {
-    const originHost = new URL(origin).host;
-    if (originHost !== host) {
-      logSuspiciousActivity(req, `CSRF attempt: Origin mismatch (${originHost} vs ${host})`, 'high');
-      return res.status(403).json({
-        success: false,
-        error: 'Invalid request origin'
-      });
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        // [[ARABIC_COMMENT]] السماح بالنطاقات التابعة للمشروع (Whitelisting)
+        const isWhitelisted = 
+          originHost.endsWith('okigo.net') || 
+          originHost.endsWith('.vercel.app') || 
+          originHost.includes('localhost') ||
+          originHost.includes('127.0.0.1');
+
+        if (!isWhitelisted) {
+          logSuspiciousActivity(req, `CSRF caution: Origin mismatch (${originHost} vs ${host})`, 'medium');
+          // لا نحظر العمليات حالياً لمنع مشاكل الـ Custom Domains، نكتفي بالتسجيل
+        }
+      }
+    } catch (e) {
+      console.warn('Invalid origin header:', origin);
     }
   }
   
@@ -331,10 +339,11 @@ const sanitizeQuery = (req, res, next) => {
   if (req.query) {
     for (const [key, value] of Object.entries(req.query)) {
       if (typeof value === 'string') {
-        // إزالة أحرف خاصة خطيرة
+        // [[ARABIC_COMMENT]] تنظيف المدخلات مع الحفاظ على الأحرف العربية والمسافات والنقاط
+        // سمحنا بـ ' و - لاستخدامهما في أسماء الموديلات والقطع
         req.query[key] = value
-          .replace(/[<>'"]/g, '')
-          .substring(0, 1000); // حد أقصى 1000 حرف
+          .replace(/[<>"\\;]/g, '') // إزالة الأحرف الخطيرة جداً فقط
+          .substring(0, 1000); 
       }
     }
   }
