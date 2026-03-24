@@ -216,12 +216,12 @@ export default function LocalCarDetail() {
                 <motion.button
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    onClick={() => router.push('/cars')}
+                    onClick={() => router.push('/')}
                     className="flex items-center gap-2 mb-10 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all group w-fit"
                 >
                     <ChevronLeft className={cn('w-4 h-4 transition-transform group-hover:-translate-x-1', isRTL && 'rotate-180 group-hover:translate-x-1')} />
                     <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-                        {isRTL ? rawText('العودة إلى معرض HM CAR') : rawText('Back to HM CAR Showroom')}
+                        {isRTL ? rawText('العودة للصفحة الرئيسية') : rawText('Back to Home Page')}
                     </span>
                 </motion.button>
 

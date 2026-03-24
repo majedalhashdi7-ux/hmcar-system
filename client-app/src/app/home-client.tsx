@@ -16,7 +16,6 @@ import {
   Mail, Search, Gavel, Cog, Info, User, LogOut, Menu, X, Plus
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import Navbar from "@/components/Navbar";
 import CinematicVideoBackground from "@/components/CinematicVideoBackground";
 import { useLanguage } from "@/lib/LanguageContext";
@@ -34,13 +33,6 @@ import { useAuth } from "@/lib/AuthContext";
 import { useSettings } from "@/lib/SettingsContext";
 import { cn } from "@/lib/utils";
 import { useStandalone } from "@/lib/useStandalone";
-const rawText = (value: string) => value;
-const getCarMakeLabel = (car: CarType) => {
-  const make = car.make;
-  return typeof make === 'object' && make
-    ? make.name || car.title || rawText('')
-    : make || car.title || rawText('');
-};
 
 export type CarType = {
   id?: string;
@@ -441,53 +433,7 @@ export default function HomeClient({ latestCars }: HomeClientProps) {
 
           {/* 2.5 ANNOUNCEMENT RIBBON REMOVED: Replaced fully by SmartAdBanner */}
 
-          {/* 4. LIVE MARKET TICKER */}
-          {(homeContent?.showLiveMarket ?? true) && latestCars && latestCars.length > 0 && (
-            <section ref={liveRef} className="relative z-10 py-32 overflow-hidden bg-linear-to-b from-transparent via-accent-gold/5 to-transparent">
-              <div className="max-w-[100vw] mx-auto text-center mb-20 px-4">
-                <h2 className="text-6xl md:text-9xl font-black text-white italic uppercase tracking-tighter drop-shadow-[0_0_60px_rgba(201,169,110,0.6)]">
-                  {isRTL ? 'المعرض المباشر' : 'LIVE SHOWROOM'}
-                </h2>
-              </div>
-
-              <div className="relative w-full overflow-hidden py-10 scale-[0.9] origin-center">
-                <div
-                  className={cn(
-                    "flex gap-12 w-max px-12",
-                    isRTL ? "animate-marquee-rtl" : "animate-marquee",
-                    "pause-marquee"
-                  )}
-                  style={{ animationDuration: `${latestCars.length * 10}s` }}
-                >
-                  {[...latestCars, ...latestCars].map((car, index) => {
-                    const makeName = getCarMakeLabel(car);
-                    return (
-                      <motion.div
-                        key={index}
-                        className="group relative w-96 h-125 rounded-[4rem] border border-white/5 bg-black/90 backdrop-blur-3xl overflow-hidden shadow-3xl shrink-0"
-                        onClick={() => router.push(`/cars/${car.id || (car as any)._id || index}`)}
-                        whileHover={{ y: -25, scale: 1.05 }}
-                      >
-                        <Image src={car.images?.[0] || "/images/placeholder.jpg"} alt={car.title || car.name || 'Car'} fill className="object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 transform group-hover:scale-110" />
-                        <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent z-10" />
-                        <div className="absolute z-20 inset-0 flex flex-col justify-end p-10">
-                          <div className="flex items-center gap-2 mb-4">
-                            <span className="px-4 py-1.5 rounded-full bg-accent-gold text-black text-[9px] font-black uppercase tracking-widest">{car.year}</span>
-                            <span className="px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-white/50 text-[9px] font-black uppercase tracking-widest">{makeName}</span>
-                          </div>
-                          <h3 className="text-3xl font-black text-white italic uppercase mb-2 group-hover:text-accent-gold transition-colors">{car.title || car.name}</h3>
-                          <div className="pt-6 border-t border-white/5 flex items-center justify-between">
-                             <span className="text-2xl font-black text-accent-gold">{formatPrice(Number(car.price || car.priceSar || (Number(car.priceUsd || 0) * 3.75) || 0))}</span>
-                            <ArrowUpRight className="w-8 h-8 text-accent-gold" />
-                          </div>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              </div>
-            </section>
-          )}
+          {/* 4. LIVE MARKET TICKER - REMOVED: Now handled fully and robustly by SmartAdBanner */}
         </>
       )}
 
