@@ -9,7 +9,6 @@
 const mongoose = require('mongoose');
 const express = require('express');
 const cors = require('cors');
-const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { tenantMiddleware } = require('./middleware/tenantMiddleware');
@@ -238,7 +237,6 @@ function buildApp() {
 
     console.log('[Vercel] Building Express app...');
     const app = express();
-    app.use(compression());
 
     // ── Middleware ──
     app.use(cors({
@@ -269,7 +267,6 @@ function buildApp() {
     // الأمان 1: تفعيل Helmet لإخفاء تفاصيل السيرفر وإضافة ترويسات أمنية
     app.use(helmet());
 
-    app.use(compression());
     app.use(express.json({ limit: '10mb' }));
     app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
