@@ -44,7 +44,7 @@ export default function GalleryHubPage() {
     <div className={cn('min-h-screen bg-cinematic-darker text-white', isRTL && 'font-arabic')} dir={isRTL ? 'rtl' : 'ltr'}>
       <Navbar />
 
-      <main className="pt-20 sm:pt-32 pb-24 px-4 sm:px-6">
+      <main className="pt-16 sm:pt-32 pb-24 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           {/* قسم العنوان والوصف العلوي */}
           <motion.div

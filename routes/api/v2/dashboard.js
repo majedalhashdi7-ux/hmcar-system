@@ -19,7 +19,8 @@ router.get('/client', requireAuthAPI, async (req, res) => {
             myOrders,
             pendingOrders,
             recentCars,
-            myFavorites
+            myFavorites,
+            unreadNotifications
         ] = await Promise.all([
             // عدد السيارات المتاحة
             Car.countDocuments({ isActive: true, isSold: false }),
@@ -27,8 +28,8 @@ router.get('/client', requireAuthAPI, async (req, res) => {
             // عدد المزادات المباشرة
             Auction.countDocuments({ status: 'running' }),
 
-            // عدد طلباتي
-            Order.countDocuments({ buyer: userId }),
+            // عدد طلباتي (النشطة)
+            Order.countDocuments({ buyer: userId, status: { $ne: 'cancelled' } }),
 
             // الطلبات قيد المعالجة
             Order.countDocuments({
@@ -43,9 +44,11 @@ router.get('/client', requireAuthAPI, async (req, res) => {
                 .select('title make model year price priceSar priceUsd priceKrw images category')
                 .lean(),
 
-            // المفضلة (إذا كان هناك نموذج للمفضلة)
-            // Favorite.countDocuments({ user: userId })
-            0 // مؤقتاً
+            // المفضلة
+            require('../../../models/Favorite').countDocuments({ user: userId }),
+
+            // إشعارات غير مقروءة
+            require('../../../models/Notification').countDocuments({ user: userId, read: false })
         ]);
 
         res.json({
@@ -55,9 +58,14 @@ router.get('/client', requireAuthAPI, async (req, res) => {
                     availableCars,
                     liveAuctions,
                     myOrders,
+                    activeOrders: myOrders, // Alias for AppHome
                     pendingOrders,
-                    myFavorites
+                    myFavorites,
+                    favoriteCars: myFavorites, // Alias for AppHome
+                    watchedAuctions: liveAuctions, // Alias for AppHome
+                    unreadNotifications
                 },
+                unreadNotifications, // Also top level for badges
                 recentCars: recentCars.map(car => ({
                     id: car._id.toString(), // [[ARABIC_COMMENT]] تحويل ObjectId إلى string لضمان صحة الروابط
                     title: car.title,

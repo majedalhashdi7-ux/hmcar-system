@@ -27,10 +27,15 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     const { user, isLoggedIn } = useAuth(); // جلب بيانات المستخدم لربط الاتصال به
 
     useEffect(() => {
-        // الاتصال بالخادم (استبدل بالرابط الفعلي في الإنتاج)
+        // الاتصال بالخادم مع دعم إعادة المحاولة التلقائية (Robust Connection)
         const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4002', {
-            transports: ['websocket'],
+            transports: ['websocket', 'polling'], // البدء بـ websocket والرجوع لـ polling إذا فشل
             reconnection: true,
+            reconnectionAttempts: Infinity, // استمرار المحاولة للأبد
+            reconnectionDelay: 2000,        // البدء بـ ثانيتين
+            reconnectionDelayMax: 10000,    // أقصى تأخير 10 ثواني
+            randomizationFactor: 0.5,
+            timeout: 20000                  // مهلة الاتصال 20 ثانية
         });
 
         socketInstance.on('connect', () => {

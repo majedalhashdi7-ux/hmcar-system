@@ -42,11 +42,10 @@ export default function CinematicVideoBackground({
     window.addEventListener("resize", checkViewport);
 
     // تأخير بسيط لضمان استقرار الواجهة قبل البدء
-    const timer = setTimeout(() => setIsLoaded(true), 100);
+    setIsLoaded(true);
 
     return () => {
       window.removeEventListener("resize", checkViewport);
-      clearTimeout(timer);
     };
   }, []);
 

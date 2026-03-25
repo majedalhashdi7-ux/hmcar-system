@@ -71,24 +71,23 @@ export default function BottomTabBar() {
 
         const fetchBadges = async () => {
             try {
-                // جلب الطلبات النشطة
-                const ordersRes = await api.orders.list({ status: 'active', limit: 1 });
-                if (ordersRes?.data?.pagination?.total !== undefined) {
-                    setActiveOrders(ordersRes.data.pagination.total);
-                } else if (Array.isArray(ordersRes?.data)) {
-                    setActiveOrders(ordersRes.data.length);
-                }
-            } catch { /* silent */ }
-
-            try {
-                // جلب الإشعارات - نحسب عدد غير المقروءة من client dashboard
+                // جلب بيانات لوحة التحكم الموحدة (تشمل الإشعارات والطلبات)
                 const dashRes = await api.dashboard.getClientData();
-                if (dashRes?.unreadNotifications !== undefined) {
-                    setUnreadNotifs(dashRes.unreadNotifications);
-                } else if (dashRes?.data?.unreadNotifications !== undefined) {
-                    setUnreadNotifs(dashRes.data.unreadNotifications);
+                const data = dashRes?.data || dashRes;
+                const stats = data?.stats || data;
+
+                if (stats?.unreadNotifications !== undefined) {
+                    setUnreadNotifs(stats.unreadNotifications);
                 }
-            } catch { /* silent */ }
+                
+                if (stats?.activeOrders !== undefined) {
+                    setActiveOrders(stats.activeOrders);
+                } else if (stats?.myOrders !== undefined) {
+                    setActiveOrders(stats.myOrders);
+                }
+            } catch (err) { 
+                console.error("[BottomTab] Failed to fetch badges:", err);
+            }
         };
 
         fetchBadges();

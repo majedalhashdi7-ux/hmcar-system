@@ -168,7 +168,7 @@ export default function PartsPage() {
         setSelectedAgency(agency);
         setSelectedModel('ALL');
         setViewMode('PARTS');
-        loadParts(agency, 'ALL');
+        loadParts(agency);
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
@@ -178,7 +178,7 @@ export default function PartsPage() {
         // القطع محملة مسبقاً — لا نحتاج API call جديد، نُفلتر فقط
     };
 
-    const loadParts = async (agency: Agency, _model?: string) => {
+    const loadParts = async (agency: Agency) => {
         setLoading(true);
         setPartSearchQuery('');
         try {
@@ -309,7 +309,7 @@ export default function PartsPage() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.5 }}
-                    className={cn("fixed top-24 z-[60]", isRTL ? "right-12" : "left-12")}
+                    className={cn("fixed top-20 sm:top-24 z-[60]", isRTL ? "right-4 sm:right-12" : "left-4 sm:left-12")}
                 >
                     <button
                         onClick={viewMode === 'AGENCIES' ? () => window.location.href = '/client/dashboard' : resetToAgencies}
@@ -320,7 +320,7 @@ export default function PartsPage() {
                     </button>
                 </motion.div>
 
-                <main className="relative z-10 pt-20 sm:pt-32 px-4 sm:px-6 pb-24 max-w-[1400px] mx-auto min-h-screen flex flex-col">
+                <main className="relative z-10 pt-16 sm:pt-32 px-4 sm:px-6 pb-24 max-w-[1400px] mx-auto min-h-screen flex flex-col">
 
                     {/* ── HEADER ── */}
                     <header className="text-center mb-8 space-y-4">
@@ -361,9 +361,9 @@ export default function PartsPage() {
                         className="relative max-w-3xl mx-auto w-full mb-10"
                     >
                         {/* شريط البحث */}
-                        <div className="relative flex items-center bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-2xl p-2 shadow-2xl overflow-hidden group mb-4">
-                            <div className="flex-1 flex items-center px-4 gap-4">
-                                <Search className="w-5 h-5 text-accent-gold group-hover:scale-110 transition-transform" />
+                        <div className="relative flex items-center bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-2xl p-1 sm:p-2 shadow-2xl overflow-hidden group mb-4">
+                            <div className="flex-1 flex items-center px-2 sm:px-4 gap-2 sm:gap-4">
+                                <Search className="w-4 h-4 sm:w-5 sm:h-5 text-accent-gold group-hover:scale-110 transition-transform" />
                                 {viewMode === 'AGENCIES' ? (
                                     <input
                                         type="text"

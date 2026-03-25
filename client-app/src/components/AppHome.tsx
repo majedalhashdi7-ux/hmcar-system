@@ -27,6 +27,7 @@ export default function AppHome({ isRTL, latestCars, formatPrice }: { isRTL: boo
     const [activeOrders, setActiveOrders] = useState<number | null>(null);
     const [watchedAuctions, setWatchedAuctions] = useState<number | null>(null);
     const [favoriteCars, setFavoriteCars] = useState<number | null>(null);
+    const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [loadingStats, setLoadingStats] = useState(true);
 
     const handleRefresh = async () => {
@@ -38,11 +39,14 @@ export default function AppHome({ isRTL, latestCars, formatPrice }: { isRTL: boo
         if (!isLoggedIn) { setLoadingStats(false); return; }
         setLoadingStats(true);
         try {
-            const dash = await api.dashboard.getClientData();
-            const data = dash?.data || dash;
-            setActiveOrders(data?.activeOrders ?? data?.ordersCount ?? 0);
-            setWatchedAuctions(data?.watchedAuctions ?? data?.auctionsCount ?? 0);
-            setFavoriteCars(data?.favoriteCars ?? data?.favoritesCount ?? 0);
+            const res = await api.dashboard.getClientData();
+            const data = res?.data || res;
+            const stats = data?.stats || data;
+            
+            setActiveOrders(stats?.activeOrders ?? stats?.ordersCount ?? stats?.myOrders ?? 0);
+            setWatchedAuctions(stats?.watchedAuctions ?? stats?.auctionsCount ?? stats?.liveAuctions ?? 0);
+            setFavoriteCars(stats?.favoriteCars ?? stats?.favoritesCount ?? stats?.myFavorites ?? 0);
+            setUnreadNotifications(data?.unreadNotifications ?? stats?.unreadNotifications ?? 0);
         } catch {
             // fallback: جلب منفصل
             try {
@@ -123,7 +127,9 @@ export default function AppHome({ isRTL, latestCars, formatPrice }: { isRTL: boo
                             className="relative w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
                         >
                             <Bell className="w-4 h-4" />
-                            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500" />
+                            {unreadNotifications > 0 && (
+                                <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" />
+                            )}
                         </Link>
                         {!isLoggedIn && (
                             <Link

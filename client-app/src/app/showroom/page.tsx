@@ -694,49 +694,53 @@ export default function ShowroomPage() {
                             {/* البحث والفلتر المتطور */}
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-blue-500/10 blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
-                                <div className="relative flex items-center bg-white/5 border border-white/10 rounded-2xl p-1.5 focus-within:border-blue-500/50 transition-all overflow-hidden">
-                                    <div className="w-10 h-10 flex items-center justify-center text-white/20">
-                                        <Search className="w-4 h-4" />
-                                    </div>
-                                    <input
-                                        type="text" value={search}
-                                        onChange={e => setSearch(e.target.value)}
-                                        placeholder={isRTL ? "ابحث بالماركة أو الموديل..." : "Search brand or model..."}
-                                        className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-white placeholder:text-white/20 px-2"
-                                    />
-                                    {years.length > 0 && (
-                                        <div className="flex items-center gap-1">
-                                            <select
-                                                value={yearFrom}
-                                                onChange={e => setYearFrom(e.target.value)}
-                                                title={isRTL ? "من سنة" : "From year"}
-                                                className="bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-[10px] font-black uppercase text-white/40 appearance-none outline-none cursor-pointer hover:text-white transition-colors"
-                                            >
-                                                <option value="">{isRTL ? rawText('من') : rawText('FROM')}</option>
-                                                {years.map(y => <option key={`from-${y}`} value={String(y)}>{y}</option>)}
-                                            </select>
-                                            <select
-                                                value={yearTo}
-                                                onChange={e => setYearTo(e.target.value)}
-                                                title={isRTL ? "إلى سنة" : "To year"}
-                                                className="bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-[10px] font-black uppercase text-white/40 appearance-none outline-none cursor-pointer hover:text-white transition-colors"
-                                            >
-                                                <option value="">{isRTL ? rawText('إلى') : rawText('TO')}</option>
-                                                {years.map(y => <option key={`to-${y}`} value={String(y)}>{y}</option>)}
-                                            </select>
+                                <div className="relative flex flex-col md:flex-row md:items-center bg-white/5 border border-white/10 rounded-2xl p-1.5 focus-within:border-blue-500/50 transition-all gap-1.5">
+                                    <div className="flex items-center flex-1 px-1">
+                                        <div className="w-10 h-10 flex items-center justify-center text-white/20">
+                                            <Search className="w-4 h-4" />
                                         </div>
-                                    )}
-                                    {availableBrands.length > 0 && (
-                                        <select
-                                            value={brandFilter}
-                                            onChange={e => setBrandFilter(e.target.value)}
-                                            title={isRTL ? "الماركة" : "Brand"}
-                                            className="ml-2 bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-[10px] font-black uppercase text-white/40 appearance-none outline-none cursor-pointer hover:text-white transition-colors"
-                                        >
-                                            <option value="">{isRTL ? rawText('كل الماركات') : rawText('ALL BRANDS')}</option>
-                                            {availableBrands.map(b => <option key={b} value={b}>{b}</option>)}
-                                        </select>
-                                    )}
+                                        <input
+                                            type="text" value={search}
+                                            onChange={e => setSearch(e.target.value)}
+                                            placeholder={isRTL ? "ابحث بالماركة أو الموديل..." : "Search brand or model..."}
+                                            className="flex-1 bg-transparent border-none outline-none text-sm font-medium text-white placeholder:text-white/20 px-2"
+                                        />
+                                    </div>
+                                    <div className="flex flex-wrap items-center gap-1.5 px-1.5 pb-1.5 md:pb-0">
+                                        {years.length > 0 && (
+                                            <div className="flex items-center gap-1 flex-1 sm:flex-none">
+                                                <select
+                                                    value={yearFrom}
+                                                    onChange={e => setYearFrom(e.target.value)}
+                                                    title={isRTL ? "من سنة" : "From year"}
+                                                    className="flex-1 sm:w-20 bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-[10px] font-black uppercase text-white/40 appearance-none outline-none cursor-pointer hover:text-white transition-colors"
+                                                >
+                                                    <option value="">{isRTL ? rawText('من') : rawText('FROM')}</option>
+                                                    {years.map(y => <option key={`from-${y}`} value={String(y)}>{y}</option>)}
+                                                </select>
+                                                <select
+                                                    value={yearTo}
+                                                    onChange={e => setYearTo(e.target.value)}
+                                                    title={isRTL ? "إلى سنة" : "To year"}
+                                                    className="flex-1 sm:w-20 bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-[10px] font-black uppercase text-white/40 appearance-none outline-none cursor-pointer hover:text-white transition-colors"
+                                                >
+                                                    <option value="">{isRTL ? rawText('إلى') : rawText('TO')}</option>
+                                                    {years.map(y => <option key={`to-${y}`} value={String(y)}>{y}</option>)}
+                                                </select>
+                                            </div>
+                                        )}
+                                        {availableBrands.length > 0 && (
+                                            <select
+                                                value={brandFilter}
+                                                onChange={e => setBrandFilter(e.target.value)}
+                                                title={isRTL ? "الماركة" : "Brand"}
+                                                className="flex-1 sm:w-auto bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-[10px] font-black uppercase text-white/40 appearance-none outline-none cursor-pointer hover:text-white transition-colors"
+                                            >
+                                                <option value="">{isRTL ? rawText('كل الماركات') : rawText('ALL BRANDS')}</option>
+                                                {availableBrands.map(b => <option key={b} value={b}>{b}</option>)}
+                                            </select>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
