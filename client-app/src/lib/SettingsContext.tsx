@@ -16,7 +16,6 @@ interface CurrencySettings {
     partsMultiplier?: number; // معامل ربح قطع الغيار
     auctionMultiplier?: number; // معامل ربح المزادات
 }
-
 interface Feature {
     _id?: string;
     icon: string;
@@ -24,6 +23,13 @@ interface Feature {
     titleEn?: string;
     desc: string;
     descEn?: string;
+}
+
+interface MarketingPixels {
+    googleAnalyticsId?: string;
+    metaPixelId?: string;
+    snapchatPixelId?: string;
+    tiktokPixelId?: string;
 }
 
 interface SiteInfo {
@@ -61,13 +67,13 @@ interface SocialLinks {
     telegram?: string;
     linkedin?: string;
 }
-
 interface SettingsContextType {
     currency: CurrencySettings;
     siteInfo: SiteInfo;
     socialLinks: SocialLinks;
     homeContent: HomeContent;
     features: Feature[];
+    marketingPixels: MarketingPixels;
     loading: boolean;
     refreshSettings: () => Promise<void>;
     displayCurrency: 'SAR' | 'USD' | 'KRW';
@@ -117,6 +123,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         }
     );
     const [features, setFeatures] = useState<Feature[]>(cachedData?.features || []);
+    const [marketingPixels, setMarketingPixels] = useState<MarketingPixels>(
+        cachedData?.marketingPixels || { googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' }
+    );
     const [loading, setLoading] = useState(!cachedData); // إذا كان هناك كاش، لا نحتاج لشاشة تحميل
     const [displayCurrency, setDisplayCurrency] = useState<'SAR' | 'USD' | 'KRW'>('SAR');
 
@@ -146,6 +155,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
                 if (res.data.socialLinks) setSocialLinks(res.data.socialLinks);
                 if (res.data.homeContent) setHomeContent(res.data.homeContent);
                 if (res.data.features) setFeatures(res.data.features);
+                if (res.data.marketingPixels) setMarketingPixels(res.data.marketingPixels);
 
                 const stored = localStorage.getItem('displayCurrency');
                 if (stored === 'USD' || stored === 'SAR' || stored === 'KRW') {
@@ -253,6 +263,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             socialLinks,
             homeContent,
             features,
+            marketingPixels,
             loading,
             refreshSettings,
             displayCurrency,

@@ -90,6 +90,14 @@ const siteSettingsSchema = new mongoose.Schema({
         bannerLabelEn: { type: String, default: '' },
     },
 
+    // إعدادات بيكسل التسويق
+    marketingPixels: {
+        googleAnalyticsId: { type: String, default: '' },
+        metaPixelId: { type: String, default: '' },
+        snapchatPixelId: { type: String, default: '' },
+        tiktokPixelId: { type: String, default: '' }
+    },
+
     // آخر تحديث
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 

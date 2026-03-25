@@ -21,7 +21,8 @@ router.get('/public', cacheResponse(1800), async (req, res) => {
                 features: settings.features,
                 homeContent: settings.homeContent,
                 // إعدادات الإعلانات متاحة للعامة لعرض الشريط
-                advertisingSettings: settings.advertisingSettings
+                advertisingSettings: settings.advertisingSettings,
+                marketingPixels: settings.marketingPixels
             }
         });
     } catch (error) {
