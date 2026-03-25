@@ -55,8 +55,6 @@ const settingsSchema = new mongoose.Schema({
     snapchatPixelId: { type: String, default: '' },
     tiktokPixelId: { type: String, default: '' }
   }
-
-  }
 }, { timestamps: true });
 
 // إنشاء سجل واحد فقط للإعدادات
