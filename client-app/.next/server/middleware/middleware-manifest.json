@@ -1,0 +1,67 @@
+{
+  "sorted_middleware": [],
+  "middleware": {
+    "/": {
+      "files": [
+        "server/edge/chunks/26586_next_dist_esm_build_templates_edge-wrapper_cfca7e27.js",
+        "server/edge/chunks/[root-of-the-server]__2c69503b._.js",
+        "server/edge/chunks/a7722_next_dist_esm_build_templates_edge-wrapper_cef56ec7.js"
+      ],
+      "name": "middleware",
+      "page": "/",
+      "matchers": [
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/admin/:path*{(\\\\.json)}?",
+          "originalSource": "/admin/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/client/:path*{(\\\\.json)}?",
+          "originalSource": "/client/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/profile/:path*{(\\\\.json)}?",
+          "originalSource": "/profile/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/orders/:path*{(\\\\.json)}?",
+          "originalSource": "/orders/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/favorites/:path*{(\\\\.json)}?",
+          "originalSource": "/favorites/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/messages/:path*{(\\\\.json)}?",
+          "originalSource": "/messages/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/notifications/:path*{(\\\\.json)}?",
+          "originalSource": "/notifications/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/comparisons/:path*{(\\\\.json)}?",
+          "originalSource": "/comparisons/:path*"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/login{(\\\\.json)}?",
+          "originalSource": "/login"
+        },
+        {
+          "regexp": "/:nextData(_next/data/[^/]{1,})?/register{(\\\\.json)}?",
+          "originalSource": "/register"
+        }
+      ],
+      "wasm": [],
+      "assets": [],
+      "env": {
+        "__NEXT_BUILD_ID": "lZcIWoaNilBslG6YCxPl2",
+        "NEXT_SERVER_ACTIONS_ENCRYPTION_KEY": "2/At1+jjmDKSlcuAnJ3O8RDdKshrfPW87E2IwB2GqHg=",
+        "__NEXT_PREVIEW_MODE_ID": "6316da68a144564569c9a2bd4e2a7ccf",
+        "__NEXT_PREVIEW_MODE_ENCRYPTION_KEY": "d54d738cd9ca8e5cbfd71ca22f9327b82b04c49248ac118b92978ce8d12580e4",
+        "__NEXT_PREVIEW_MODE_SIGNING_KEY": "fedd249f0d03cbd30b57755fa30a8870f534bd5995576cd979a361518293c848"
+      }
+    }
+  },
+  "instrumentation": null,
+  "functions": {}
+}
