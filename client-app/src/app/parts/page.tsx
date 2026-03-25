@@ -320,7 +320,7 @@ export default function PartsPage() {
                     </button>
                 </motion.div>
 
-                <main className="relative z-10 pt-32 px-6 pb-20 max-w-[1400px] mx-auto min-h-screen flex flex-col">
+                <main className="relative z-10 pt-20 sm:pt-32 px-4 sm:px-6 pb-24 max-w-[1400px] mx-auto min-h-screen flex flex-col">
 
                     {/* ── HEADER ── */}
                     <header className="text-center mb-8 space-y-4">
@@ -434,7 +434,7 @@ export default function PartsPage() {
                                 exit={{ opacity: 0, scale: 1.1, filter: "blur(20px)" }}
                                 className="max-w-6xl mx-auto py-16"
                             >
-                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-y-12 gap-x-8">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 sm:gap-y-10">
                                     {filteredAgencies.map((agency, idx) => (
                                         <motion.div
                                             key={agency.id}
@@ -513,7 +513,7 @@ export default function PartsPage() {
                                         </Link>
                                     </motion.div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
                                         {filteredParts.map((part, idx) => (
                                             <motion.div
                                                 key={part.id}

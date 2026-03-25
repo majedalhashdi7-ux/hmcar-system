@@ -44,8 +44,7 @@ export default function GalleryHubPage() {
     <div className={cn('min-h-screen bg-cinematic-darker text-white', isRTL && 'font-arabic')} dir={isRTL ? 'rtl' : 'ltr'}>
       <Navbar />
 
-      {/* المحتوى الرئيسي للملف */}
-      <main className="pt-32 pb-20 px-6">
+      <main className="pt-20 sm:pt-32 pb-24 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
           {/* قسم العنوان والوصف العلوي */}
           <motion.div
@@ -73,8 +72,8 @@ export default function GalleryHubPage() {
             <p className="text-white/50 mt-4 max-w-2xl mx-auto">{TXT.subtitle}</p>
           </motion.div>
 
-          {/* شبكة الخيارات (المعرض الكوري ومعرض HM CAR المحلي) */}
-          <div className="grid md:grid-cols-2 gap-6">
+          {/* شبكة الخيارات */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             {/* خيار المعرض الكوري */}
             <Link href="/showroom" className="group">
               <motion.div

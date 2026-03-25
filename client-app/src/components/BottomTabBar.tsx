@@ -1,19 +1,19 @@
 'use client';
 
 /**
- * شريط التنقل السفلي (Bottom Tab Bar) الواسع
- * مخصص لواجهة الجوال (PWA) ليوفر تجربة أسهل في القراءة والتمرير
+ * شريط التنقل السفلي (Bottom Tab Bar)
+ * يظهر badge الإشعارات غير المقروءة والطلبات النشطة
  */
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import {
-    Home, Car, Bell, Wrench, User
-} from 'lucide-react';
+import { Home, Car, Bell, Wrench, User } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useAuth } from '@/lib/AuthContext';
+import { useEffect, useState } from 'react';
+import { api } from '@/lib/api';
 
-// قائمة التبويبات (Tabs) والروابط المرتبطة بها - معدلة حسب طلب المستخدم
 const TABS = [
     {
         href: '/gallery',
@@ -21,6 +21,7 @@ const TABS = [
         labelAr: 'السيارات',
         labelEn: 'Cars',
         matchPaths: ['/gallery', '/showroom', '/cars'],
+        badgeKey: null,
     },
     {
         href: '/parts',
@@ -28,6 +29,7 @@ const TABS = [
         labelAr: 'قطع الغيار',
         labelEn: 'Parts',
         matchPaths: ['/parts'],
+        badgeKey: null,
     },
     {
         href: '/',
@@ -36,6 +38,7 @@ const TABS = [
         labelEn: 'Home',
         matchPaths: ['/'],
         exact: true,
+        badgeKey: null,
     },
     {
         href: '/notifications',
@@ -43,6 +46,7 @@ const TABS = [
         labelAr: 'الإشعارات',
         labelEn: 'Notifications',
         matchPaths: ['/notifications'],
+        badgeKey: 'notifications',
     },
     {
         href: '/client/dashboard',
@@ -50,67 +54,121 @@ const TABS = [
         labelAr: 'حسابي',
         labelEn: 'Account',
         matchPaths: ['/client', '/profile', '/orders'],
+        badgeKey: 'orders',
     },
 ];
 
 export default function BottomTabBar() {
     const pathname = usePathname();
     const { isRTL } = useLanguage();
+    const { user, isLoggedIn } = useAuth();
+    const [unreadNotifs, setUnreadNotifs] = useState(0);
+    const [activeOrders, setActiveOrders] = useState(0);
+
+    // جلب عدد الإشعارات والطلبات غير المقروءة
+    useEffect(() => {
+        if (!isLoggedIn) return;
+
+        const fetchBadges = async () => {
+            try {
+                // جلب الطلبات النشطة
+                const ordersRes = await api.orders.list({ status: 'active', limit: 1 });
+                if (ordersRes?.data?.pagination?.total !== undefined) {
+                    setActiveOrders(ordersRes.data.pagination.total);
+                } else if (Array.isArray(ordersRes?.data)) {
+                    setActiveOrders(ordersRes.data.length);
+                }
+            } catch { /* silent */ }
+
+            try {
+                // جلب الإشعارات - نحسب عدد غير المقروءة من client dashboard
+                const dashRes = await api.dashboard.getClientData();
+                if (dashRes?.unreadNotifications !== undefined) {
+                    setUnreadNotifs(dashRes.unreadNotifications);
+                } else if (dashRes?.data?.unreadNotifications !== undefined) {
+                    setUnreadNotifs(dashRes.data.unreadNotifications);
+                }
+            } catch { /* silent */ }
+        };
+
+        fetchBadges();
+        const interval = setInterval(fetchBadges, 3 * 60 * 1000); // كل 3 دقائق
+        return () => clearInterval(interval);
+    }, [isLoggedIn, user]);
 
     const isActive = (tab: typeof TABS[0]) => {
-        // التحقق مما إذا كان المسار الحالي يطابق التبويب (سواء مطابقة تامة أو بداية المسار)
         if (tab.exact) return pathname === tab.href;
         return tab.matchPaths.some(p => pathname.startsWith(p));
     };
 
+    const getBadge = (tab: typeof TABS[0]) => {
+        if (!isLoggedIn) return 0;
+        if (tab.badgeKey === 'notifications') return unreadNotifs;
+        if (tab.badgeKey === 'orders') return activeOrders;
+        return 0;
+    };
+
     return (
         <nav
-            // جعلنا حجم الشريط وأزراره أكبر قليلاً، وأضفنا تأثيرات تجعل التمرير والضغط سلساً
-            className="fixed bottom-0 left-0 right-0 z-[100] bg-[#0A0A0A] border-t border-white/10 backdrop-blur-3xl shadow-2xl"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }} 
+            className="fixed bottom-0 left-0 right-0 z-[100] bg-[#0A0A0A]/95 border-t border-white/10 backdrop-blur-3xl shadow-2xl"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 12px)' }}
             dir="ltr"
         >
-            <div className="flex items-center justify-around px-2 pt-4 pb-3 max-w-lg mx-auto overflow-hidden touch-pan-x">
+            <div className="flex items-center justify-around px-2 pt-3 pb-2 max-w-lg mx-auto">
                 {TABS.map((tab) => {
                     const active = isActive(tab);
                     const Icon = tab.icon;
+                    const badge = getBadge(tab);
+
                     return (
                         <Link key={tab.href} href={tab.href} className="flex-1 group" prefetch={true}>
                             <motion.div
-                                whileTap={{ scale: 0.9 }} // تصغير خفيف جدا لزيادة السلاسة
-                                className="flex flex-col items-center gap-1.5 cursor-pointer relative"
+                                whileTap={{ scale: 0.88 }}
+                                className="flex flex-col items-center gap-1 cursor-pointer relative py-1"
                             >
-                                {/* أيقونة مع مؤشر النشاط */}
+                                {/* أيقونة مع badge */}
                                 <div className="relative">
                                     {active && (
                                         <motion.div
                                             layoutId="tab-bg"
-                                            className="absolute -inset-3 rounded-xl bg-cinematic-neon-gold/10"
+                                            className="absolute -inset-3 rounded-xl bg-accent-gold/10"
                                             transition={{ type: 'spring', damping: 25, stiffness: 400 }}
                                         />
                                     )}
                                     <Icon
-                                        className={`w-7 h-7 relative z-10 transition-all duration-300 ease-in-out ${
-                                            active ? 'text-cinematic-neon-gold scale-110 drop-shadow-[0_0_8px_rgba(255,184,0,0.4)]' : 'text-white/40 group-hover:text-white/70'
+                                        className={`w-6 h-6 relative z-10 transition-all duration-300 ${
+                                            active
+                                                ? 'text-accent-gold scale-110 drop-shadow-[0_0_8px_rgba(201,169,110,0.5)]'
+                                                : 'text-white/40 group-hover:text-white/70'
                                         }`}
                                         strokeWidth={active ? 2.5 : 2}
                                     />
+                                    {/* Badge الإشعارات */}
+                                    {badge > 0 && (
+                                        <motion.span
+                                            initial={{ scale: 0 }}
+                                            animate={{ scale: 1 }}
+                                            className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center z-20 shadow-lg"
+                                        >
+                                            {badge > 99 ? '99+' : badge}
+                                        </motion.span>
+                                    )}
                                 </div>
 
-                                {/* التسمية - حجم خط أكبر */}
+                                {/* التسمية */}
                                 <span
-                                    className={`text-[12px] md:text-[13px] font-bold tracking-wide transition-all duration-300 ${
-                                        active ? 'text-cinematic-neon-gold' : 'text-white/40 group-hover:text-white/70'
+                                    className={`text-[10px] font-bold tracking-wide transition-all duration-300 ${
+                                        active ? 'text-accent-gold' : 'text-white/30 group-hover:text-white/60'
                                     }`}
                                 >
                                     {isRTL ? tab.labelAr : tab.labelEn}
                                 </span>
 
-                                {/* نقطة المؤشر */}
+                                {/* نقطة النشاط */}
                                 {active && (
                                     <motion.div
                                         layoutId="tab-dot"
-                                        className="absolute -bottom-2 w-1.5 h-1.5 rounded-full bg-cinematic-neon-gold"
+                                        className="absolute -bottom-1 w-1 h-1 rounded-full bg-accent-gold"
                                         transition={{ type: 'spring', damping: 25, stiffness: 400 }}
                                     />
                                 )}
@@ -122,5 +180,3 @@ export default function BottomTabBar() {
         </nav>
     );
 }
-
-
