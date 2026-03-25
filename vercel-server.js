@@ -31,7 +31,11 @@ module.exports = async (req, res) => {
         // ── 3. تهيئة البيانات الأساسية (لمرة واحدة فقط عند تشغيل الـ Lambda) ──
         if (!isInitialized) {
             console.log('[Vercel] Running database seeding...');
-            await SeedService.runAll();
+            try {
+                await SeedService.runAll();
+            } catch (seedError) {
+                console.log('[Vercel] Seeding failed but continuing:', seedError.message);
+            }
             isInitialized = true;
         }
 
