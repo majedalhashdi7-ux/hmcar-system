@@ -546,3 +546,30 @@ function SaveButton({ loading, isRTL, label, onClick, white = false }: {
         </motion.button>
     );
 }
+
+// ─────────────────────────────────
+// تبويب التسويق والتتبع (Marketing Pixels)
+// ─────────────────────────────────
+export function MarketingTab({ marketingPixels = { googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' }, loading, isRTL, onSave, onSilentSave, onMarketingChange }: {
+    marketingPixels: any; loading: boolean; isRTL: boolean;
+    onSave: () => void; onSilentSave: () => void;
+    onMarketingChange: (info: any) => void;
+}) {
+    return (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='space-y-6'>
+            <div className='p-8 bg-white/2 border border-white/5 rounded-3xl'>
+                 <h2 className='text-lg font-black uppercase tracking-wider mb-6 flex items-center gap-3'>
+                    <Globe className='w-5 h-5 text-cinematic-neon-red' />
+                    {isRTL ? 'إعدادات التتبع التسويقي (Pixels)' : 'Marketing Pixels Settings'}
+                </h2>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                    <div>
+                        <label className='text-[10px] font-bold text-white/40 uppercase tracking-wider mb-2 block'>Google Analytics 4</label>
+                        <input type='text' value={marketingPixels.googleAnalyticsId || ''} placeholder='G-XXXXXXXXXX' onChange={e => onMarketingChange({ ...marketingPixels, googleAnalyticsId: e.target.value })} onBlur={onSilentSave} className='w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm focus:outline-none focus:border-cinematic-neon-red/40' />
+                    </div>
+                </div>
+            </div>
+            <SaveButton loading={loading} isRTL={isRTL} label={isRTL ? 'حفظ إعدادات التتبع' : 'Save Pixel Config'} onClick={onSave} />
+        </motion.div>
+    );
+}

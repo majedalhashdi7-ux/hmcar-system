@@ -30,11 +30,11 @@ import AdminPageShell from '@/components/AdminPageShell';
 
 // ── المكونات المقسمة ──
 import ProfileTab from './_components/ProfileTab';
-import { SocialTab, ContactTab, CurrencyTab, SiteTab, HomeTab, FeaturesTab } from './_components/SettingsTabs';
+import { SocialTab, ContactTab, CurrencyTab, SiteTab, HomeTab, FeaturesTab, MarketingTab } from './_components/SettingsTabs';
 import AdsTab from './_components/AdsTab';
 
 // ── أنواع التبويبات ──
-type TabID = 'profile' | 'security' | 'social' | 'contact' | 'currency' | 'site' | 'home' | 'features' | 'ads';
+type TabID = 'profile' | 'security' | 'social' | 'contact' | 'currency' | 'site' | 'home' | 'features' | 'ads' | 'marketing';
 
 // ── أنواع البيانات ──
 interface SocialLinks { whatsapp: string; instagram: string; twitter: string; facebook: string; youtube: string; tiktok: string; snapchat: string; telegram: string; linkedin: string; }
@@ -80,6 +80,8 @@ function AdminSettingsContent() {
     const [siteInfo, setSiteInfo] = useState<SiteInfo>({ siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' });
     const [homeContent, setHomeContent] = useState<HomeContent>({ heroTitle: '', heroSubtitle: '', heroVideoUrl: '' });
     const [features, setFeatures] = useState<Feature[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [marketingPixels, setMarketingPixels] = useState<any>({ googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' });
 
     // ── تحميل البيانات عند الفتح ──
     useEffect(() => {
@@ -100,6 +102,7 @@ function AdminSettingsContent() {
                 if (response.data.siteInfo) setSiteInfo(response.data.siteInfo);
                 if (response.data.homeContent) setHomeContent(response.data.homeContent);
                 if (response.data.features) setFeatures(response.data.features);
+                if (response.data.marketingPixels) setMarketingPixels(response.data.marketingPixels);
             }
         } catch (error) { console.error('فشل تحميل الإعدادات:', error); }
     };
@@ -201,6 +204,16 @@ function AdminSettingsContent() {
         } finally { if (!silent) setLoading(false); }
     };
 
+    const handleSaveMarketingPixels = async (silent = false) => {
+        if (!silent) { setLoading(true); setMessage({ type: '', text: '' }); }
+        try {
+            await api.settings.updateSiteInfo({ siteInfo: siteInfo as any });
+            if (!silent) setMessage({ type: 'success', text: isRTL ? 'تم حفظ إعدادات الـ Pixels' : 'Pixels config saved' });
+        } catch (error) {
+            if (!silent) setMessage({ type: 'error', text: (error as Error).message || 'Error saving' });
+        } finally { if (!silent) setLoading(false); }
+    };
+
     // ── رفع الشعار ──
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -230,6 +243,7 @@ function AdminSettingsContent() {
         { id: 'features', label: isRTL ? 'لماذا تختارنا' : 'Features', icon: Shield },
         // ── تبويب الإعلانات الجديد ──
         { id: 'ads', label: isRTL ? 'الإعلانات' : 'Ads', icon: Megaphone },
+        { id: 'marketing', label: isRTL ? 'التتبع التسويقي' : 'Pixels', icon: Globe },
     ];
     return (
         <AdminPageShell
@@ -351,6 +365,17 @@ function AdminSettingsContent() {
                     {/* ── تبويب إدارة الإعلانات ── */}
                     {activeTab === 'ads' && (
                         <AdsTab isRTL={isRTL} />
+                    )}
+
+                    {activeTab === 'marketing' && (
+                        <MarketingTab
+                            marketingPixels={marketingPixels}
+                            loading={loading}
+                            isRTL={isRTL}
+                            onSave={handleSaveMarketingPixels}
+                            onSilentSave={() => handleSaveMarketingPixels(true)}
+                            onMarketingChange={setMarketingPixels}
+                        />
                     )}
 
             </AdminPageShell>

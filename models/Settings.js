@@ -48,6 +48,14 @@ const settingsSchema = new mongoose.Schema({
     favicon: { type: String, default: '/favicon.ico' },
     maintenance: { type: Boolean, default: false },
     maintenanceMessage: { type: String, default: 'الموقع تحت الصيانة. سنعود قريباً.' }
+  },
+  marketingPixels: {
+    googleAnalyticsId: { type: String, default: '' },
+    metaPixelId: { type: String, default: '' },
+    snapchatPixelId: { type: String, default: '' },
+    tiktokPixelId: { type: String, default: '' }
+  }
+
   }
 }, { timestamps: true });
 
