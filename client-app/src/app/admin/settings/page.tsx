@@ -60,7 +60,8 @@ function AdminSettingsContent() {
     const [activeTab, setActiveTab] = useState<TabID>('profile');
 
     useEffect(() => {
-        if (tabParam && ['profile', 'security', 'social', 'contact', 'currency', 'site', 'home', 'features', 'ads'].includes(tabParam)) {
+        const allowedTabs: TabID[] = ['profile', 'security', 'social', 'contact', 'currency', 'site', 'home', 'features', 'ads', 'marketing'];
+        if (tabParam && allowedTabs.includes(tabParam)) {
             setActiveTab(tabParam);
         }
     }, [tabParam]);
@@ -101,8 +102,16 @@ function AdminSettingsContent() {
                 if (response.data.currencySettings) setCurrencySettings(response.data.currencySettings);
                 if (response.data.siteInfo) setSiteInfo(response.data.siteInfo);
                 if (response.data.homeContent) setHomeContent(response.data.homeContent);
-                if (response.data.features) setFeatures(response.data.features);
-                if (response.data.marketingPixels) setMarketingPixels(response.data.marketingPixels);
+                if (response.data.homeContent) setHomeContent(response.data.homeContent);
+                if (response.data.features) setFeatures(response.data.features || []);
+                if (response.data.marketingPixels) {
+                    setMarketingPixels({
+                        googleAnalyticsId: response.data.marketingPixels.googleAnalyticsId || '',
+                        metaPixelId: response.data.marketingPixels.metaPixelId || '',
+                        snapchatPixelId: response.data.marketingPixels.snapchatPixelId || '',
+                        tiktokPixelId: response.data.marketingPixels.tiktokPixelId || '',
+                    });
+                }
             }
         } catch (error) { console.error('فشل تحميل الإعدادات:', error); }
     };
@@ -207,7 +216,12 @@ function AdminSettingsContent() {
     const handleSaveMarketingPixels = async (silent = false) => {
         if (!silent) { setLoading(true); setMessage({ type: '', text: '' }); }
         try {
-            await api.settings.updateSiteInfo({ siteInfo: siteInfo as any });
+            await api.settings.updateSiteInfo({ 
+                siteInfo: { 
+                    ...siteInfo, 
+                    marketingPixels: marketingPixels // المبدأ هو الحفظ في السجل العام للإعدادات
+                } as any 
+            });
             if (!silent) setMessage({ type: 'success', text: isRTL ? 'تم حفظ إعدادات الـ Pixels' : 'Pixels config saved' });
         } catch (error) {
             if (!silent) setMessage({ type: 'error', text: (error as Error).message || 'Error saving' });

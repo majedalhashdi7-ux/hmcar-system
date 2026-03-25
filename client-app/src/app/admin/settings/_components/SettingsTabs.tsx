@@ -555,21 +555,87 @@ export function MarketingTab({ marketingPixels = { googleAnalyticsId: '', metaPi
     onSave: () => void; onSilentSave: () => void;
     onMarketingChange: (info: any) => void;
 }) {
+    // التحقق من وجود البيانات لتجنب أي كراش
+    const pixels = marketingPixels || { googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' };
+
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='space-y-6'>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className='space-y-6 pb-10'>
             <div className='p-8 bg-white/2 border border-white/5 rounded-3xl'>
-                 <h2 className='text-lg font-black uppercase tracking-wider mb-6 flex items-center gap-3'>
-                    <Globe className='w-5 h-5 text-cinematic-neon-red' />
-                    {isRTL ? 'إعدادات التتبع التسويقي (Pixels)' : 'Marketing Pixels Settings'}
-                </h2>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                 <div className="flex items-center gap-4 mb-8">
+                    <div className="w-12 h-12 rounded-2xl bg-cinematic-neon-red/10 flex items-center justify-center">
+                        <Globe className='w-6 h-6 text-cinematic-neon-red' />
+                    </div>
                     <div>
-                        <label className='text-[10px] font-bold text-white/40 uppercase tracking-wider mb-2 block'>Google Analytics 4</label>
-                        <input type='text' value={marketingPixels.googleAnalyticsId || ''} placeholder='G-XXXXXXXXXX' onChange={e => onMarketingChange({ ...marketingPixels, googleAnalyticsId: e.target.value })} onBlur={onSilentSave} className='w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm focus:outline-none focus:border-cinematic-neon-red/40' />
+                        <h2 className='text-lg font-black uppercase tracking-wider text-white'>
+                            {isRTL ? 'إعدادات التتبع التسويقي (SaaS Pixels)' : 'SaaS Marketing Pixels'}
+                        </h2>
+                        <p className="text-[11px] text-white/40 mt-0.5">
+                            {isRTL 
+                                ? 'هذا التبويب مخصص لإدارة أكواد التتبع لكل عميل بشكل منفصل.' 
+                                : 'Manage tracking pixels for each showroom / tenant independently.'}
+                        </p>
+                    </div>
+                 </div>
+
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-8'>
+                    {/* Google Analytics */}
+                    <div className="space-y-3">
+                        <label className='text-[10px] font-bold text-white/40 uppercase tracking-widest block flex items-center gap-2'>
+                            <Globe className="w-3 h-3 text-emerald-400" />
+                            Google Analytics 4 (GA4)
+                        </label>
+                        <input type='text' value={pixels.googleAnalyticsId || ''} 
+                            placeholder='G-XXXXXXXXXX' 
+                            onChange={e => onMarketingChange({ ...pixels, googleAnalyticsId: e.target.value })} 
+                            onBlur={onSilentSave} 
+                            className='w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm focus:outline-none focus:border-emerald-500/40' />
+                        <p className="text-[8px] text-emerald-400/40 uppercase tracking-tighter">Enter your G- identifier for Google Traffic tracking</p>
+                    </div>
+
+                    {/* Meta Pixel */}
+                    <div className="space-y-3">
+                        <label className='text-[10px] font-bold text-white/40 uppercase tracking-widest block flex items-center gap-2'>
+                            <Globe className="w-3 h-3 text-blue-500" />
+                            Meta (Facebook/Instagram) Pixel
+                        </label>
+                        <input type='text' value={pixels.metaPixelId || ''} 
+                            placeholder='XXXXXXXXXXXXXXX' 
+                            onChange={e => onMarketingChange({ ...pixels, metaPixelId: e.target.value })} 
+                            onBlur={onSilentSave} 
+                            className='w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm focus:outline-none focus:border-blue-500/40 text-blue-100' />
+                        <p className="text-[8px] text-blue-500/40 uppercase tracking-tighter">FOR TRACKING CONVERSIONS FROM SOCIAL ADS</p>
+                    </div>
+
+                    {/* Snapchat Pixel */}
+                    <div className="space-y-3">
+                        <label className='text-[10px] font-bold text-white/40 uppercase tracking-widest block flex items-center gap-2'>
+                            <Globe className="w-3 h-3 text-yellow-400" />
+                            Snapchat Pixel
+                        </label>
+                        <input type='text' value={pixels.snapchatPixelId || ''} 
+                            placeholder='xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx' 
+                            onChange={e => onMarketingChange({ ...pixels, snapchatPixelId: e.target.value })} 
+                            onBlur={onSilentSave} 
+                            className='w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm focus:outline-none focus:border-yellow-400/40' />
+                            <p className="text-[8px] text-yellow-400/40 uppercase tracking-tighter">Enter your full snap pixel ID (UUID format)</p>
+                    </div>
+
+                    {/* TikTok Pixel */}
+                    <div className="space-y-3">
+                        <label className='text-[10px] font-bold text-white/40 uppercase tracking-widest block flex items-center gap-2'>
+                            <Globe className="w-3 h-3 text-rose-500" />
+                            TikTok Pixel
+                        </label>
+                        <input type='text' value={pixels.tiktokPixelId || ''} 
+                            placeholder='CXXXXXXXXXXXXXX' 
+                            onChange={e => onMarketingChange({ ...pixels, tiktokPixelId: e.target.value })} 
+                            onBlur={onSilentSave} 
+                            className='w-full bg-white/5 border border-white/10 rounded-xl py-4 px-4 text-sm focus:outline-none focus:border-rose-500/40' />
+                            <p className="text-[8px] text-rose-500/40 uppercase tracking-tighter">TRACK SALES COMING FROM TIKTOK VIDEOS & ADS</p>
                     </div>
                 </div>
             </div>
-            <SaveButton loading={loading} isRTL={isRTL} label={isRTL ? 'حفظ إعدادات التتبع' : 'Save Pixel Config'} onClick={onSave} />
+            <SaveButton loading={loading} isRTL={isRTL} label={isRTL ? 'تفعيل وحفظ أرقام التتبع' : 'ACTIVATE PIXEL TRACKING'} onClick={onSave} />
         </motion.div>
     );
 }
