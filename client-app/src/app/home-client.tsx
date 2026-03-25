@@ -93,15 +93,13 @@ function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boole
 
       {/* Popup النافذة المنبثقة المميزة */}
       {showPopup && (
-        <>
-          {/* خلفية شفافة لإغلاق النافذة */}
-          <div className="fixed inset-0 z-[199]" onClick={handleClose} />
+        <div className="fixed inset-0 z-[199] pointer-events-none flex items-end justify-start sm:items-start p-4 pb-24 sm:pb-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.8, x: isRTL ? -30 : 30, y: 20 }}
             animate={{ opacity: 1, scale: 1, x: 0, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, x: isRTL ? -20 : 20, y: 10 }}
             transition={{ type: "spring", damping: 20, stiffness: 200 }}
-            className={`absolute top-0 z-[200] w-80 rounded-[2rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-accent-gold/40 p-1 shadow-[0_20px_60px_rgba(201,169,110,0.25)] overflow-hidden ${isRTL ? 'right-16' : 'left-16'}`}
+            className={`pointer-events-auto relative w-80 sm:w-80 rounded-[2rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-accent-gold/40 p-1 shadow-[0_20px_60px_rgba(201,169,110,0.25)] overflow-hidden ${isRTL ? 'self-start' : 'self-end'} sm:self-start sm:mt-16 sm:ms-16`}
             dir={isRTL ? 'rtl' : 'ltr'}
           >
             {/* لمعان ذهبي متحرك في الخلفية */}
@@ -187,13 +185,14 @@ function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boole
               )}
             </div>
           </motion.div>
-        </>
+        </div>
       )}
     </div>
   );
 }
 
-export const revalidate = 60;
+// revalidate is not supported by client components
+// export const revalidate = 60;
 
 export default function HomeClient({ latestCars }: HomeClientProps) {
   const { isRTL } = useLanguage();
