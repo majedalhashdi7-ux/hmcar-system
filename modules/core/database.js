@@ -57,9 +57,13 @@ class DatabaseManager {
 
       console.log('✅ تم الاتصال بقاعدة البيانات بنجاح');
 
-      // إنشاء حساب المشرف التلقائي إذا كان مفعلاً
+      // Skip seeding in Vercel environment
+      if (process.env.VERCEL) {
+        console.log('📦 Vercel environment detected - skipping database seeding');
+        return this.connection;
+      }
 
-      // Seed admin and demo data
+      // إنشاء حساب المشرف التلقائي إذا كان مفعلاً
       await this.seedDevAdmin();
       await this.seedDemoData();
 
