@@ -320,7 +320,7 @@ export default function PartsPage() {
                     </button>
                 </motion.div>
 
-                <main className="relative z-10 pt-16 sm:pt-32 px-4 sm:px-6 pb-24 max-w-[1400px] mx-auto min-h-screen flex flex-col">
+                <main className="relative z-10 pt-28 sm:pt-32 px-4 sm:px-6 pb-24 max-w-[1400px] mx-auto min-h-screen flex flex-col">
 
                     {/* ── HEADER ── */}
                     <header className="text-center mb-8 space-y-4">

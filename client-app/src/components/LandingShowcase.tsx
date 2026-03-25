@@ -79,7 +79,7 @@ export default function LandingShowcase({ isRTL, latestCars = [] }: LandingShowc
 
             {/* ── GATEWAY TITLE ── */}
             <motion.div
-                className="text-center z-20 mb-20 pt-12"
+                className="text-center z-20 mb-20 pt-32 sm:pt-48"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 1.2 }}
