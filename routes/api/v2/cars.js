@@ -200,7 +200,6 @@ router.get('/', cacheResponse(300), async (req, res, next) => {
 
         const [cars, total] = await Promise.all([
             Car.find(filter)
-                .populate('agency')
                 .sort({ createdAt: -1 })
                 .limit(parseInt(limit))
                 .skip(skip)
