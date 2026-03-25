@@ -39,23 +39,6 @@ const cacheResponse = (ttlInSeconds = 60) => {
             }
 
             res.set('X-Cache', 'MISS');
-
-            // Monkey-patch res.send to cache the response
-            const originalSend = res.send;
-            res.send = (body) => {
-                // Only cache successful responses
-                if (res.statusCode >= 200 && res.statusCode < 300) {
-                    const cacheEntry = {
-                        status: res.statusCode,
-                        body: JSON.parse(body) // Assuming body is JSON string
-                    };
-                    cacheService.set(key, cacheEntry, ttlInSeconds).catch(err => {
-                        console.error(`Cache set error for key [${key}]:`, err);
-                    });
-                }
-                return originalSend.call(res, body);
-            };
-
             next();
         } catch (error) {
             console.error('Cache middleware error:', error);
@@ -100,4 +83,3 @@ module.exports = {
     invalidateCache,
     generateCacheKey
 };
-

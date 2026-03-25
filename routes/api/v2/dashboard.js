@@ -2,15 +2,18 @@
 
 const express = require('express');
 const router = express.Router();
-const Car = require('../../../models/Car');
-const Auction = require('../../../models/Auction');
-const Order = require('../../../models/Order');
+const { getModel } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI } = require('../../../middleware/auth');
 
 // GET /api/v2/dashboard/client - بيانات لوحة تحكم العميل
 router.get('/client', requireAuthAPI, async (req, res) => {
     try {
         const userId = req.user.userId || req.user._id;
+        const Car = getModel(req, 'Car');
+        const Auction = getModel(req, 'Auction');
+        const Order = getModel(req, 'Order');
+        const Favorite = getModel(req, 'Favorite');
+        const Notification = getModel(req, 'Notification');
 
         // جلب الإحصائيات
         const [
@@ -45,10 +48,10 @@ router.get('/client', requireAuthAPI, async (req, res) => {
                 .lean(),
 
             // المفضلة
-            require('../../../models/Favorite').countDocuments({ user: userId }),
+            Favorite.countDocuments({ user: userId }),
 
             // إشعارات غير مقروءة
-            require('../../../models/Notification').countDocuments({ user: userId, read: false })
+            Notification.countDocuments({ user: userId, read: false })
         ]);
 
         res.json({
@@ -100,6 +103,11 @@ router.get('/admin', requireAuthAPI, async (req, res) => {
             });
         }
 
+        const Car = getModel(req, 'Car');
+        const User = getModel(req, 'User');
+        const Auction = getModel(req, 'Auction');
+        const Order = getModel(req, 'Order');
+
         const [
             totalCars,
             totalUsers,
@@ -109,7 +117,7 @@ router.get('/admin', requireAuthAPI, async (req, res) => {
             pendingOrders
         ] = await Promise.all([
             Car.countDocuments(),
-            require('../../../models/User').countDocuments(),
+            User.countDocuments(),
             Auction.countDocuments(),
             Auction.countDocuments({ status: 'running' }),
             Order.countDocuments(),

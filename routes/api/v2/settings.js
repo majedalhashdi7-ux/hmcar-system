@@ -2,13 +2,14 @@
 
 const express = require('express');
 const router = express.Router();
-const SiteSettings = require('../../../models/SiteSettings');
+const { getModel } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI, requireAdmin } = require('../../../middleware/auth');
 const { cacheResponse, invalidateCache } = require('../../../middleware/cache');
 
 // الحصول على إعدادات الموقع (عام - للزوار)
 router.get('/public', cacheResponse(1800), async (req, res) => {
     try {
+        const SiteSettings = getModel(req, 'SiteSettings');
         const settings = await SiteSettings.getSettings();
 
         res.json({
@@ -37,6 +38,7 @@ router.get('/public', cacheResponse(1800), async (req, res) => {
 // الحصول على كل الإعدادات (للأدمن فقط)
 router.get('/', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
+        const SiteSettings = getModel(req, 'SiteSettings');
         const settings = await SiteSettings.getSettings();
 
         res.json({
@@ -56,6 +58,7 @@ router.get('/', requireAuthAPI, requireAdmin, async (req, res) => {
 router.put('/social-links', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { socialLinks } = req.body;
+        const SiteSettings = getModel(req, 'SiteSettings');
 
         const settings = await SiteSettings.updateSettings(
             { socialLinks },
@@ -80,6 +83,7 @@ router.put('/social-links', requireAuthAPI, requireAdmin, invalidateCache('/api/
 router.put('/contact-info', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { contactInfo } = req.body;
+        const SiteSettings = getModel(req, 'SiteSettings');
 
         const settings = await SiteSettings.updateSettings(
             { contactInfo },
@@ -104,6 +108,7 @@ router.put('/contact-info', requireAuthAPI, requireAdmin, invalidateCache('/api/
 router.put('/site-info', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { siteInfo } = req.body;
+        const SiteSettings = getModel(req, 'SiteSettings');
 
         const settings = await SiteSettings.updateSettings(
             { siteInfo },
@@ -128,6 +133,7 @@ router.put('/site-info', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/
 router.put('/currency-settings', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { currencySettings } = req.body;
+        const SiteSettings = getModel(req, 'SiteSettings');
 
         const usdToSar = Number(currencySettings?.usdToSar);
         const usdToKrw = Number(currencySettings?.usdToKrw);
@@ -180,6 +186,7 @@ router.put('/currency-settings', requireAuthAPI, requireAdmin, invalidateCache('
 router.put('/features', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { features } = req.body;
+        const SiteSettings = getModel(req, 'SiteSettings');
 
         const settings = await SiteSettings.updateSettings(
             { features },
@@ -204,6 +211,7 @@ router.put('/features', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/s
 router.put('/home-content', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { homeContent } = req.body;
+        const SiteSettings = getModel(req, 'SiteSettings');
 
         const settings = await SiteSettings.updateSettings(
             { homeContent },
@@ -227,6 +235,7 @@ router.put('/home-content', requireAuthAPI, requireAdmin, invalidateCache('/api/
 // ── إعدادات الإعلانات: جلب (للأدمن) ──
 router.get('/advertising', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
+        const SiteSettings = getModel(req, 'SiteSettings');
         const settings = await SiteSettings.getSettings();
         res.json({
             success: true,
@@ -242,6 +251,7 @@ router.get('/advertising', requireAuthAPI, requireAdmin, async (req, res) => {
 router.put('/advertising', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
     try {
         const { advertisingSettings } = req.body;
+        const SiteSettings = getModel(req, 'SiteSettings');
         const settings = await SiteSettings.updateSettings(
             { advertisingSettings },
             req.user._id

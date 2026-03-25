@@ -59,7 +59,7 @@ export async function fetchAPI(endpoint: string, options: RequestInit & { useCac
         const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-            let message = data.message || data.error || `فشل الطلب: ${response.status}`;
+            let message = data.message || (typeof data.error === 'string' ? data.error : data.error?.message) || `فشل الطلب: ${response.status}`;
             
             if (response.status === 429) {
                 message = 'لقد قمت بعدد كبير من المحاولات. يرجى الانتظار قليلاً قبل المحاولة مرة أخرى.';

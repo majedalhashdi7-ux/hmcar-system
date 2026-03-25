@@ -21,7 +21,7 @@ interface LandingShowcaseProps {
     }>;
 }
 
-export default function LandingShowcase({ isRTL, latestCars = [] }: LandingShowcaseProps) {
+export default function LandingShowcase({ isRTL }: LandingShowcaseProps) {
     const router = useRouter();
     const { homeContent } = useSettings();
 
