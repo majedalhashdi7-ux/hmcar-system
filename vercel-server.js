@@ -3,7 +3,6 @@
 
 const App = require('./modules/app');
 const database = require('./modules/core/database');
-const SeedService = require('./services/SeedService');
 
 // تخزين مثيل التطبيق وحالة التهيئة في "الكاش" لتجنب إعادة البناء مع كل طلب
 let cachedAppInstance = null;
@@ -30,12 +29,7 @@ module.exports = async (req, res) => {
 
         // ── 3. تهيئة البيانات الأساسية (لمرة واحدة فقط عند تشغيل الـ Lambda) ──
         if (!isInitialized) {
-            console.log('[Vercel] Running database seeding...');
-            try {
-                await SeedService.runAll();
-            } catch (seedError) {
-                console.log('[Vercel] Seeding failed but continuing:', seedError.message);
-            }
+            console.log('[Vercel] Skipping database seeding in production...');
             isInitialized = true;
         }
 
