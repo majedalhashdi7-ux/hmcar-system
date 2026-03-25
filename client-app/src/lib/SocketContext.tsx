@@ -28,7 +28,9 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         // الاتصال بالخادم مع دعم إعادة المحاولة التلقائية (Robust Connection)
-        const socketInstance = io(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4002', {
+        const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+        
+        const socketInstance = io(socketUrl, {
             transports: ['websocket', 'polling'], // البدء بـ websocket والرجوع لـ polling إذا فشل
             reconnection: true,
             reconnectionAttempts: Infinity, // استمرار المحاولة للأبد

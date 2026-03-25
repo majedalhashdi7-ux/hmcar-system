@@ -110,7 +110,18 @@ const siteSettingsSchema = new mongoose.Schema({
 siteSettingsSchema.statics.getSettings = async function () {
     let settings = await this.findOne({ key: 'main' });
     if (!settings) {
-        settings = await this.create({ key: 'main' });
+        settings = await this.create({ 
+            key: 'main',
+            features: [],
+            socialLinks: { whatsapp: '+967781007805' },
+            homeContent: { 
+                showLiveMarket: true, 
+                showAdvertising: true,
+                showTrustHub: true,
+                showTestimonials: true,
+                showBrandCatalog: true
+            }
+        });
     }
     return settings;
 };
