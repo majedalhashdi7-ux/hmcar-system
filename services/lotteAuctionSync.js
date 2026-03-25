@@ -1,7 +1,7 @@
 // [[ARABIC_HEADER]] هذا الملف (services/lotteAuctionSync.js) جزء من مشروع HM CAR ويحتوي تعليقات عربية لضمان الوضوح.
 
 const puppeteer = require('puppeteer');
-const SiteSetting = require('../models/SiteSetting');
+const SiteSettings = require('../models/SiteSettings');
 
 let intervalHandle = null;
 let lastRunAt = null;
@@ -9,16 +9,15 @@ let lastError = null;
 let isRunning = false;
 
 async function saveSetting(key, value) {
-  await SiteSetting.findOneAndUpdate(
-    { key },
-    { value: String(value || '') },
-    { upsert: true, new: true }
-  );
+  const settings = await SiteSettings.getSettings();
+  if(!settings.metadata) settings.metadata = new Map();
+  settings.metadata.set(key, String(value || ''));
+  await settings.save();
 }
 
 async function loadSetting(key) {
-  const s = await SiteSetting.findOne({ key });
-  return s ? String(s.value || '') : '';
+  const s = await SiteSettings.getSettings();
+  return s.metadata?.get(key) || '';
 }
 
 function safeJsonParse(text) {
@@ -53,11 +52,12 @@ async function scrapeLotte(auctionUrl, username, password) {
       timeout: 45000
     });
 
-    await page.waitForTimeout(800);
+    // Simple wait without deprecated waitForTimeout
+    await new Promise(r => setTimeout(r, 800));
 
     const filled = await page.evaluate((u, p) => {
       const inputs = Array.from(document.querySelectorAll('input'));
-      const userInput = inputs.find(i => /id|user|login|userid|아이디/i.test((i.name || '') + ' ' + (i.id || '') + ' ' + (i.placeholder || '')));
+      const userInput = inputs.find(i => /id|user|login|userid|아이دي/i.test((i.name || '') + ' ' + (i.id || '') + ' ' + (i.placeholder || '')));
       const passInput = inputs.find(i => (i.type === 'password') || /pass|pw|비밀번호/i.test((i.name || '') + ' ' + (i.id || '') + ' ' + (i.placeholder || '')));
       if (!userInput || !passInput) return { ok: false, reason: 'missing_inputs' };
       userInput.focus();
@@ -79,11 +79,11 @@ async function scrapeLotte(auctionUrl, username, password) {
       if (btn) btn.click();
     });
 
-    await page.waitForTimeout(2500);
+    await new Promise(r => setTimeout(r, 2500));
 
     if (auctionUrl) {
       await page.goto(auctionUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
-      await page.waitForTimeout(1200);
+      await new Promise(r => setTimeout(r, 1200));
     }
 
     const cars = await page.evaluate(() => {

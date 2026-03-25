@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 
 // البيانات الوصفية (SEO Metadata) لتحسين ظهور الموقع في محركات البحث ومشاركات التواصل الاجتماعي
 export const metadata: Metadata = {
-  metadataBase: new URL('https://car-auction-sand.vercel.app'),
+  metadataBase: new URL('https://hmcar.okigo.net'),
   title: {
     template: '%s | HM CAR',
     default: 'HM CAR | Premium Korean Auto Export & Parts',
@@ -77,7 +77,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "HM CAR | Premium Korean Auto Export",
     description: "تصدير السيارات الفاخرة وقطع الغيار من كوريا إلى العالم - أفضل الأسعار وجودة مضمونة",
-    url: 'https://car-auction-sand.vercel.app',
+    url: 'https://hmcar.okigo.net',
     siteName: "HM CAR",
     locale: 'ar_SA',
     type: "website",

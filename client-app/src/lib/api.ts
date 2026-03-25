@@ -5,7 +5,7 @@
  */
 
 // الأفضل استخدام الرابط الثابت في الإنتاج إذا كان العميل والارسال منفصلين
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://car-auction-sand.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hmcar.okigo.net';
 
 import { apiCache } from './api-cache';
 

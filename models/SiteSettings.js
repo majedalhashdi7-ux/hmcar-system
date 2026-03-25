@@ -98,6 +98,9 @@ const siteSettingsSchema = new mongoose.Schema({
         tiktokPixelId: { type: String, default: '' }
     },
 
+    // إعدادات أخرى متنوعة (للأنظمة الفرعية)
+    metadata: { type: Map, of: String, default: {} },
+
     // آخر تحديث
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 

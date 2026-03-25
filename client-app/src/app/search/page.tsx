@@ -3,8 +3,9 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Mail, Search, Gavel, Cog, Info, User, LogOut, Menu, X, Tag, AlertCircle, ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
+import { Search, Tag, AlertCircle, ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
 import Link from 'next/link';
+import NextImage from 'next/image';
 import ClientPageHeader from '@/components/ClientPageHeader';
 import Navbar from '@/components/Navbar';
 import { api } from '@/lib/api';
@@ -139,7 +140,9 @@ function SearchContent() {
                                 )}
                             >
                                 {b.logoUrl ? (
-                                    <img src={b.logoUrl} alt={b.name} className={cn("w-5 h-5 object-contain", brand === b.name ? "grayscale-0" : "grayscale")} />
+                                    <div className="relative w-5 h-5">
+                                        <NextImage src={b.logoUrl} alt={b.name} fill className={cn("object-contain", brand === b.name ? "grayscale-0" : "grayscale")} />
+                                    </div>
                                 ) : <Tag className="w-3 h-3" />}
                                 <span className="text-[10px] font-black uppercase tracking-widest">{b.name}</span>
                             </Link>
@@ -233,7 +236,7 @@ function SearchContent() {
                                         >
                                             <Link href={`/cars/${car.id || car._id}`}>
                                                 <div className="relative h-72 overflow-hidden rounded-t-[2.5rem] bg-black">
-                                                    <img src={car.images?.[0] || 'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?q=80&w=1000'} alt={car.title} className="w-full h-full object-cover grayscale transition-all duration-[1.5s] group-hover:grayscale-0 group-hover:scale-110 opacity-70 group-hover:opacity-100" />
+                                                    <NextImage src={car.images?.[0] || 'https://images.unsplash.com/photo-1592194996308-7b43878e84a6?q=80&w=1000'} alt={car.title} fill className="object-cover grayscale transition-all duration-[1.5s] group-hover:grayscale-0 group-hover:scale-110 opacity-70 group-hover:opacity-100" />
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
                                                     <div className="absolute bottom-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-xl rounded-full border border-white/10 flex items-center gap-2">
                                                         <span className="w-1.5 h-1.5 rounded-full bg-luxury-gold" />
@@ -284,7 +287,7 @@ function SearchContent() {
                                         >
                                             <Link href={`/parts/${part.id}`}>
                                                 <div className="aspect-square bg-white/[0.02] rounded-[2rem] overflow-hidden mb-6 border border-white/5 relative">
-                                                    <img src={part.img} alt={part.name} className="w-full h-full object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 p-8" />
+                                                    <NextImage src={part.img} alt={part.name} fill className="object-contain grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 p-8" />
                                                     <div className="absolute top-4 right-4 text-[9px] font-black uppercase tracking-widest text-white/20 border border-white/10 px-3 py-1 rounded-full">{part.brand}</div>
                                                 </div>
                                                 <div className="space-y-4">

@@ -125,8 +125,9 @@ const security = {
         return callback(null, allowedInDev.includes(origin) || origin.startsWith('http://localhost'));
       }
 
-      // في بيئة الإنتاج: السماح لـ Vercel + ALLOWED_ORIGINS
+      // في بيئة الإنتاج: السماح لـ Vercel + OKIGO + ALLOWED_ORIGINS
       const allowedProd = [
+        'https://hmcar.okigo.net',
         'https://car-auction-sand.vercel.app',
         'https://client-app-iota-eight.vercel.app',
         'https://client-app-iota-eight-daood-alhashdis-projects.vercel.app',
@@ -135,9 +136,13 @@ const security = {
           : [])
       ];
 
-      // اقبل أي نطاق ينتهي بـ .vercel.app أو أي من القائمة
+      if (process.env.CLIENT_URL) allowedProd.push(process.env.CLIENT_URL.trim());
+      if (process.env.BASE_URL) allowedProd.push(process.env.BASE_URL.trim());
+
+      // اقبل أي نطاق ينتهي بـ .vercel.app أو .okigo.net أو أي من القائمة
       const isVercel = origin.endsWith('.vercel.app');
-      const isAllowed = allowedProd.includes(origin) || isVercel;
+      const isOkigo = origin.endsWith('.okigo.net');
+      const isAllowed = allowedProd.includes(origin) || isVercel || isOkigo;
 
       callback(isAllowed ? null : new Error(`CORS blocked: ${origin}`), isAllowed);
     },

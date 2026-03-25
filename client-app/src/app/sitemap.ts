@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    const baseUrl = 'https://car-auction-sand.vercel.app';
+    const baseUrl = 'https://hmcar.okigo.net';
     const now = new Date();
 
     const staticPages: MetadataRoute.Sitemap = [

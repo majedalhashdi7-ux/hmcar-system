@@ -440,13 +440,17 @@ export default function AdminPartsPage() {
                                     className="w-full flex items-center justify-between p-5 hover:bg-orange-500/5 transition-all"
                                 >
                                     <div className="flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center overflow-hidden">
-                                            {brandParts[0]?.brandLogo ? (
-                                                <img src={brandParts[0].brandLogo} alt={brand} className="w-full h-full object-contain p-1" />
-                                            ) : getBrandLogo(brand) ? (
-                                                <img src={getBrandLogo(brand)!} alt={brand} className="w-full h-full object-contain p-1" onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.nextElementSibling?.classList.remove('hidden'); }} />
-                                            ) : null}
-                                            <Building2 className={cn("w-5 h-5 text-orange-400", (brandParts[0]?.brandLogo || getBrandLogo(brand)) && "hidden")} />
+                                        <div className="relative w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center overflow-hidden">
+                                            {brandParts[0]?.brandLogo || getBrandLogo(brand) ? (
+                                                <Image 
+                                                    src={brandParts[0]?.brandLogo || getBrandLogo(brand)!} 
+                                                    alt={brand} 
+                                                    fill 
+                                                    className="object-contain p-1" 
+                                                />
+                                            ) : (
+                                                <Building2 className="w-5 h-5 text-orange-400" />
+                                            )}
                                         </div>
                                         <div className="text-start">
                                             <h3 className="font-black uppercase tracking-widest text-white">{brand}</h3>
