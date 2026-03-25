@@ -113,14 +113,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         checkExistingLogin();
 
-        // إرسال إشارة نبضكل دقيقة لإبلاغ السيرفر أن المستخدم متصل (Online)
+    // إرسال إشارة نبض كل 5 دقائق لإبلاغ السيرفر أن المستخدم متصل (Online)
+        // تم تزيد المدة من دقيقة إلى 5 دقائق لتخفيف الضغط على السيرفر
         let heartbeatInterval: NodeJS.Timeout;
         if (user) {
             const sendHeartbeat = () => {
-                api.users.heartbeat().catch(() => {});
+                api.users.heartbeat().catch(() => {}); // صامت - لا يعرض أخطاء
             };
-            sendHeartbeat(); // إرسال نبض فوري عند تسجيل الدخول أو التحديث
-            heartbeatInterval = setInterval(sendHeartbeat, 60000); // 60 ثانية
+            // تأخير 3 ثوانٍ قبل الإرسال الأول لإعطاء الصفحة وقت للتحميل
+            const initial = setTimeout(sendHeartbeat, 3000);
+            heartbeatInterval = setInterval(sendHeartbeat, 5 * 60 * 1000); // 5 دقائق
+            return () => {
+                clearTimeout(initial);
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
+            };
         }
 
         return () => {

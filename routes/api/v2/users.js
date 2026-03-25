@@ -91,13 +91,19 @@ router.get('/', requireAuthAPI, requirePermissionAPI('manage_users'), async (req
 router.post('/heartbeat', requireAuthAPI, async (req, res) => {
   try {
     const User = getModel(req, 'User');
-    const userId = req.user.userId || req.user.id || req.user._id;
-    if (userId) {
-      await User.updateOne({ _id: userId }, { $set: { lastActiveAt: new Date(), isOnline: true } });
+    const userId = req.user?.userId || req.user?.id || req.user?._id;
+    if (userId && User) {
+      // Use updateOne with error suppression - don't block the response
+      User.updateOne(
+        { _id: userId }, 
+        { $set: { lastActiveAt: new Date(), isOnline: true } }
+      ).catch(() => {}); // silent fail - DB update is best-effort
     }
-    res.json({ success: true });
+    // Always return success to prevent browser error flooding
+    res.json({ success: true, ts: Date.now() });
   } catch (error) {
-    res.status(500).json({ success: false });
+    // Still return 200 to prevent error loops in the browser
+    res.json({ success: true });
   }
 });
 

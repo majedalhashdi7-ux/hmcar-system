@@ -405,16 +405,18 @@ export default function HomeClient({ latestCars }: HomeClientProps) {
         />
       ) : null}
 
-      {/* ── BACK TO TOP BUTTON ── */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="fixed bottom-8 right-8 z-50 w-12 h-12 rounded-2xl bg-accent-gold text-black flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-        title={isRTL ? 'الرجوع للأعلى' : 'Back to Top'}
-      >
-        <ArrowRight className="-rotate-90 w-5 h-5" />
-      </motion.button>
+      {/* ── BACK TO TOP BUTTON ── - مخفي في وضع التطبيق لتجنب التحجب على شريط التنقل السفلي */}
+      {!isStandalone && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-8 right-8 z-40 w-12 h-12 rounded-2xl bg-accent-gold text-black flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+          title={isRTL ? 'الرجوع للأعلى' : 'Back to Top'}
+        >
+          <ArrowRight className="-rotate-90 w-5 h-5" />
+        </motion.button>
+      )}
 
       {/* ── CONTENT SWITCHER ── */}
       {isStandalone ? (
