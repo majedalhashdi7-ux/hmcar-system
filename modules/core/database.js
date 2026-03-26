@@ -1,18 +1,16 @@
-// [[ARABIC_HEADER]] هذا الملف (modules/core/database.js) جزء من مشروع HM CAR ويحتوي تعليقات عربية لضمان الوضوح.
+// [[ARABIC_HEADER]] هذا الملف (modules/core/database.js) جزء من مشروع HM CAR
 
 /**
  * [[ملف الاتصال بقاعدة البيانات]] - modules/core/database.js
- * 
- * هذا الملف مسؤول عن الاتصال بقاعدة البيانات MongoDB
- * - إدارة الاتصال
- * - معالجة الأخطاء
- * - أحداث الاتصال
- * 
- * @author HM CAR Team
+ * مُحسَّن لـ Vercel Serverless + MongoDB Atlas
+ * - إدارة الاتصال مع connection caching
+ * - timeout مناسب لـ Atlas cold start
  */
 
 const mongoose = require('mongoose');
 const config = require('./config');
+
+const IS_SERVERLESS = !!(process.env.VERCEL || process.env.NOW_REGION);
 
 /**
  * فئة لإدارة قاعدة البيانات
@@ -21,12 +19,30 @@ class DatabaseManager {
   constructor() {
     this.connection = null;
     this.isConnected = false;
+    this._connectingPromise = null;
   }
 
   /**
    * الاتصال بقاعدة البيانات
    */
   async connect() {
+    // إذا كان متصلاً بالفعل، لا تعد
+    if (this.isConnected && mongoose.connection.readyState === 1) {
+      return this.connection;
+    }
+
+    // تجنب التوازي في الاتصال
+    if (this._connectingPromise) {
+      return this._connectingPromise;
+    }
+
+    this._connectingPromise = this._doConnect()
+      .finally(() => { this._connectingPromise = null; });
+
+    return this._connectingPromise;
+  }
+
+  async _doConnect() {
     try {
       console.log('🔄 جاري الاتصال بقاعدة البيانات...');
 
@@ -43,33 +59,35 @@ class DatabaseManager {
         console.log('✅ تم تشغيل MongoDB في الذاكرة');
       }
 
-      // إعدادات الاتصال
+      // إعدادات الاتصال - مُحسَّنة لـ Vercel Serverless + Atlas
       const options = {
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
+        maxPoolSize: IS_SERVERLESS ? 5 : 10,
+        serverSelectionTimeoutMS: 20000,  // 20 ثانية لـ Atlas cold start
         socketTimeoutMS: 45000,
-        bufferCommands: false,
+        connectTimeoutMS: 20000,
+        bufferCommands: true,
+        retryWrites: true,
       };
 
       // الاتصال
       this.connection = await mongoose.connect(uri, options);
       this.isConnected = true;
-
       console.log('✅ تم الاتصال بقاعدة البيانات بنجاح');
 
-      // Skip seeding in Vercel environment
-      if (process.env.VERCEL) {
-        console.log('📦 Vercel environment detected - skipping database seeding');
+      // تخطي الـ seeding في Vercel (قاعدة البيانات جاهزة)
+      if (IS_SERVERLESS || process.env.SKIP_SEED === 'true') {
+        console.log('⏭️ تخطي seeding في بيئة Serverless...');
         return this.connection;
       }
 
-      // إنشاء حساب المشرف التلقائي إذا كان مفعلاً
+      // إنشاء حساب المشرف التلقائي إذا كان مفعلاً (للتطوير فقط)
       await this.seedDevAdmin();
       await this.seedDemoData();
 
       return this.connection;
     } catch (error) {
       console.error('❌ فشل الاتصال بقاعدة البيانات:', error.message);
+      this.isConnected = false;
       throw error;
     }
   }
@@ -144,40 +162,6 @@ class DatabaseManager {
             isActive: true,
             listingType: 'store'
           },
-          {
-            title: 'Lexus LX 600',
-            make: 'Lexus',
-            model: 'LX',
-            year: 2023,
-            price: 520000,
-            priceSar: 520000,
-            mileage: 8000,
-            images: ['/images/photo_2026-02-07_22-24-44.jpg'],
-            description: 'The ultimate luxury SUV.',
-            fuelType: 'Petrol',
-            transmission: 'Automatic',
-            color: 'Silver',
-            condition: 'excellent',
-            isActive: true,
-            listingType: 'store'
-          },
-          {
-            title: 'Range Rover Autobiography',
-            make: 'Land Rover',
-            model: 'Range Rover',
-            year: 2024,
-            price: 650000,
-            priceSar: 650000,
-            mileage: 2500,
-            images: ['/images/placeholder.jpg'],
-            description: 'Top of the line luxury SUV.',
-            fuelType: 'Hybrid',
-            transmission: 'Automatic',
-            color: 'Black',
-            condition: 'excellent',
-            isActive: true,
-            listingType: 'store'
-          }
         ];
 
         await Car.create(demoCars);
@@ -238,20 +222,25 @@ const databaseManager = new DatabaseManager();
 // أحداث قاعدة البيانات
 mongoose.connection.on('connected', () => {
   console.log('📊 قاعدة البيانات متصلة');
+  databaseManager.isConnected = true;
 });
 
 mongoose.connection.on('error', (err) => {
-  console.error('❌ خطأ في قاعدة البيانات:', err);
+  console.error('❌ خطأ في قاعدة البيانات:', err.message);
+  databaseManager.isConnected = false;
 });
 
 mongoose.connection.on('disconnected', () => {
   console.log('📊 قاعدة البيانات منقطعة');
+  databaseManager.isConnected = false;
 });
 
-// عند إغلاق التطبيق
-process.on('SIGINT', async () => {
-  await databaseManager.disconnect();
-  process.exit(0);
-});
+// عند إغلاق التطبيق (غير مطلوب في Serverless)
+if (!IS_SERVERLESS) {
+  process.on('SIGINT', async () => {
+    await databaseManager.disconnect();
+    process.exit(0);
+  });
+}
 
 module.exports = databaseManager;

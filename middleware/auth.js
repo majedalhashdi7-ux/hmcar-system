@@ -1,23 +1,26 @@
-// [[ARABIC_HEADER]] هذا الملف (middleware/auth.js) جزء من مشروع HM CAR ويحتوي تعليقات عربية لضمان الوضوح.
+// [[ARABIC_HEADER]] هذا الملف (middleware/auth.js) جزء من مشروع HM CAR
 
 const jwt = require('jsonwebtoken');
 
-// middleware/auth.js
+// middleware/auth.js - يستخدم JWT فقط (بدون session) في Vercel
 const requireAuth = (req, res, next) => {
-  // حارس (Guard): يمنع الوصول للصفحات المحمية إذا لم يكن المستخدم مسجل دخول
-  if (!req.session.user) return res.redirect('/auth/login');
+  // حارس: يمنع الوصول إذا لم يكن المستخدم مسجل دخول
+  const session = req.session || {};
+  if (!session.user) return res.redirect('/auth/login');
   next();
 };
 
-// For API routes - return JSON instead of redirect
+// For API routes - JWT-first, fallback to session
 const requireAuthAPI = (req, res, next) => {
-  // Check for JWT in Authorization header
+  // التحقق من JWT في Authorization header (الأولوية)
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     try {
       const jwtSecret = process.env.JWT_SECRET;
-      if (!jwtSecret) return res.status(500).json({ error: 'Server configuration error' });
+      if (!jwtSecret) {
+        return res.status(500).json({ error: 'Server configuration error', code: 'MISSING_JWT_SECRET' });
+      }
       const decoded = jwt.verify(token, jwtSecret);
       req.user = decoded;
       return next();
@@ -26,17 +29,17 @@ const requireAuthAPI = (req, res, next) => {
     }
   }
 
-  // Fallback to session
-  if (!req.session || !req.session.user) {
-    return res.status(401).json({ error: 'يجب تسجيل الدخول' });
+  // Fallback إلى session (آمن من undefined)
+  const session = req.session || {};
+  if (!session.user) {
+    return res.status(401).json({ error: 'يجب تسجيل الدخول', code: 'UNAUTHORIZED' });
   }
-  req.user = req.session.user;
+  req.user = session.user;
   next();
 };
 
-// Simple auth middleware for API routes
+// Simple auth middleware
 const auth = (req, res, next) => {
-  // Check for JWT in Authorization header
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
@@ -51,58 +54,56 @@ const auth = (req, res, next) => {
     }
   }
 
-  if (!req.session || !req.session.user) {
+  const session = req.session || {};
+  if (!session.user) {
     return res.status(401).json({ error: 'يجب تسجيل الدخول' });
   }
-  req.user = req.session.user;
+  req.user = session.user;
   next();
 };
 
-// Permission check middleware for API routes
+// Permission check
 const requirePermissionAPI = (permission) => {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'يجب تسجيل الدخول' });
     }
 
-    // [[ARABIC_COMMENT]] السوبر أدمن له كافة الصلاحيات دائماً
     if (req.user.role === 'super_admin') {
       return next();
     }
 
-    // [[ARABIC_COMMENT]] التحقق من الصلاحيات للأدمن والمدير (Manager)
-    // [[ARABIC_COMMENT]] تأكد من أن الأدمن يملك الصلاحية المحددة في مصفوفة permissions
     const userPermissions = req.user.permissions || [];
     if (userPermissions.includes(permission)) {
       return next();
     }
 
-    return res.status(403).json({ 
-      error: 'ليس لديك صلاحية للوصول', 
-      message: `عذراً، لا تملك صلاحية (${permission}) المطلوبة لتنفيذ هذا الإجراء` 
+    return res.status(403).json({
+      error: 'ليس لديك صلاحية للوصول',
+      message: `عذراً، لا تملك صلاحية (${permission}) المطلوبة`
     });
   };
 };
 
-// Middleware to require admin access
+// Require admin
 const requireAdmin = (req, res, next) => {
-  // If user is not attached to req (e.g. from session), try to get it
-  if (!req.user && req.session && req.session.user) {
-    req.user = req.session.user;
+  // دعم session آمن
+  const session = req.session || {};
+  if (!req.user && session.user) {
+    req.user = session.user;
   }
 
   if (!req.user) {
-    if (req.originalUrl.startsWith('/api')) {
+    if (req.originalUrl && req.originalUrl.startsWith('/api')) {
       return res.status(401).json({ error: 'Authentication required' });
     }
     return res.redirect('/auth/login');
   }
 
   if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-    if (req.originalUrl.startsWith('/api')) {
+    if (req.originalUrl && req.originalUrl.startsWith('/api')) {
       return res.status(403).json({ error: 'Admin privileges required' });
     }
-    // For non-API routes, render error or unauthorized paged
     return res.status(403).send('Forbidden');
   }
   next();

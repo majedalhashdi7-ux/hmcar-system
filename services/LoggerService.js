@@ -1,259 +1,157 @@
-// [[ARABIC_HEADER]] هذا الملف (services/LoggerService.js) جزء من مشروع HM CAR ويحتوي تعليقات عربية لضمان الوضوح.
+// [[ARABIC_HEADER]] هذا الملف (services/LoggerService.js) جزء من مشروع HM CAR
 
 /**
- * Advanced Logging Service
- * نظام تسجيل متقدم باستخدام Winston
+ * Advanced Logging Service - مُحسَّن لـ Vercel Serverless
+ * يستخدم console في Vercel (لأن filesystem محدود للقراءة فقط)
+ * ويستخدم Winston مع ملفات في بيئة التطوير
  */
 
-const winston = require('winston');
-const DailyRotateFile = require('winston-daily-rotate-file');
-const path = require('path');
-const fs = require('fs');
+const IS_VERCEL = !!(process.env.VERCEL || process.env.NOW_REGION);
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
-// إنشاء مجلد logs إذا لم يكن موجوداً
-const logsDir = path.join(__dirname, '..', 'logs');
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+let logger;
+
+if (IS_VERCEL) {
+  // ── بيئة Vercel: console فقط (لا ملفات) ──
+  logger = {
+    info:  (msg, meta = {}) => console.log(`[INFO] ${msg}`, Object.keys(meta).length ? meta : ''),
+    warn:  (msg, meta = {}) => console.warn(`[WARN] ${msg}`, Object.keys(meta).length ? meta : ''),
+    error: (msg, meta = {}) => console.error(`[ERROR] ${msg}`, Object.keys(meta).length ? meta : ''),
+    debug: (msg, meta = {}) => process.env.DEBUG && console.debug(`[DEBUG] ${msg}`, meta),
+    log:   (level, msg, meta = {}) => console.log(`[${level.toUpperCase()}] ${msg}`, meta),
+    child: () => logger,
+  };
+} else {
+  // ── بيئة محلية / Railway: Winston مع ملفات ──
+  try {
+    const winston = require('winston');
+    const path = require('path');
+    const fs = require('fs');
+
+    const logsDir = path.join(__dirname, '..', 'logs');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+
+    const transports = [
+      new winston.transports.Console({
+        format: winston.format.combine(
+          winston.format.colorize(),
+          winston.format.simple()
+        ),
+        silent: IS_PRODUCTION,
+      }),
+    ];
+
+    // إضافة file logging فقط إذا كان الـ DailyRotateFile متاحاً
+    try {
+      const DailyRotateFile = require('winston-daily-rotate-file');
+      transports.push(
+        new DailyRotateFile({
+          filename: path.join(logsDir, 'error-%DATE%.log'),
+          datePattern: 'YYYY-MM-DD',
+          level: 'error',
+          maxSize: '20m',
+          maxFiles: '30d',
+        }),
+        new DailyRotateFile({
+          filename: path.join(logsDir, 'combined-%DATE%.log'),
+          datePattern: 'YYYY-MM-DD',
+          maxSize: '20m',
+          maxFiles: '14d',
+        })
+      );
+    } catch (e) {
+      // DailyRotateFile غير مثبت - استمر بدونه
+    }
+
+    logger = winston.createLogger({
+      level: process.env.LOG_LEVEL || 'info',
+      defaultMeta: { service: 'hm-car' },
+      transports,
+    });
+  } catch (e) {
+    // Winston غير متاح - fallback للـ console
+    logger = {
+      info:  (msg) => console.log(`[INFO] ${msg}`),
+      warn:  (msg) => console.warn(`[WARN] ${msg}`),
+      error: (msg) => console.error(`[ERROR] ${msg}`),
+      debug: (msg) => console.debug(`[DEBUG] ${msg}`),
+      log:   (level, msg) => console.log(`[${level}] ${msg}`),
+      child: () => logger,
+    };
+  }
 }
 
-// تنسيق مخصص للوقت
-const customTimestamp = () => {
-  return new Date().toLocaleString('ar-SA', {
-    timeZone: 'Asia/Riyadh',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
-};
-
-// تنسيق مخصص للـ logs
-const customFormat = winston.format.combine(
-  winston.format.timestamp({ format: customTimestamp }),
-  winston.format.errors({ stack: true }),
-  winston.format.splat(),
-  winston.format.json(),
-  winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    let log = `${timestamp} [${level.toUpperCase()}]: ${message}`;
-    
-    if (Object.keys(meta).length > 0) {
-      log += `\n${JSON.stringify(meta, null, 2)}`;
-    }
-    
-    return log;
-  })
-);
-
-// Console format للتطوير
-const consoleFormat = winston.format.combine(
-  winston.format.colorize(),
-  winston.format.timestamp({ format: 'HH:mm:ss' }),
-  winston.format.printf(({ timestamp, level, message, ...meta }) => {
-    let log = `${timestamp} ${level}: ${message}`;
-    
-    if (Object.keys(meta).length > 0) {
-      log += `\n${JSON.stringify(meta, null, 2)}`;
-    }
-    
-    return log;
-  })
-);
-
-// إنشاء Logger
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: customFormat,
-  defaultMeta: { service: 'car-auction' },
-  transports: [
-    // Error logs - يتم حفظها بشكل منفصل
-    new DailyRotateFile({
-      filename: path.join(logsDir, 'error-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      level: 'error',
-      maxSize: '20m',
-      maxFiles: '30d',
-      zippedArchive: true
-    }),
-
-    // Combined logs - جميع المستويات
-    new DailyRotateFile({
-      filename: path.join(logsDir, 'combined-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      maxSize: '20m',
-      maxFiles: '14d',
-      zippedArchive: true
-    }),
-
-    // HTTP logs - طلبات HTTP فقط
-    new DailyRotateFile({
-      filename: path.join(logsDir, 'http-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      level: 'http',
-      maxSize: '20m',
-      maxFiles: '7d',
-      zippedArchive: true
-    }),
-
-    // Database logs
-    new DailyRotateFile({
-      filename: path.join(logsDir, 'database-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      level: 'info',
-      maxSize: '10m',
-      maxFiles: '7d'
-    }),
-
-    // Audit logs - للعمليات الحساسة
-    new DailyRotateFile({
-      filename: path.join(logsDir, 'audit-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      maxSize: '10m',
-      maxFiles: '90d' // يحتفظ بها لفترة أطول
-    })
-  ]
-});
-
-// إضافة Console transport في بيئة التطوير
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: consoleFormat
-  }));
-}
-
-// Wrapper functions مع context إضافي
+// ── Wrapper Class ──
 class LoggerService {
   constructor() {
     this.logger = logger;
   }
 
-  /**
-   * Log info level
-   */
   info(message, meta = {}) {
-    this.logger.info(message, this._enrichMeta(meta));
+    try { this.logger.info(message, this._safe(meta)); } catch (e) { console.log('[INFO]', message); }
   }
 
-  /**
-   * Log warning level
-   */
   warn(message, meta = {}) {
-    this.logger.warn(message, this._enrichMeta(meta));
+    try { this.logger.warn(message, this._safe(meta)); } catch (e) { console.warn('[WARN]', message); }
   }
 
-  /**
-   * Log error level
-   */
   error(message, error = null, meta = {}) {
-    const errorMeta = {
-      ...this._enrichMeta(meta),
-      ...(error && {
-        error: {
-          message: error.message,
-          stack: error.stack,
-          code: error.code
-        }
-      })
-    };
-
-    this.logger.error(message, errorMeta);
+    try {
+      const errorMeta = {
+        ...this._safe(meta),
+        ...(error && { error: { message: error.message, stack: error.stack } }),
+      };
+      this.logger.error(message, errorMeta);
+    } catch (e) { console.error('[ERROR]', message, error?.message); }
   }
 
-  /**
-   * Log debug level
-   */
   debug(message, meta = {}) {
-    this.logger.debug(message, this._enrichMeta(meta));
+    try { this.logger.debug(message, this._safe(meta)); } catch (e) {}
   }
 
-  /**
-   * Log HTTP requests
-   */
   http(message, meta = {}) {
-    this.logger.log('http', message, this._enrichMeta(meta));
+    try { this.logger.log('http', message, this._safe(meta)); } catch (e) {}
   }
 
-  /**
-   * Log database operations
-   */
   database(operation, meta = {}) {
-    this.logger.info(`DB: ${operation}`, {
-      ...this._enrichMeta(meta),
-      category: 'database'
-    });
+    this.info(`DB: ${operation}`, { ...meta, category: 'database' });
   }
 
-  /**
-   * Log audit events (sensitive operations)
-   */
   audit(action, userId, meta = {}) {
-    this.logger.info(`AUDIT: ${action}`, {
-      ...this._enrichMeta(meta),
-      userId,
-      category: 'audit',
-      timestamp: new Date().toISOString()
-    });
+    this.info(`AUDIT: ${action}`, { ...meta, userId, category: 'audit' });
   }
 
-  /**
-   * Log security events
-   */
   security(event, meta = {}) {
-    this.logger.warn(`SECURITY: ${event}`, {
-      ...this._enrichMeta(meta),
-      category: 'security'
-    });
+    this.warn(`SECURITY: ${event}`, { ...meta, category: 'security' });
   }
 
-  /**
-   * Log performance metrics
-   */
   performance(metric, value, meta = {}) {
-    this.logger.info(`PERFORMANCE: ${metric}`, {
-      ...this._enrichMeta(meta),
-      value,
-      category: 'performance'
-    });
+    this.info(`PERFORMANCE: ${metric}`, { ...meta, value, category: 'performance' });
   }
 
-  /**
-   * Log with custom level
-   */
   log(level, message, meta = {}) {
-    this.logger.log(level, message, this._enrichMeta(meta));
+    try { this.logger.log(level, message, this._safe(meta)); } catch (e) {}
   }
 
-  /**
-   * Enrich metadata with additional context
-   */
-  _enrichMeta(meta) {
-    return {
-      ...meta,
-      env: process.env.NODE_ENV || 'development',
-      pid: process.pid,
-      memory: process.memoryUsage().heapUsed
-    };
+  _safe(meta) {
+    try {
+      return {
+        ...meta,
+        env: process.env.NODE_ENV || 'development',
+        pid: process.pid,
+      };
+    } catch (e) { return {}; }
   }
 
-  /**
-   * Create child logger with persistent metadata
-   */
   child(metadata) {
-    return this.logger.child(metadata);
+    try { return this.logger.child(metadata); } catch (e) { return this; }
   }
 
-  /**
-   * Stream for Morgan HTTP logger
-   */
   get stream() {
-    return {
-      write: (message) => {
-        this.http(message.trim());
-      }
-    };
+    return { write: (message) => { this.http(message.trim()); } };
   }
 }
 
-// Export singleton instance
 module.exports = new LoggerService();

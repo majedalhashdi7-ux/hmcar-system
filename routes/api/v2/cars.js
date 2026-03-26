@@ -207,6 +207,14 @@ router.get('/', cacheResponse(300), async (req, res, next) => {
             Car.countDocuments(filter)
         ]);
 
+        // [[ARABIC_COMMENT]] جلب سعر الصرف من الإعدادات بدلاً من القيمة الثابتة
+        const SiteSettings = require('../../../models/SiteSettings');
+        let usdToSar = 3.75;
+        try {
+            const settings = await SiteSettings.getSettings();
+            usdToSar = Number(settings?.currencySettings?.usdToSar) || 3.75;
+        } catch (e) { /* fallback to default */ }
+
         res.json({
             success: true,
             data: {
@@ -216,10 +224,10 @@ router.get('/', cacheResponse(300), async (req, res, next) => {
                     make: car.make,
                     model: car.model,
                     year: car.year,
-                    price: car.price || car.priceSar || (car.priceUsd ? car.priceUsd * 3.75 : 0) || 0,
-                    priceSar: car.priceSar || car.price || (car.priceUsd ? car.priceUsd * 3.75 : 0) || 0,
-                    priceUsd: car.priceUsd || (car.priceSar ? car.priceSar / 3.75 : 0) || 0,
-                    basePriceUsd: car.basePriceUsd || car.priceUsd || (car.priceSar ? car.priceSar / 3.75 : 0) || 0,
+                    price: car.price || car.priceSar || (car.priceUsd ? car.priceUsd * usdToSar : 0) || 0,
+                    priceSar: car.priceSar || car.price || (car.priceUsd ? car.priceUsd * usdToSar : 0) || 0,
+                    priceUsd: car.priceUsd || (car.priceSar ? car.priceSar / usdToSar : 0) || 0,
+                    basePriceUsd: car.basePriceUsd || car.priceUsd || (car.priceSar ? car.priceSar / usdToSar : 0) || 0,
                     priceKrw: car.priceKrw || 0,
                     displayCurrency: car.displayCurrency || 'SAR',
                     images: car.images || [],

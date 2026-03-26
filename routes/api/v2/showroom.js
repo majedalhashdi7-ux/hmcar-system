@@ -274,6 +274,42 @@ router.get('/cars', async (req, res) => {
         const showroomUrl = settings?.showroomSettings?.encarUrl || '';
         const usdToSar = Number(settings?.currencySettings?.usdToSar || 3.75);
         const usdToKrw = Number(settings?.currencySettings?.usdToKrw || 1350);
+        const auctionMultiplier = Number(settings?.currencySettings?.auctionMultiplier || 1.10);
+
+        // [[ARABIC_COMMENT]] إذا لم توجد سيارات محلية → نجلب مباشرة من Encar API كـ Fallback
+        if (total === 0 && showroomUrl) {
+            try {
+                const apiUrl = convertEncarUrlToApi(showroomUrl, page);
+                const data = await fetchExternal(apiUrl);
+                const results = (data.SearchResults || []).map(translateCar);
+
+                const liveCars = results.map(item => {
+                    const computedUsd = Number(((item.priceKrw / usdToKrw) * auctionMultiplier).toFixed(2));
+                    const computedSar = Math.round(computedUsd * usdToSar);
+                    return {
+                        ...item,
+                        priceUsd: computedUsd,
+                        priceSar: computedSar,
+                        price: computedSar,
+                    };
+                });
+
+                const encarTotal = data.Count || liveCars.length;
+
+                return res.json({
+                    success: true,
+                    data: liveCars,
+                    total: encarTotal,
+                    page,
+                    totalPages: Math.ceil(encarTotal / limit),
+                    encarUrl: showroomUrl,
+                    source: 'live_encar',
+                });
+            } catch (liveErr) {
+                console.warn('⚠️ Encar live fallback failed:', liveErr.message);
+                // إذا فشل الـ Fallback أيضاً → نُرجع مصفوفة فارغة مع رسالة
+            }
+        }
 
         const formattedCars = cars.map(car => ({
             id: car._id.toString(),

@@ -16,9 +16,30 @@ const crypto = require('crypto');
 
 /**
  * تخزين مؤقت لتتبع المحاولات المشبوهة
+ * يتم تنظيفها تلقائياً كل ساعة لتجنب تسرب الذاكرة
  */
 const suspiciousAttempts = new Map();
 const blockedIPs = new Set();
+
+// [[ARABIC_COMMENT]] تنظيف دوري لتجنب تسرب الذاكرة في بيئة Non-Serverless
+const CLEANUP_INTERVAL = 60 * 60 * 1000; // ساعة واحدة
+const MAX_ENTRY_AGE = 2 * 60 * 60 * 1000; // ساعتان
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of suspiciousAttempts) {
+    if (now - (data.lastAttempt || 0) > MAX_ENTRY_AGE) {
+      suspiciousAttempts.delete(ip);
+    }
+  }
+  // الحفاظ على حجم blockedIPs معقول (أقصى 1000 عنوان)
+  if (blockedIPs.size > 1000) {
+    const toRemove = blockedIPs.size - 500;
+    const iterator = blockedIPs.values();
+    for (let i = 0; i < toRemove; i++) {
+      blockedIPs.delete(iterator.next().value);
+    }
+  }
+}, CLEANUP_INTERVAL);
 
 /**
  * تنظيف IP متعدد (proxy)
@@ -28,7 +49,7 @@ const getClientIP = (req) => {
   if (forwarded) {
     return forwarded.split(',')[0].trim();
   }
-  return req.ip || req.connection.remoteAddress;
+  return req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || 'unknown';
 };
 
 /**
@@ -91,29 +112,28 @@ const checkBlockedIP = (req, res, next) => {
 const detectInjection = (req, res, next) => {
   const suspicious = [
     // SQL Injection patterns
-    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\b)/i,
+    /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|UNION|ALTER|CREATE|TRUNCATE)\b\s+(FROM|INTO|TABLE|SET|WHERE|DATABASE))/i,
     /(\b(OR|AND)\b\s*\d+\s*=\s*\d+)/i,
-    /(--|#|\/\*|\*\/)/,
-    /(\bEXEC\b|\bEXECUTE\b)/i,
+    /(--\s|#\s|\/\*.*\*\/)/,
+    /(\bEXEC(UTE)?\b\s+\w)/i,
     
     // NoSQL Injection patterns
     /\$where/i,
-    /\$gt|\$lt|\$ne|\$eq|\$regex/i,
     /\{\s*\$\w+/,
     
     // XSS patterns
     /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-    /javascript:/i,
-    /on\w+\s*=/i,
+    /javascript\s*:/i,
+    /on(error|load|click|mouseover|focus|blur)\s*=/i,
     /data:\s*text\/html/i,
     
     // Path traversal
-    /\.\.\//,
-    /\.\.\\/, 
+    /\.\.[\/\\]{2,}/,
     
-    // Command injection
-    /[;&|`$]/,
-    /\b(cat|ls|dir|pwd|whoami|wget|curl)\b/i
+    // Command injection - أكثر دقة: نفحص أوامر شل حقيقية فقط
+    // لا نحظر & و $ لأنها تُستخدم في أوصاف السيارات والأسعار
+    /[`]/, // backtick فقط - خطير دائماً
+    /\b(whoami|wget|chmod|chown|passwd|sudo|su\s)\b/i
   ];
   
   const checkValue = (value, location) => {
@@ -128,8 +148,9 @@ const detectInjection = (req, res, next) => {
     return false;
   };
   
-  const checkObject = (obj, location) => {
-    if (!obj || typeof obj !== 'object') return false;
+  const checkObject = (obj, location, depth = 0) => {
+    // [[ARABIC_COMMENT]] حد أقصى للعمق لتجنب Stack Overflow
+    if (!obj || typeof obj !== 'object' || depth > 5) return false;
     
     for (const [key, value] of Object.entries(obj)) {
       // تحقق من اسم المفتاح أيضاً
@@ -138,7 +159,7 @@ const detectInjection = (req, res, next) => {
       if (typeof value === 'string') {
         if (checkValue(value, `${location}.${key}`)) return true;
       } else if (typeof value === 'object' && value !== null) {
-        if (checkObject(value, `${location}.${key}`)) return true;
+        if (checkObject(value, `${location}.${key}`, depth + 1)) return true;
       }
     }
     return false;
@@ -325,9 +346,25 @@ const securityHeaders = (req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
+  
+  // [[ARABIC_COMMENT]] لا نضع no-store على مسارات GET العامة لأن ذلك يبطل كاش المتصفح
+  // فقط نضعه على العمليات الحساسة (POST/PUT/PATCH/DELETE) والمسارات الخاصة
+  const isPublicGet = req.method === 'GET' && (
+    req.path.includes('/public') ||
+    req.path.includes('/settings') ||
+    req.path.includes('/brands') ||
+    req.path.includes('/cars') ||
+    req.path.includes('/parts') ||
+    req.path.includes('/showroom')
+  );
+  
+  if (isPublicGet) {
+    res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  } else {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
   
   next();
 };

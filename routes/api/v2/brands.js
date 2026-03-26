@@ -7,10 +7,29 @@ const AuditLog = require('../../../models/AuditLog');
 const { requireAuthAPI, requirePermissionAPI } = require('../../../middleware/auth');
 const { cacheResponse, invalidateCache } = require('../../../middleware/cache');
 
-// Reset dummy brands and parts (Admin only)
+// Reset dummy brands and parts (Admin only) - يتطلب تأكيد صريح
 router.post('/reset-default-hmcar', requireAuthAPI, requirePermissionAPI('manage_brands'), async (req, res) => {
   try {
+    // [[ARABIC_COMMENT]] يتطلب إرسال confirm=true لمنع الحذف بالخطأ
+    if (req.body.confirm !== true) {
+      return res.status(400).json({
+        success: false,
+        message: 'هذا الإجراء سيحذف جميع الوكالات وقطع الغيار. أرسل confirm: true للتأكيد.'
+      });
+    }
+
     const SparePart = require('../../../models/SparePart');
+    
+    // [[ARABIC_COMMENT]] تسجيل العملية في AuditLog قبل الحذف
+    const partsCount = await SparePart.countDocuments({});
+    const brandsCount = await Brand.countDocuments({});
+    await AuditLog.create({
+      action: 'reset_brands_and_parts',
+      userId: req.user?.userId || req.user?._id,
+      details: `حذف جماعي: ${brandsCount} وكالة + ${partsCount} قطعة غيار`,
+      severity: 'critical'
+    }).catch(() => {});
+
     await SparePart.deleteMany({});
     await Brand.deleteMany({});
 

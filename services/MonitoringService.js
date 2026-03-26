@@ -1,12 +1,18 @@
-// [[ARABIC_HEADER]] هذا الملف (services/MonitoringService.js) جزء من مشروع HM CAR ويحتوي تعليقات عربية لضمان الوضوح.
-
-/**
- * Monitoring Service
- * خدمة مراقبة أداء النظام - مُحسّنة لبيئة الإنتاج مع دعم Sentry
- */
+// [[ARABIC_HEADER]] هذا الملف (services/MonitoringService.js) جزء من مشروع HM CAR
+// مُحسَّن لـ Vercel Serverless - لا يشغل setInterval
 
 const os = require('os');
-const logger = require('./LoggerService');
+
+// آمن من الـ Circular dependency
+let loggerInstance = null;
+function getLogger() {
+  if (!loggerInstance) {
+    try { loggerInstance = require('./LoggerService'); } catch (e) {}
+  }
+  return loggerInstance;
+}
+
+const IS_SERVERLESS = !!(process.env.VERCEL || process.env.NOW_REGION || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
 class MonitoringService {
   constructor() {
@@ -16,17 +22,17 @@ class MonitoringService {
       errors: [],
       lastHealthCheck: null
     };
+    this.sentryEnabled = false;
 
-    // التفعيل التلقائي لـ Sentry في حال وجود المفتاح في المتغيرات البيئية
+    // تهيئة Sentry إذا كان مفعلاً
     this.initSentry();
-    
-    // بدء الفحوصات الدورية
-    this.startHealthChecks();
+
+    // بدء الفحوصات الدورية فقط في بيئة non-serverless
+    if (!IS_SERVERLESS) {
+      this.startHealthChecks();
+    }
   }
 
-  /**
-   * تهيئة Sentry للمراقبة الفورية للأخطاء
-   */
   initSentry() {
     if (process.env.SENTRY_DSN) {
       try {
@@ -34,19 +40,17 @@ class MonitoringService {
         Sentry.init({
           dsn: process.env.SENTRY_DSN,
           environment: process.env.NODE_ENV || 'development',
-          tracesSampleRate: 1.0,
+          tracesSampleRate: 0.5,
         });
         this.sentryEnabled = true;
-        logger.info('✅ تم تفعيل مراقبة الأخطاء عبر Sentry');
+        const logger = getLogger();
+        if (logger) logger.info('✅ تم تفعيل Sentry');
       } catch (err) {
-        logger.warn('⚠️ تعذر تشغيل Sentry (تأكد من تثبيت المكتبة):', err.message);
+        console.warn('⚠️ Sentry غير متاح:', err.message);
       }
     }
   }
 
-  /**
-   * تسجيل المقاييس لكل طلب HTTP
-   */
   recordRequest(statusCode, duration) {
     this.metrics.requests.total++;
     if (statusCode >= 200 && statusCode < 400) {
@@ -55,33 +59,28 @@ class MonitoringService {
       this.metrics.requests.failed++;
     }
     this.metrics.responseTime.push(duration);
-    if (this.metrics.responseTime.length > 1000) this.metrics.responseTime.shift();
+    if (this.metrics.responseTime.length > 500) this.metrics.responseTime.shift();
   }
 
-  /**
-   * تسجيل الخطأ وإرساله لـ Sentry إذا كان مفعلاً
-   */
   recordError(error, context = {}) {
     this.metrics.errors.push({
       message: error.message,
       context,
       timestamp: new Date()
     });
+    if (this.metrics.errors.length > 50) this.metrics.errors.shift();
 
-    if (this.metrics.errors.length > 100) this.metrics.errors.shift();
-
-    // إرسال لـ Sentry للتبليغ الفوري
     if (this.sentryEnabled) {
-      const Sentry = require('@sentry/node');
-      Sentry.captureException(error, { extra: context });
+      try {
+        const Sentry = require('@sentry/node');
+        Sentry.captureException(error, { extra: context });
+      } catch (e) {}
     }
 
-    logger.error('Error recorded', error, context);
+    const logger = getLogger();
+    if (logger) logger.error('Error recorded', error, context);
   }
 
-  /**
-   * الحصول على الحالة الصحية للنظام
-   */
   getHealth() {
     const health = {
       status: 'healthy',
@@ -89,7 +88,7 @@ class MonitoringService {
       uptime: process.uptime(),
       system: this.getSystemMetrics(),
       application: this.getApplicationMetrics(),
-      database: { connected: true } 
+      database: { connected: true }
     };
 
     const errorRate = this.metrics.requests.total > 0
@@ -104,15 +103,19 @@ class MonitoringService {
   }
 
   getSystemMetrics() {
-    return {
-      platform: os.platform(),
-      cpus: os.cpus().length,
-      memory: {
-        total: this.formatBytes(os.totalmem()),
-        free: this.formatBytes(os.freemem()),
-        usagePercent: ((1 - (os.freemem() / os.totalmem())) * 100).toFixed(2)
-      }
-    };
+    try {
+      return {
+        platform: os.platform(),
+        cpus: os.cpus().length,
+        memory: {
+          total: this.formatBytes(os.totalmem()),
+          free: this.formatBytes(os.freemem()),
+          usagePercent: ((1 - (os.freemem() / os.totalmem())) * 100).toFixed(2)
+        }
+      };
+    } catch (e) {
+      return { platform: 'unknown', cpus: 1, memory: {} };
+    }
   }
 
   getApplicationMetrics() {
@@ -128,17 +131,12 @@ class MonitoringService {
     };
   }
 
-  /**
-   * Get response time statistics
-   */
   getResponseTimeStats() {
     if (this.metrics.responseTime.length === 0) {
       return { avg: 0, min: 0, max: 0, p95: 0, p99: 0 };
     }
-
     const sorted = [...this.metrics.responseTime].sort((a, b) => a - b);
     const sum = sorted.reduce((a, b) => a + b, 0);
-
     return {
       avg: (sum / sorted.length).toFixed(2),
       min: sorted[0],
@@ -148,9 +146,6 @@ class MonitoringService {
     };
   }
 
-  /**
-   * Get recent errors
-   */
   getRecentErrors(limit = 10) {
     return this.metrics.errors.slice(-limit).reverse();
   }
@@ -163,18 +158,18 @@ class MonitoringService {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
+  // فقط في non-serverless
   startHealthChecks() {
+    if (IS_SERVERLESS) return;
     setInterval(() => {
       const health = this.getHealth();
       if (health.status === 'unhealthy') {
-        logger.error('🚨 تنبيه: حالة النظام غير مستقرة!', null, { health });
+        const logger = getLogger();
+        if (logger) logger.error('🚨 النظام غير مستقر!', null, { health });
       }
     }, 5 * 60 * 1000);
   }
 
-  /**
-   * Check database connection
-   */
   async checkDatabase() {
     try {
       const mongoose = require('mongoose');
@@ -187,9 +182,6 @@ class MonitoringService {
     }
   }
 
-  /**
-   * Check Redis connection
-   */
   async checkRedis() {
     try {
       const cacheService = require('./CacheService');
@@ -197,19 +189,12 @@ class MonitoringService {
       await cacheService.set(testKey, 'ok', 10);
       const value = await cacheService.get(testKey);
       await cacheService.del(testKey);
-      
-      return {
-        connected: value === 'ok',
-        status: 'healthy'
-      };
+      return { connected: value === 'ok', status: 'healthy' };
     } catch (error) {
       return { connected: false, error: error.message };
     }
   }
 
-  /**
-   * Get detailed system report
-   */
   async getDetailedReport() {
     return {
       health: this.getHealth(),
@@ -219,9 +204,6 @@ class MonitoringService {
     };
   }
 
-  /**
-   * Reset metrics (useful for testing)
-   */
   resetMetrics() {
     this.metrics = {
       requests: { total: 0, success: 0, failed: 0 },
@@ -232,5 +214,4 @@ class MonitoringService {
   }
 }
 
-// Export singleton
 module.exports = new MonitoringService();

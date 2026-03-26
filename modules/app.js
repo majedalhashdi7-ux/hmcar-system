@@ -1,25 +1,43 @@
-// [[ARABIC_HEADER]] هذا الملف (modules/app.js) جزء من مشروع HM CAR ويحتوي تعليقات عربية لضمان الوضوح.
+// [[ARABIC_HEADER]] هذا الملف (modules/app.js) جزء من مشروع HM CAR
 
 /**
  * @file modules/app.js
- * @description المكون الأساسي لتطبيق Express. 
- * هذا الملف مسؤول عن تجميع الإعدادات، المسارات، طبقات الحماية، وربط قاعدة البيانات.
+ * @description المكون الأساسي لتطبيق Express.
+ * مُحسَّن لـ Vercel Serverless - لا يستخدم session middleware هنا
+ * (الـ vercel-server.js يبني التطبيق مباشرة بدون app.js في Vercel)
  */
 
 const express = require('express');
 const path = require('path');
 const config = require('./core/config');
 const database = require('./core/database');
-const logger = require('./core/logger');
-const monitoring = require('../services/MonitoringService');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const { tenantMiddleware } = require('../middleware/tenantMiddleware');
 
+// آمن من crash في Monitoring
+let monitoring = null;
+try {
+  monitoring = require('../services/MonitoringService');
+} catch (e) {
+  monitoring = { recordRequest: () => {} };
+}
+
+// آمن من crash في Logger
+let logger = null;
+try {
+  logger = require('./core/logger');
+} catch (e) {
+  logger = {
+    info: (msg) => console.log('[INFO]', msg),
+    error: (msg, err) => console.error('[ERROR]', msg, err?.message || ''),
+    warn: (msg) => console.warn('[WARN]', msg),
+  };
+}
+
 /**
  * فئة التطبيق (App Class)
- * تقوم بتنظيم دورة حياة الخادم وتجهيز البيئة البرمجية.
  */
 class App {
   constructor() {
@@ -27,66 +45,59 @@ class App {
     this.setupApp();
   }
 
-  /**
-   * الإعداد الأولي للتطبيق
-   */
   setupApp() {
-    this.setupMiddleware();      // إعداد الوسطاء (Middlewares)
-    this.setupRoutes();          // إعداد المسارات (Routes)
-    this.setupErrorHandling();    // إعداد معالجة الأخطاء
+    this.setupMiddleware();
+    this.setupRoutes();
+    this.setupErrorHandling();
   }
 
-  /**
-   * إعداد طبقات الحماية والوسطاء
-   */
   setupMiddleware() {
-    // استخدام Helmet لتأمين ترويسات HTTP
-    this.app.use(helmet(config.security.helmet));
+    // Helmet بإعدادات مرنة
+    this.app.use(helmet({
+      contentSecurityPolicy: false,
+    }));
 
-    // تفعيل ضغط البيانات لتحسين سرعة التحميل
     this.app.use(compression());
 
-    // تفعيل سياسة مشاركة الموارد (CORS)
+    // CORS
     this.app.use(cors(config.security.cors));
 
-    // تحليل بيانات الطلبات بصيغة JSON و URL-encoded
+    // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-    // تقديم الملفات الثابتة (الصور والوسائط المرفوعة)
+    // Static files
     this.app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
     this.app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
-    // ── نظام المعارض المتعددة (Multi-Tenant) ──
-    // يحدد المعرض من الدومين/Header ويربط قاعدة البيانات المناسبة
+    // Multi-Tenant Middleware
     this.app.use(tenantMiddleware({ required: false, connectDb: true }));
 
-    // تتبع الطلبات (Monitoring Middleware)
+    // Request tracking (آمن من crash)
     this.app.use((req, res, next) => {
-      const start = Date.now();
-      res.on('finish', () => {
-        const duration = Date.now() - start;
-        monitoring.recordRequest(res.statusCode, duration);
-      });
+      try {
+        const start = Date.now();
+        res.on('finish', () => {
+          const duration = Date.now() - start;
+          if (monitoring && monitoring.recordRequest) {
+            monitoring.recordRequest(res.statusCode, duration);
+          }
+        });
+      } catch (e) {}
       next();
     });
 
     logger.info('✅ تم إعداد الوسطاء وطبقات الأمان بنجاح');
   }
 
-  /**
-   * تعريف المسارات الرئيسية للنظام
-   */
   setupRoutes() {
-    // نقطة فحص حالة الخادم (Health Check)
+    // Health Check
     this.app.get('/health', (req, res) => {
       res.json({ status: 'ok', timestamp: new Date(), engine: 'HM-CAR-V2' });
     });
 
-    // تحميل إصدار الـ API الثاني (V2)
     this.setupApiRoutes();
 
-    // رسالة الترحيب واختبار الاتصال بالجذر
     this.app.get('/', (req, res) => {
       res.json({
         message: 'مرحباً بك في واجهة برمجة تطبيقات HM CAR V2',
@@ -98,31 +109,21 @@ class App {
     logger.info('✅ تم إعداد المسارات الأساسية');
   }
 
-  /**
-   * تحميل مسارات الـ API المنظمة
-   */
   setupApiRoutes() {
     try {
-      // استيراد الموجه الرئيسي لنسخة API v2
       const apiV2Router = require('../routes/api/v2/index');
-
-      // دعم المسارات المختلفة (ببادئة /api أو بدونها) لضمان العمل على Vercel وجميع البيئات
       this.app.use('/api/v2', apiV2Router);
       this.app.use('/v2', apiV2Router);
-      this.app.use('/api', apiV2Router); // في حال تم توجيه كل طلبات api لموجه واحد
-
-      logger.info('✅ تم تحميل جميع مسارات API v2 بنجاح (Aggressive Mount)');
+      this.app.use('/api', apiV2Router);
+      logger.info('✅ تم تحميل جميع مسارات API v2 بنجاح');
     } catch (error) {
-      logger.error('❌ خطأ في تحميل مسارات API v2:', error.message);
-      console.error(error);
+      logger.error('❌ خطأ في تحميل مسارات API v2:', error);
+      console.error('API routes load error:', error.message, error.stack);
     }
   }
 
-  /**
-   * نظام معالجة الأخطاء الشامل
-   */
   setupErrorHandling() {
-    // معالجة الروابط غير الموجودة (404)
+    // 404
     this.app.use((req, res, next) => {
       res.status(404).json({
         success: false,
@@ -131,36 +132,37 @@ class App {
       });
     });
 
-    // المعالج العام للأخطاء البرمجية والتقنية
+    // Global error handler
     this.app.use((err, req, res, next) => {
       logger.error('⚠️ خطأ غير متوقع:', err);
-      res.status(500).json({
-        success: false,
-        message: 'حدث خطأ تقني داخلي في الخادم',
-        error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
-      });
+      if (!res.headersSent) {
+        res.status(500).json({
+          success: false,
+          message: 'حدث خطأ تقني داخلي في الخادم',
+          error: process.env.NODE_ENV === 'development' ? err.message : 'Internal Server Error'
+        });
+      }
     });
 
     logger.info('✅ تم تفعيل نظام معالجة الأخطاء');
   }
 
   /**
-   * تشغيل الخادم وربط قاعدة البيانات
+   * تشغيل الخادم (للبيئة المحلية فقط - غير مستخدم في Vercel)
    */
   async start() {
     try {
-      // الاتصال بقاعدة بيانات MongoDB
       await database.connect();
       logger.info('✅ تم الاتصال بقاعدة البيانات بنجاح');
 
-      // ─── تهيئة البيانات الافتراضية ───
-      // تهيئة الإعدادات، الأدمن، والبيانات التجريبية عند الحاجة
-      const SeedService = require('../services/SeedService');
-      await SeedService.runAll();
+      try {
+        const SeedService = require('../services/SeedService');
+        await SeedService.runAll();
+      } catch (e) {
+        console.warn('⚠️ SeedService error (non-fatal):', e.message);
+      }
 
       const socketModule = require('./socket');
-
-      // بدء الاستماع للطلبات عبر البورت المحدد
       const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : config.server.host;
       const port = process.env.PORT || config.server.port;
 
@@ -168,16 +170,12 @@ class App {
         logger.info(`🚀 الخادم يعمل حالياً على http://${host}:${port}`);
       });
 
-      // تهيئة نظام الـ WebSockets للتواصل الفوري (للمزادات والتنبيهات)
       this.io = socketModule.init(server);
-      this.app.set('io', this.io); // جعل كائن IO متاحاً في كامل التطبيق
+      this.app.set('io', this.io);
 
-      // آلية الإغلاق الآمن للنظام (Graceful Shutdown)
       const shutdown = async () => {
         logger.info('⏳ جاري إغلاق النظام بأمان...');
-        server.close(() => {
-          logger.info('🛑 تم إيقاف استقبال الطلبات');
-        });
+        server.close(() => { logger.info('🛑 تم إيقاف استقبال الطلبات'); });
         await database.disconnect();
         process.exit(0);
       };

@@ -84,6 +84,7 @@ function CarCard({ car, onContact, onViewDetails, priceText }: {
     const [imgErr, setImgErr] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isInCart, setIsInCart] = useState(false);
+    const { currency } = useSettings();
     const carImage = resolveCarImage(car);
 
     return (
@@ -189,7 +190,7 @@ function CarCard({ car, onContact, onViewDetails, priceText }: {
                                 id: car.id, 
                                 type: 'car', 
                                 title: car.title, 
-                                price: car.priceSar || (car.priceUsd ? car.priceUsd * 3.75 : 0),
+                                price: car.priceSar || (car.priceUsd ? car.priceUsd * Number(currency.usdToSar || 3.75) : 0),
                                 image: car.imageUrl || car.image || car.images?.[0] || '',
                                 brand: car.manufacturerAr
                             });
@@ -222,7 +223,7 @@ function CarCard({ car, onContact, onViewDetails, priceText }: {
                                 id: car.id, 
                                 type: 'car', 
                                 title: car.title, 
-                                price: car.priceSar || (car.priceUsd ? car.priceUsd * 3.75 : 0),
+                                price: car.priceSar || (car.priceUsd ? car.priceUsd * Number(currency.usdToSar || 3.75) : 0),
                                 image: car.imageUrl || car.image || car.images?.[0] || '',
                             });
                             localStorage.setItem('hm_cart', JSON.stringify(cart));

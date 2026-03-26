@@ -55,9 +55,11 @@ router.get('/', requireAuthAPI, async (req, res) => {
 });
 
 // POST /api/v2/orders - إنشاء طلب جديد (يُستدعى عند الضغط على زر واتساب أو تأكيد السلة)
-router.post('/', async (req, res) => {
+// [[ARABIC_COMMENT]] تم إضافة المصادقة لمنع إنشاء طلبات مزيفة
+router.post('/', requireAuthAPI, async (req, res) => {
     try {
-        const { buyerId, items, pricing, notes, channel = 'whatsapp' } = req.body;
+        const { items, pricing, notes, channel = 'whatsapp' } = req.body;
+        const buyerId = req.user.userId || req.user._id;
         const settings = await SiteSettings.getSettings().catch(() => null);
 
         const usdToSar = toFiniteNumber(req.body?.currencySnapshot?.usdToSar) || toFiniteNumber(settings?.currencySettings?.usdToSar) || 3.75;
@@ -122,7 +124,7 @@ router.post('/', async (req, res) => {
 
         const newOrder = new Order({
             orderNumber,
-            buyer: buyerId || req.user?.userId, // قد يكون ضيفاً أحياناً
+            buyer: buyerId,
             items: normalizedItems,
             pricing: normalizedPricing,
             notes,
