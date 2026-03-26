@@ -97,43 +97,49 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         }
         return null;
     };
-    
-    const cachedData = getInitialCache();
-
-    const [currency, setCurrency] = useState<CurrencySettings>(
-        cachedData?.currencySettings || { 
-            usdToSar: 3.75, 
-            usdToKrw: 1350, 
-            activeCurrency: 'SAR',
-            partsMultiplier: 1.0,
-            auctionMultiplier: 1.0
-        }
-    );
-    const [siteInfo, setSiteInfo] = useState<SiteInfo>(
-        cachedData?.siteInfo || { siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' }
-    );
-    const [socialLinks, setSocialLinks] = useState<SocialLinks>(cachedData?.socialLinks || {});
-    const [homeContent, setHomeContent] = useState<HomeContent>(
-        cachedData?.homeContent || {
-            showLiveMarket: true,
-            showAdvertising: true,
-            showTrustHub: true,
-            showTestimonials: true,
-            showBrandCatalog: true
-        }
-    );
-    const [features, setFeatures] = useState<Feature[]>(cachedData?.features || []);
-    const [marketingPixels, setMarketingPixels] = useState<MarketingPixels>(
-        cachedData?.marketingPixels || { googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' }
-    );
-    const [loading, setLoading] = useState(!cachedData); // إذا كان هناك كاش، لا نحتاج لشاشة تحميل
+    const [currency, setCurrency] = useState<CurrencySettings>({ 
+        usdToSar: 3.75, 
+        usdToKrw: 1350, 
+        activeCurrency: 'SAR',
+        partsMultiplier: 1.0,
+        auctionMultiplier: 1.0
+    });
+    const [siteInfo, setSiteInfo] = useState<SiteInfo>({ siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' });
+    const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
+    const [homeContent, setHomeContent] = useState<HomeContent>({
+        showLiveMarket: true,
+        showAdvertising: true,
+        showTrustHub: true,
+        showTestimonials: true,
+        showBrandCatalog: true
+    });
+    const [features, setFeatures] = useState<Feature[]>([]);
+    const [marketingPixels, setMarketingPixels] = useState<MarketingPixels>({ googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' });
+    const [loading, setLoading] = useState(true);
     const [displayCurrency, setDisplayCurrency] = useState<'SAR' | 'USD' | 'KRW'>('SAR');
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('displayCurrency');
-            if (stored === 'USD' || stored === 'SAR' || stored === 'KRW') {
-                setDisplayCurrency(stored as 'SAR' | 'USD' | 'KRW');
+            // تحميل الكاش بصمت بعد التحميل المبدئي لتجنب خطأ Hydration Mismatch
+            try {
+                const storedCache = window.localStorage.getItem('hm_settings_cache');
+                if (storedCache) {
+                    const cache = JSON.parse(storedCache);
+                    if (cache.currencySettings) setCurrency(cache.currencySettings);
+                    if (cache.siteInfo) setSiteInfo(cache.siteInfo);
+                    if (cache.socialLinks) setSocialLinks(cache.socialLinks);
+                    if (cache.homeContent) setHomeContent(cache.homeContent);
+                    if (cache.features) setFeatures(cache.features);
+                    if (cache.marketingPixels) setMarketingPixels(cache.marketingPixels);
+                    setLoading(false);
+                }
+            } catch (e) {
+                // Ignore
+            }
+
+            const storedCurrency = localStorage.getItem('displayCurrency');
+            if (storedCurrency === 'USD' || storedCurrency === 'SAR' || storedCurrency === 'KRW') {
+                setDisplayCurrency(storedCurrency as 'SAR' | 'USD' | 'KRW');
             }
         }
     }, []);
