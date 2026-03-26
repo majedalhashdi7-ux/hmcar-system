@@ -153,6 +153,11 @@ const detectInjection = (req, res, next) => {
     if (!obj || typeof obj !== 'object' || depth > 5) return false;
     
     for (const [key, value] of Object.entries(obj)) {
+      // تخطي فحص النصوص المسموح للزوار كتابتها لتجنب حظرهم
+      if (['message', 'note', 'notes', 'description', 'details', 'comment', 'content', 'title', 'reason', 'address'].includes(key.toLowerCase())) {
+          continue;
+      }
+      
       // تحقق من اسم المفتاح أيضاً
       if (checkValue(key, `${location}.key`)) return true;
       

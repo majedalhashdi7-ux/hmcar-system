@@ -271,7 +271,9 @@ router.get('/cars', async (req, res) => {
         ]);
 
         const settings = await SiteSettings.getSettings();
-        const showroomUrl = settings?.showroomSettings?.encarUrl || '';
+        // Provide a default fallback Encar URL if settings are empty so the showroom is never completely empty
+        const defaultEncarUrl = 'https://car.encar.com/dc/dc_cardetailview.do?method=kcarList&wtClick_korList=015';
+        const showroomUrl = settings?.showroomSettings?.encarUrl || defaultEncarUrl;
         const usdToSar = Number(settings?.currencySettings?.usdToSar || 3.75);
         const usdToKrw = Number(settings?.currencySettings?.usdToKrw || 1350);
         const auctionMultiplier = Number(settings?.currencySettings?.auctionMultiplier || 1.10);

@@ -105,8 +105,8 @@ router.post('/', requireAuthAPI, async (req, res) => {
 
         const normalizedItems = Array.isArray(items)
             ? items.map((item) => {
-                const unitPriceSar = toFiniteNumber(item?.unitPriceSar);
-                const unitPriceUsd = toFiniteNumber(item?.unitPriceUsd);
+                const unitPriceSar = Math.max(0, toFiniteNumber(item?.unitPriceSar));
+                const unitPriceUsd = Math.max(0, toFiniteNumber(item?.unitPriceUsd));
 
                 const resolvedUnitPriceSar = unitPriceSar || (unitPriceUsd > 0 ? Number((unitPriceUsd * usdToSar).toFixed(2)) : 0);
                 const resolvedUnitPriceUsd = unitPriceUsd || (unitPriceSar > 0 ? Number((unitPriceSar / usdToSar).toFixed(2)) : 0);
@@ -118,6 +118,15 @@ router.post('/', requireAuthAPI, async (req, res) => {
                 };
             })
             : [];
+
+        // التأكد العالي من الأمان (Security & Validation Checks)
+        if (!normalizedItems || normalizedItems.length === 0) {
+            return res.status(400).json({ success: false, error: 'الطلب لا يحتوي على عناصر' });
+        }
+        
+        if (normalizedPricing.grandTotalSar < 0 || normalizedPricing.subTotalSar < 0 || normalizedPricing.shippingSar < 0) {
+             return res.status(400).json({ success: false, error: 'تم التلاعب بالأسعار وإرسال قيم سالبة غير معتمدة' });
+        }
 
         // توليد رقم طلب فريد
         const orderNumber = `HM-${new Date().getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;

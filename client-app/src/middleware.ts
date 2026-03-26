@@ -14,7 +14,6 @@ const PROTECTED_CLIENT_ROUTES = [
     '/favorites',
     '/messages',
     '/notifications',
-    '/comparisons',
 ];
 
 // المسارات المحمية للمدراء
