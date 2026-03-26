@@ -31,13 +31,13 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL || (typeof window !== 'undefined' ? window.location.origin : '');
         
         const socketInstance = io(socketUrl, {
-            transports: ['websocket', 'polling'], // البدء بـ websocket والرجوع لـ polling إذا فشل
+            transports: ['polling', 'websocket'], // البدء بـ polling لأنه أصلح لبيئات Serverless مثل Vercel
             reconnection: true,
-            reconnectionAttempts: Infinity, // استمرار المحاولة للأبد
-            reconnectionDelay: 2000,        // البدء بـ ثانيتين
-            reconnectionDelayMax: 10000,    // أقصى تأخير 10 ثواني
+            reconnectionAttempts: 3,        // إيقاف المحاولات المجنونة التي تسبب اختناق المتصفح (كانت Infinity)
+            reconnectionDelay: 5000,        // البدء بـ 5 ثواني لمنح الخادم وقتاً للرد
+            reconnectionDelayMax: 15000,    // أقصى تأخير 15 ثانية
             randomizationFactor: 0.5,
-            timeout: 20000                  // مهلة الاتصال 20 ثانية
+            timeout: 10000                  // مهلة الاتصال 10 ثواني (بدلاً من 20 لتقليل التعليق)
         });
 
         socketInstance.on('connect', () => {
