@@ -203,11 +203,14 @@ export default function HomeClient({ latestCars }: HomeClientProps) {
   const liveRef = useRef<HTMLDivElement>(null);
   const [videoHeight, setVideoHeight] = useState<string>("55vh");
   const [deferredInstall, setDeferredInstall] = useState<any>(null);
-  const [isInstalled, setIsInstalled] = useState(() => {
-    // التحقق مما إذا كان التطبيق مسجلاً كمثبت في التخزين المحلي
-    if (typeof window !== 'undefined') return !!localStorage.getItem('pwa_installed');
-    return false;
-  });
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // التحقق مما إذا كان التطبيق مسجلاً كمثبت في التخزين المحلي بعد تحميل الصفحة لتجنب خطأ Hydration
+    if (typeof window !== 'undefined') {
+      setIsInstalled(!!localStorage.getItem('pwa_installed'));
+    }
+  }, []);
 
   useEffect(() => {
     const handler = (e: Event) => { e.preventDefault(); setDeferredInstall(e); };
