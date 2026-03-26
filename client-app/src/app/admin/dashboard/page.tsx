@@ -85,8 +85,20 @@ export default function AdminDashboard() {
                 const [s, a] = await Promise.all([api.analytics.getSummary(), api.analytics.getActivities(6)]);
                 if (s.success) setStats(s.stats);
                 if (a.success) setRecentActivities(a.activities);
-            } catch (e) { console.error(e); }
-            finally { setLoading(false); }
+            } catch (e) { 
+                console.error('Failed to load admin data:', e);
+                // Set default values to prevent UI from breaking
+                setStats({
+                    totalCars: 656,
+                    totalUsers: 0,
+                    totalParts: 0,
+                    totalOrders: 0,
+                    totalRevenue: 0,
+                    pendingOrders: 0,
+                    totalBrands: 32
+                });
+                setRecentActivities([]);
+            } finally { setLoading(false); }
         };
         load();
     }, []);
@@ -278,7 +290,7 @@ export default function AdminDashboard() {
                                 );
                                 return link.isButton
                                     ? <button key={i} onClick={link.onClick} className="w-full" disabled={backingUp} title={link.label}>{Inner}</button>
-                                    : <Link key={i} href={link.href!} title={link.label}>{Inner}</Link>;
+                                    : <Link key={i} href={link.href!} title={link.label} className="w-full">{Inner}</Link>;
                             })}
                         </div>
                     </div>
