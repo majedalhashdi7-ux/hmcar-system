@@ -5,7 +5,7 @@
 - Extension: 0.37.1 (prod)
 - VS Code: 1.109.0 (bdd88df003631aaa0bcbe057cb0a940b80a476fa)
 - OS: win32 10.0.19045 x64
-- GitHub Account: divdhash9-droid
+- GitHub Account: majedalhashdi7-ux
 
 ## Network
 

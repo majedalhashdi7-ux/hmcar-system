@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "debugId": "7fd5df4c-020f-5824-c097-b0280751b2a6",
-  "sections": [
-    {"offset": {"line": 1, "column": 0}, "map": {"version":3,"sources":["../../../../../client-app/src/app/profile/page.tsx"],"sourcesContent":["'use client';\n\nimport { useEffect } from 'react';\nimport { useRouter } from 'next/navigation';\n\nexport default function ProfileRedirect() {\n    const router = useRouter();\n    \n    useEffect(() => {\n        router.replace('/client/profile');\n    }, [router]);\n\n    return (\n        <div className=\"min-h-screen bg-black flex items-center justify-center\">\n            <div className=\"w-8 h-8 border-2 border-cinematic-neon-gold border-t-transparent rounded-full animate-spin\" />\n        </div>\n    );\n}\n"],"names":[],"mappings":"wDAEA,EAAA,EAAA,CAAA,CAAA,OACA,EAAA,EAAA,CAAA,CAAA,MAEe,SAAS,IACpB,IAAM,EAAS,CAAA,EAAA,EAAA,SAAA,AAAS,IAMxB,MAJA,CAAA,EAAA,EAAA,SAAA,AAAS,EAAC,KACN,EAAO,OAAO,CAAC,kBACnB,EAAG,CAAC,EAAO,EAGP,CAAA,EAAA,EAAA,GAAA,EAAC,MAAA,CAAI,UAAU,kEACX,CAAA,EAAA,EAAA,GAAA,EAAC,MAAA,CAAI,UAAU,gGAG3B"}}]
-}

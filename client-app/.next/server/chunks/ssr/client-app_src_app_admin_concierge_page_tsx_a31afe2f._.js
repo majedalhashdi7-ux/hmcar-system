@@ -1,5 +1,0 @@
-;!function(){try { var e="undefined"!=typeof globalThis?globalThis:"undefined"!=typeof global?global:"undefined"!=typeof window?window:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&((e._debugIds|| (e._debugIds={}))[n]="5b18d0eb-64c1-d33b-7801-893c6e139e6f")}catch(e){}}();
-module.exports=[87442,a=>{"use strict";var b=a.i(52615),c=a.i(80497),d=a.i(9134);function e(){let a=(0,d.useRouter)();return(0,c.useEffect)(()=>{a.replace("/admin/orders?tab=special")},[a]),(0,b.jsx)("div",{className:"min-h-screen bg-black flex items-center justify-center",children:(0,b.jsx)("div",{className:"animate-pulse text-orange-500 cockpit-mono text-xs uppercase tracking-widest",children:"Redirecting to Fulfillment Hub..."})})}a.s(["default",()=>e])}];
-
-//# debugId=5b18d0eb-64c1-d33b-7801-893c6e139e6f
-//# sourceMappingURL=client-app_src_app_admin_concierge_page_tsx_a31afe2f._.js.map

@@ -5,6 +5,7 @@ node_modules/
 
 # Build outputs
 .next/
+client-app/.next/
 out/
 build/
 dist/

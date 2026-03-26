@@ -1,5 +1,0 @@
-;!function(){try { var e="undefined"!=typeof globalThis?globalThis:"undefined"!=typeof global?global:"undefined"!=typeof window?window:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&((e._debugIds|| (e._debugIds={}))[n]="2321cc62-9df8-8d2f-cfc7-3df687d62172")}catch(e){}}();
-module.exports=[18047,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(78878);a.n(d("[project]/client-app/node_modules/next/dist/client/components/builtin/global-error.js <module evaluation>"))},60485,(a,b,c)=>{let{createClientModuleProxy:d}=a.r(78878);a.n(d("[project]/client-app/node_modules/next/dist/client/components/builtin/global-error.js"))},43353,a=>{"use strict";a.i(18047);var b=a.i(60485);a.n(b)}];
-
-//# debugId=2321cc62-9df8-8d2f-cfc7-3df687d62172
-//# sourceMappingURL=26586_next_dist_client_components_builtin_global-error_2934e358.js.map
