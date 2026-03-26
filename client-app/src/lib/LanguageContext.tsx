@@ -172,17 +172,23 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
  */
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // تهيئة اللغة مباشرة من المتصفح أو التخزين المحلي لتجنب التحديث المتأخر عند التحميل
-    const [lang, setLang] = useState<Language>(() => {
-        if (typeof window === 'undefined') return 'AR';
-        const cookieMatch = document.cookie.match(/(?:^|; )appLang=([^;]+)/);
-        const cookieLang = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
-        const storedLang = localStorage.getItem('appLang') as Language | null;
+    // تهيئة اللغة لتكون 'AR' كقيمة مبدئية لتطابق السيرفر وتجنب خطأ Hydration المميت
+    const [lang, setLang] = useState<Language>('AR');
 
-        // التحقق من صحة اللغة المخزنة
-        if (cookieLang === 'EN' || cookieLang === 'AR' || cookieLang === 'KR') return cookieLang as Language;
-        if (storedLang === 'EN' || storedLang === 'AR' || storedLang === 'KR') return storedLang as Language;
-        return 'AR'; // اللغة الافتراضية
-    });
+    // قراءة اللغة من المتصفح في الخلفية وتحديثها بصمت
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const cookieMatch = document.cookie.match(/(?:^|; )appLang=([^;]+)/);
+            const cookieLang = cookieMatch ? decodeURIComponent(cookieMatch[1]) : null;
+            const storedLang = localStorage.getItem('appLang') as Language | null;
+
+            if (cookieLang === 'EN' || cookieLang === 'AR' || cookieLang === 'KR') {
+                setLang(cookieLang as Language);
+            } else if (storedLang === 'EN' || storedLang === 'AR' || storedLang === 'KR') {
+                setLang(storedLang as Language);
+            }
+        }
+    }, []);
 
     /**
      * حفظ اللغة المختارة في التخزين المحلي وملفات البريد (Cookies)
