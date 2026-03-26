@@ -7,6 +7,7 @@
 import { motion } from "framer-motion";
 import { Wrench, Gavel, ArrowRight, Car } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useSettings } from "@/lib/SettingsContext";
 
@@ -107,16 +108,12 @@ export default function LandingShowcase({ isRTL }: LandingShowcaseProps) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.8, duration: 0.8 }}
                 >
-                    <motion.button
-                        onClick={() => router.push('/login')}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="relative inline-flex items-center gap-3 px-10 py-4 rounded-2xl font-black uppercase tracking-[0.25em] text-sm text-black bg-gradient-to-r from-accent-gold to-[#e8c97a] shadow-[0_0_40px_rgba(201,169,110,0.4)] cursor-pointer select-none overflow-hidden group/btn"
+                    <Link
+                        href="/login"
+                        className="relative inline-flex items-center gap-3 px-10 py-4 rounded-2xl font-black uppercase tracking-[0.25em] text-sm text-black bg-gradient-to-r from-accent-gold to-[#e8c97a] shadow-[0_0_40px_rgba(201,169,110,0.4)] cursor-pointer select-none overflow-hidden group/btn hover:scale-105 active:scale-95 transition-all"
                     >
-                        <motion.div
-                            animate={{ opacity: [0.4, 0.9, 0.4] }}
-                            transition={{ duration: 2.5, repeat: Infinity }}
-                            className="absolute inset-0 rounded-2xl bg-white/20 blur-sm"
+                        <div
+                            className="absolute inset-0 rounded-2xl bg-white/20 blur-sm animate-pulse"
                         />
                         <div className="absolute inset-0 bg-white/40 translate-x-[-100%] group-hover/btn:translate-x-[100%] transition-transform duration-1000" />
                         
@@ -124,7 +121,7 @@ export default function LandingShowcase({ isRTL }: LandingShowcaseProps) {
                             {isRTL ? "تسجيل الدخول" : "LOGIN"}
                         </span>
                         <ArrowRight className={`relative z-10 w-4 h-4 transition-transform group-hover/btn:translate-x-1 ${isRTL ? "rotate-180 group-hover/btn:-translate-x-1" : ""}`} />
-                    </motion.button>
+                    </Link>
                 </motion.div>
             </motion.div>
 
