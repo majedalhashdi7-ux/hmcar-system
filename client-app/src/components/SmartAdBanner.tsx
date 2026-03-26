@@ -464,7 +464,7 @@ export default function SmartAdBanner() {
 
         return (
             <div className="relative mb-8" dir={isRTL ? 'rtl' : 'ltr'}>
-                <div className="absolute inset-0 bg-gradient-to-r from-black via-white/[0.02] to-black" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-white/[0.02] to-black pointer-events-none" />
                 <div className="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none" />
                 <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none" />
 

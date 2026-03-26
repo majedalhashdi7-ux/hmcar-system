@@ -12,43 +12,47 @@ export default function SmartPrefetchProvider({ children }: { children: React.Re
     const router = useRouter();
 
     useEffect(() => {
-        // [[ARABIC_COMMENT]] لا تفعل شيئاً إذا كان الإنترنت ضعيفاً أو المستخدم في وضع توفير البيانات
         if (typeof window === 'undefined') return;
         const conn = (navigator as any).connection;
-        if (conn && (conn.saveData || conn.effectiveType.includes('2g'))) return;
+        if (conn && (conn.saveData || conn.effectiveType?.includes('2g'))) return;
 
-        const handleMouseEnter = (e: MouseEvent) => {
+        // [[ARABIC_COMMENT]] متغير لمنع التكرار (Debounce)
+        let prefetchTimer: NodeJS.Timeout;
+        const prefetchedUrls = new Set<string>();
+
+        const handleMouseOver = (e: MouseEvent) => {
             const target = (e.target as HTMLElement).closest('a');
             if (!target || !target.href) return;
 
-            const url = new URL(target.href);
+            const urlStr = target.href;
+            const url = new URL(urlStr, window.location.origin);
             if (url.origin !== window.location.origin) return;
 
             const path = url.pathname;
+            if (prefetchedUrls.has(path)) return; // تم الجلب مسبقاً
 
-            // 1. [[ARABIC_COMMENT]] إخبار Next.js بتحميل الكود البرمجي للصفحة مسبقاً
-            router.prefetch(path);
+            clearTimeout(prefetchTimer);
+            prefetchTimer = setTimeout(() => {
+                prefetchedUrls.add(path);
+                // 1. [[ARABIC_COMMENT]] إخبار Next.js بتحميل الكود
+                router.prefetch(path);
 
-            // 2. [[ARABIC_COMMENT]] إذا كان الرابط لصفحة سيارة، حمل بيانات الـ API في الكاش
-            if (path.startsWith('/cars/')) {
-                const carId = path.split('/')[2];
-                if (carId) {
-                    fetchAPI(`/api/v2/cars/${carId}`, { useCache: true }).catch(() => {});
+                // 2. [[ARABIC_COMMENT]] جلب الـ API لصفحات محددة
+                if (path.startsWith('/cars/') || path.startsWith('/parts/')) {
+                    const id = path.split('/')[2];
+                    if (id) {
+                        fetchAPI(`/api/v2${path.startsWith('/cars/') ? '/cars' : '/parts'}/${id}`, { useCache: true }).catch(() => {});
+                    }
                 }
-            }
-            
-            // 3. [[ARABIC_COMMENT]] إذا كان لقسم قطع الغيار
-            if (path.startsWith('/parts/')) {
-                const partId = path.split('/')[2];
-                if (partId) {
-                    fetchAPI(`/api/v2/parts/${partId}`, { useCache: true }).catch(() => {});
-                }
-            }
+            }, 150); // تأخير 150 ملي ثانية لعدم استنزاف المتصفح عند المرور العابر
         };
 
-        // [[ARABIC_COMMENT]] إضافة مستمع لجميع الروابط المفتوحة
-        document.addEventListener('mouseenter', handleMouseEnter, true);
-        return () => document.removeEventListener('mouseenter', handleMouseEnter, true);
+        // [[ARABIC_COMMENT]] استخدام mouseover العادي بدلاً من mouseenter بوضع capture الخانق
+        document.addEventListener('mouseover', handleMouseOver);
+        return () => {
+            document.removeEventListener('mouseover', handleMouseOver);
+            clearTimeout(prefetchTimer);
+        };
     }, [router]);
 
     return <>{children}</>;
