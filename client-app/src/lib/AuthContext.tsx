@@ -109,30 +109,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     }, [clearAuth, clearCookies]);
 
-    // التحقق من الجلسة وتحديث نبض الاتصال (Heartbeat)
+    // [[ARABIC_COMMENT]] 1. التحقق من الجلسة مرة واحدة عند التحميل
     useEffect(() => {
         checkExistingLogin();
+    }, [checkExistingLogin]);
 
-    // إرسال إشارة نبض كل 5 دقائق لإبلاغ السيرفر أن المستخدم متصل (Online)
-        // تم تزيد المدة من دقيقة إلى 5 دقائق لتخفيف الضغط على السيرفر
+    // [[ARABIC_COMMENT]] 2. إرسال إشارة نبض كل 5 دقائق لإبلاغ السيرفر أن المستخدم متصل
+    useEffect(() => {
         let heartbeatInterval: NodeJS.Timeout;
+        let initialTimeout: NodeJS.Timeout;
+
         if (user) {
             const sendHeartbeat = () => {
                 api.users.heartbeat().catch(() => {}); // صامت - لا يعرض أخطاء
             };
             // تأخير 3 ثوانٍ قبل الإرسال الأول لإعطاء الصفحة وقت للتحميل
-            const initial = setTimeout(sendHeartbeat, 3000);
+            initialTimeout = setTimeout(sendHeartbeat, 3000);
             heartbeatInterval = setInterval(sendHeartbeat, 5 * 60 * 1000); // 5 دقائق
-            return () => {
-                clearTimeout(initial);
-                if (heartbeatInterval) clearInterval(heartbeatInterval);
-            };
         }
 
         return () => {
+            if (initialTimeout) clearTimeout(initialTimeout);
             if (heartbeatInterval) clearInterval(heartbeatInterval);
         };
-    }, [checkExistingLogin, user]);
+    }, [user]);
 
     function refreshUser() {
         checkExistingLogin();
