@@ -144,9 +144,9 @@ export default function Navbar() {
 
                                 {!isLoggedIn && (
                                     <Link href="/login" className="hidden sm:block">
-                                        <button className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all">
+                                        <div className="px-5 py-2.5 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer">
                                             {isRTL ? rawText('دخول') : rawText('SIGN IN')}
-                                        </button>
+                                        </div>
                                     </Link>
                                 )}
 
@@ -281,10 +281,10 @@ export default function Navbar() {
                             <div className="p-6 border-t border-white/5 space-y-3">
                                 {!isLoggedIn && (
                                     <Link href="/login" className="block">
-                                        <button className="w-full btn-luxury py-4 rounded-xl text-[12px]">
+                                        <div className="w-full btn-luxury py-4 rounded-xl text-[12px] flex items-center justify-center gap-2 cursor-pointer">
                                             <User className="w-3.5 h-3.5" />
                                             {isRTL ? rawText('تسجيل الدخول') : rawText('SIGN IN')}
-                                        </button>
+                                        </div>
                                     </Link>
                                 )}
                             </div>

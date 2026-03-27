@@ -151,6 +151,33 @@ export default async function RootLayout({
         <link rel="apple-touch-startup-image" href="/splash_screens/10.2__iPad_portrait.png" media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
         <link rel="apple-touch-startup-image" href="/splash_screens/7.9__iPad_mini_landscape.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)" />
         <link rel="apple-touch-startup-image" href="/splash_screens/7.9__iPad_mini_portrait.png" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" />
+        
+        {/* [[ARABIC_COMMENT]] سكريبت معالجة الأخطاء الذاتي (Self-Healing) لتجاوز الكاش المعطوب */}
+        <script dangerouslySetInnerHTML={{
+          __html: `
+            window.addEventListener('error', function(e) {
+              if (e.message && (e.message.indexOf('Maximum update depth exceeded') > -1 || e.message.indexOf('Minified React error #185') > -1 || e.message.indexOf('Minified React error #321') > -1)) {
+                console.warn('[Self-Healing] Fatal React loop detected. Clearing Service Workers & cache...');
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    for(var i = 0; i < regs.length; i++) { regs[i].unregister(); }
+                  });
+                }
+                if ('caches' in window) {
+                  caches.keys().then(function(names) {
+                    for(var i = 0; i < names.length; i++) { caches.delete(names[i]); }
+                  });
+                }
+                sessionStorage.setItem('hm_crash_recovery', '1');
+                setTimeout(function() { window.location.reload(true); }, 500);
+              }
+            });
+            if (sessionStorage.getItem('hm_crash_recovery')) {
+              console.log('[Self-Healing] Recovered from crash.');
+              sessionStorage.removeItem('hm_crash_recovery');
+            }
+          `
+        }} />
       </head>
       <body className={`antialiased selection:bg-white/20 selection:text-white ${tajawal.variable}`}>
         {/* [[ARABIC_COMMENT]] فاحص أداء الواجهة - يظهر فقط في بيئة التطوير للمساعدة في تحسين السرعة */}
