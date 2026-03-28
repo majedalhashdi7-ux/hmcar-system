@@ -6,6 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { requireAuthAPI } = require('../../../middleware/auth');
+const { uploadLimiter } = require('../../../middleware/rateLimiter');
 const config = require('../../../modules/core/config');
 const cloudinaryLib = require('cloudinary').v2;
 
@@ -42,8 +43,8 @@ const upload = multer({
     }
 });
 
-// Upload endpoint
-router.post('/', requireAuthAPI, upload.single('image'), async (req, res) => {
+// Upload endpoint - مع uploadLimiter للحماية من الرفع المفرط
+router.post('/', uploadLimiter, requireAuthAPI, upload.single('image'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({

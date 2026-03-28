@@ -10,12 +10,20 @@ const express = require('express');
 const router = express.Router();
 const { apiRateLimiter } = require('../../../middleware/securityEnhanced');
 const { autoCacheMiddleware } = require('../../../middleware/autoCache');
+const { 
+  generalLimiter, 
+  authLimiter, 
+  strictLimiter, 
+  publicLimiter,
+  searchLimiter,
+  uploadLimiter 
+} = require('../../../middleware/rateLimiter');
 
 /**
  * إعداد طبقة تقييد الطلبات (Rate Limiter)
  * لحماية الخادم من الهجمات وزيادة عدد الطلبات من نفس العنوان.
  */
-router.use(apiRateLimiter);
+router.use(generalLimiter);
 
 /**
  * معلومات الإصدار الحالي للـ API
@@ -69,35 +77,36 @@ router.get('/health', async (req, res) => {
 
 // --- ربط المسارات الفرعية (Sub-Routes) ---
 
-router.use('/tenant', require('./tenant'));              // نظام المعارض المتعددة (Multi-Tenant)
-router.use('/auth', require('./auth'));                  // المصادقة
-router.use('/users', require('./users'));                // المستخدمين
-router.use('/cars', autoCacheMiddleware({ ttl: 300 }), require('./cars'));    // [[ARABIC_COMMENT]] كاش للسيارات لمدة 5 دقائق
-router.use('/auctions', require('./auctions'));          // المزادات
-router.use('/parts', autoCacheMiddleware({ ttl: 300 }), require('./parts'));  // [[ARABIC_COMMENT]] كاش لقطع الغيار لمدة 5 دقائق
-router.use('/dashboard', require('./dashboard'));        // لوحة التحكم
-router.use('/orders', require('./orders'));              // الطلبات
-router.use('/notifications', require('./notifications')); // التنبيهات
-router.use('/analytics', require('./analytics'));        // التحليلات
-router.use('/upload', require('./upload.js'));           // رفع الملفات
+router.use('/tenant', publicLimiter, require('./tenant'));              // نظام المعارض المتعددة (Multi-Tenant)
+router.use('/auth', authLimiter, require('./auth'));                    // المصادقة - حماية مشددة
+router.use('/users', strictLimiter, require('./users'));                // المستخدمين - حماية متوسطة
+router.use('/cars', publicLimiter, autoCacheMiddleware({ ttl: 300 }), require('./cars'));    // [[ARABIC_COMMENT]] كاش للسيارات لمدة 5 دقائق
+router.use('/auctions', strictLimiter, require('./auctions'));          // المزادات - حماية متوسطة
+router.use('/parts', publicLimiter, autoCacheMiddleware({ ttl: 300 }), require('./parts'));  // [[ARABIC_COMMENT]] كاش لقطع الغيار لمدة 5 دقائق
+router.use('/dashboard', strictLimiter, require('./dashboard'));        // لوحة التحكم - حماية متوسطة
+router.use('/orders', strictLimiter, require('./orders'));              // الطلبات - حماية متوسطة
+router.use('/notifications', publicLimiter, require('./notifications')); // التنبيهات
+router.use('/analytics', strictLimiter, require('./analytics'));        // التحليلات - حماية متوسطة
+router.use('/upload', uploadLimiter, require('./upload.js'));           // رفع الملفات - حد صارم
+router.use('/search', searchLimiter);                                   // البحث - حد متوسط
 router.use('/settings', autoCacheMiddleware({ ttl: 600 }), require('./settings')); // [[ARABIC_COMMENT]] كاش للإعدادات لمدة 10 دقائق
-router.use('/messages', require('./messages'));          // الرسائل
-router.use('/reviews', require('./reviews'));            // التقييمات
-router.use('/comparisons', require('./comparisons'));    // المقارنات
-router.use('/brands', require('./brands'));              // الماركات
-router.use('/contact', require('./contact'));            // الاتصال
-router.use('/leads', require('./leads'));                // العملاء المحتملون (Leads)
-router.use('/favorites', require('./favorites'));        // المفضلة
-router.use('/bids', require('./bids'));                  // المزايدات
-router.use('/live-auctions', require('./live-auctions'));// المزادات المباشرة
-router.use('/live-auction-requests', require('./live-auction-requests')); // طلبات الشراء للمزاد المباشر
-router.use('/smart-alerts', require('./smart-alerts')); // التنبيهات الذكية
-router.use('/security', require('./security'));         // قسم الأمان والأجهزة المحظورة
-router.use('/backup', require('./backup'));             // [[ARABIC_COMMENT]] النسخ الاحتياطي التلقائي
-router.use('/concierge', require('./concierge'));       // الطلبات الخاصة (طلب سيارة / قطع غيار)
-router.use('/showroom', require('./showroom'));          // المعرض الكوري (Encar)
-router.use('/invoices', require('./invoices'));          // نظام الفواتير المخصص (Invoices)
-router.use('/system', require('./system'));            // الفحص الشامل للنظام
+router.use('/messages', publicLimiter, require('./messages'));          // الرسائل
+router.use('/reviews', publicLimiter, require('./reviews'));            // التقييمات
+router.use('/comparisons', publicLimiter, require('./comparisons'));    // المقارنات
+router.use('/brands', publicLimiter, require('./brands'));              // الماركات
+router.use('/contact', strictLimiter, require('./contact'));            // الاتصال - حماية متوسطة
+router.use('/leads', strictLimiter, require('./leads'));                // العملاء المحتملون (Leads)
+router.use('/favorites', publicLimiter, require('./favorites'));        // المفضلة
+router.use('/bids', strictLimiter, require('./bids'));                  // المزايدات - حماية متوسطة
+router.use('/live-auctions', publicLimiter, require('./live-auctions'));// المزادات المباشرة
+router.use('/live-auction-requests', strictLimiter, require('./live-auction-requests')); // طلبات الشراء للمزاد المباشر
+router.use('/smart-alerts', publicLimiter, require('./smart-alerts')); // التنبيهات الذكية
+router.use('/security', strictLimiter, require('./security'));         // قسم الأمان والأجهزة المحظورة
+router.use('/backup', strictLimiter, require('./backup'));             // [[ARABIC_COMMENT]] النسخ الاحتياطي التلقائي
+router.use('/concierge', strictLimiter, require('./concierge'));       // الطلبات الخاصة (طلب سيارة / قطع غيار)
+router.use('/showroom', publicLimiter, require('./showroom'));          // المعرض الكوري (Encar)
+router.use('/invoices', strictLimiter, require('./invoices'));          // نظام الفواتير المخصص (Invoices)
+router.use('/system', strictLimiter, require('./system'));            // الفحص الشامل للنظام
 
 /**
  * معالج الأخطاء المركزي لمسارات API

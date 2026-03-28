@@ -7,12 +7,13 @@ const bcrypt = require('bcrypt');
 const { getModel } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI } = require('../../../middleware/auth');
 const { authRateLimiter, fullSecurityMiddleware } = require('../../../middleware/securityEnhanced');
+const { authLimiter } = require('../../../middleware/rateLimiter');
 
 // تطبيق ميدلوير الأمان العام على جميع مسارات المصادقة
 router.use(fullSecurityMiddleware);
 
-// Register endpoint
-router.post('/register', authRateLimiter, async (req, res) => {
+// Register endpoint - استخدام authLimiter الجديد
+router.post('/register', authLimiter, async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
     const User = getModel(req, 'User');
@@ -113,7 +114,7 @@ router.post('/register', authRateLimiter, async (req, res) => {
 
 // Auto Register/Login endpoint for clients
 // إذا لم يكن المستخدم موجوداً، يتم إنشاؤه تلقائياً
-router.post('/auto-login', authRateLimiter, async (req, res) => {
+router.post('/auto-login', authLimiter, async (req, res) => {
   try {
     const { name, password, deviceId } = req.body;
     const User = getModel(req, 'User');
@@ -302,7 +303,7 @@ router.post('/auto-login', authRateLimiter, async (req, res) => {
 });
 
 // Login endpoint
-router.post('/login', authRateLimiter, async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, phone, name, identifier, password, role, deviceInfo, deviceId, rememberMe } = req.body;
     const User = getModel(req, 'User');
@@ -624,7 +625,7 @@ router.post('/change-password', requireAuthAPI, async (req, res) => {
 });
 
 // Forgot password endpoint
-router.post('/forgot-password', authRateLimiter, async (req, res) => {
+router.post('/forgot-password', authLimiter, async (req, res) => {
   try {
     const { email, phone } = req.body;
     const User = getModel(req, 'User');
