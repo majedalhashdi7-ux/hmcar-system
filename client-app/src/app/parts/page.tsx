@@ -2,21 +2,13 @@
 
 /**
  * صفحة قطع الغيار (Spare Parts Page)
- * تتيح للمستخدمين البحث عن قطع الغيار المتاحة عبر خطوات منظمة:
- * 1. اختيار الوكالة (Agency): مثل تويوتا، كيا، كاديلاك، إلخ.
- * 2. اختيار الموديل (Model): مثل كامري، كورولا، إلخ.
- * 3. عرض القطع (Parts): قائمة بجميع المكونات المتاحة المتوافقة مع الخيارات المختارة.
  */
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import {
-    Search,
-    AlertCircle, Zap,
-    ChevronLeft, ChevronRight
-} from "lucide-react";
-
+import { Search, AlertCircle, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import PartCard from "@/components/PartCard";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 import { api } from "@/lib/api";
@@ -513,58 +505,14 @@ export default function PartsPage() {
                                         </Link>
                                     </motion.div>
                                 ) : (
-                                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
+                                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
                                         {filteredParts.map((part, idx) => (
-                                            <motion.div
+                                            <PartCard
                                                 key={part.id}
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: idx * 0.05 }}
-                                                className="group relative cursor-pointer"
+                                                part={part}
+                                                index={idx}
                                                 onClick={() => openPartModal(part)}
-                                            >
-                                                <div className="glass-card bg-black/40 backdrop-blur-3xl border border-white/10 rounded-[32px] p-6 hover:border-accent-gold/40 transition-all duration-700">
-                                                    <div className="relative aspect-square mb-6 rounded-2xl overflow-hidden bg-white/5 border border-white/5">
-                                                        <Image
-                                                            src={resolvePartImage(part)}
-                                                            alt={part.name}
-                                                            fill
-                                                            className="object-cover group-hover:scale-110 transition-transform duration-700"
-                                                            unoptimized
-                                                            referrerPolicy="no-referrer"
-                                                        />
-                                                        <div className="absolute top-4 right-4 px-3 py-1 bg-black/60 backdrop-blur-md rounded-full border border-white/10 text-[7px] font-black uppercase tracking-widest">{part.condition}</div>
-                                                        {/* [[ARABIC_COMMENT]] overlay يظهر عند hover */}
-                                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                                                            <span className="text-white text-[11px] font-black uppercase tracking-widest border border-white/40 px-4 py-2 rounded-full">
-                                                                {isRTL ? 'عرض التفاصيل' : 'VIEW DETAILS'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="space-y-3">
-                                                        <span className="text-[8px] font-black text-accent-gold uppercase tracking-[0.3em]">
-                                                            {!isRTL && (part as any).carMakeEn ? (part as any).carMakeEn : part.brand}
-                                                        </span>
-                                                        <h3 className="text-lg font-black uppercase tracking-tight leading-tight min-h-[3rem] group-hover:text-accent-gold transition-colors">
-                                                            {getPartDisplayName(part)}
-                                                        </h3>
-                                                        <p className="text-[10px] text-white/35 uppercase tracking-widest">
-                                                            {!isRTL && (part as any).partTypeEn
-                                                                ? (part as any).partTypeEn
-                                                                : (part.categoryAr || part.category)}
-                                                        </p>
-                                                        <div className="text-xl font-black gradient-text-gold">{formatPrice(Number(part.price))}</div>
-                                                        {part.stockQty !== undefined && (
-                                                            <div className={`text-[10px] font-black uppercase tracking-widest ${part.stockQty > 5 ? 'text-green-400' : part.stockQty > 0 ? 'text-yellow-400' : 'text-red-400'
-                                                                }`}>
-                                                                {part.stockQty > 0
-                                                                    ? (isRTL ? `متوفر: ${part.stockQty} قطعة` : `In Stock: ${part.stockQty}`)
-                                                                    : (isRTL ? 'غير متوفر' : 'Out of Stock')}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </motion.div>
+                                            />
                                         ))}
                                     </div>
                                 )}

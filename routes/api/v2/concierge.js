@@ -3,7 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const ConciergeRequest = require('../../../models/ConciergeRequest');
-const Notification = require('../../../models/Notification');
+const UserNotification = require('../../../models/UserNotification');
 const User = require('../../../models/User');
 const { requireAuthAPI, requireAdmin } = require('../../../middleware/auth');
 
@@ -89,11 +89,10 @@ router.post('/', async (req, res) => {
                     title: notifTitle,
                     message: notifMsg,
                     type: 'info',
-                    link: '/admin/concierge',
-                    status: 'new',
+                    actionUrl: '/admin/concierge',
                     read: false
                 }));
-                await Notification.insertMany(notifications);
+                await UserNotification.insertMany(notifications);
             }
         } catch (notifErr) {
             console.error('Failed to create admin notifications:', notifErr);

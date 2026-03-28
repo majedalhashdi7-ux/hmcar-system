@@ -20,8 +20,8 @@ const crypto = require('crypto');
 // تحميل متغيرات البيئة
 dotenv.config();
 
-const isProduction = (process.env.NODE_ENV || 'development') === 'production';
-const isTestEnv = (process.env.NODE_ENV || '').toLowerCase() === 'test';
+const isProduction = ((process.env.NODE_ENV || 'development').trim().replace(/\r?\n/g, '')) === 'production';
+const isTestEnv = ((process.env.NODE_ENV || '').trim().replace(/\r?\n/g, '')).toLowerCase() === 'test';
 const isMochaRun = process.argv.some((arg) => String(arg).toLowerCase().includes('mocha'));
 const forceMemoryDb = (isTestEnv || isMochaRun) && process.env.TEST_USE_REMOTE_DB !== 'true';
 const defaultMongoUri = forceMemoryDb
@@ -57,12 +57,9 @@ const database = {
 
   // خيارات الاتصال
   options: {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    maxPoolSize: 50, // [[ARABIC_COMMENT]] رفع الحد الأقصى للاتصالات لدعم المزيد من المستخدمين المتزامنين
+    maxPoolSize: 50,
     serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
-    bufferMaxEntries: 0,
     bufferCommands: false
   }
 };
@@ -72,14 +69,14 @@ const database = {
  */
 const server = {
   // معلومات أساسية
-  port: process.env.PORT || 4002,
+  port: process.env.PORT || 4001,
   host: process.env.HOST || 'localhost',
 
   // بيئة التشغيل
   env: process.env.NODE_ENV || 'development',
 
   // عنوان URL الأساسي
-  baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 4002}`,
+  baseUrl: process.env.BASE_URL || `http://localhost:${process.env.PORT || 4001}`,
 
   // إعدادات الجلسات
   session: {
@@ -121,13 +118,14 @@ const security = {
       ];
 
       // في بيئة التطوير
-      if (process.env.NODE_ENV !== 'production') {
+      if (!isProduction) {
         return callback(null, allowedInDev.includes(origin) || origin.startsWith('http://localhost'));
       }
 
       // في بيئة الإنتاج: السماح لـ Vercel + OKIGO + ALLOWED_ORIGINS
       const allowedProd = [
         'https://hmcar.okigo.net',
+        'https://www.hmcar.okigo.net',
         'https://car-auction-sand.vercel.app',
         'https://client-app-iota-eight.vercel.app',
         'https://client-app-iota-eight-daood-alhashdis-projects.vercel.app',
@@ -139,7 +137,6 @@ const security = {
       if (process.env.CLIENT_URL) allowedProd.push(process.env.CLIENT_URL.trim());
       if (process.env.BASE_URL) allowedProd.push(process.env.BASE_URL.trim());
 
-      // اقبل أي نطاق ينتهي بـ .vercel.app أو .okigo.net أو أي من القائمة
       const isVercel = origin.endsWith('.vercel.app');
       const isOkigo = origin.endsWith('.okigo.net');
       const isAllowed = allowedProd.includes(origin) || isVercel || isOkigo;

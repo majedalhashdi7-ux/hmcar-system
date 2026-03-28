@@ -1,4 +1,6 @@
-// [[ARABIC_HEADER]] هذا الملف (middleware/cache.js) جزء من مشروع HM CAR ويحتوي تعليقات عربية لضمان الوضوح.
+// [[ARABIC_HEADER]] هذا الملف (middleware/cache.js) جزء من مشروع HM CAR
+// cache.js: كاش يدوي للـ routes (يُستخدم في cars, brands, settings)
+// autoCache.js: كاش تلقائي على مستوى الـ router (يُستخدم في index.js)
 
 const cacheService = require('../services/CacheService');
 

@@ -2,7 +2,7 @@
 
 const mongoose = require('mongoose');
 const User = require('../models/User');
-const Settings = require('../models/Settings');
+const SiteSettings = require('../models/SiteSettings');
 const { getDefaultPermissions } = require('../middleware/permissions');
 
 async function initializeSystem() {
@@ -22,9 +22,9 @@ async function initializeSystem() {
     }
 
     // إنشاء أو تحديث الإعدادات الافتراضية (باستخدام findOneAndUpdate للأسرع)
-    let settings = await Settings.findOneAndUpdate(
-      {},
-      { $setOnInsert: { /* default settings */ } },
+    let settings = await SiteSettings.findOneAndUpdate(
+      { key: 'main' },
+      { $setOnInsert: { key: 'main' } },
       { upsert: true, new: true }
     );
     console.log('✅ Settings initialized');

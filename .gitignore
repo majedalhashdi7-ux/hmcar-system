@@ -24,6 +24,10 @@ dist/
 .env.vercel*
 .env.production.vercel
 
+# Backups & sensitive archives
+backups/
+config/image/
+
 # Database
 database-data/
 *.log
@@ -50,6 +54,11 @@ npm-debug.log*
 # Coverage
 coverage/
 .nyc_output/
+
+# ESLint/Test reports
+lint_results.json
+eslint_report.json
+*.report.json
 
 # Testing
 test-results/

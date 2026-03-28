@@ -4,8 +4,11 @@
  * يحتوي على الدوال الأساسية لإرسال واستقبال البيانات من الخادم (Backend).
  */
 
-// الأفضل استخدام الرابط الثابت في الإنتاج إذا كان العميل والارسال منفصلين
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://hmcar.okigo.net';
+// في الإنتاج على Vercel: استخدم مسار نسبي (vercel.json يوجه /api/* للباكند)
+// في التطوير: استخدم NEXT_PUBLIC_API_URL أو localhost
+const API_BASE_URL = (typeof window !== 'undefined' && window.location.hostname !== 'localhost')
+    ? ''  // مسار نسبي - vercel.json يتولى التوجيه
+    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001');
 
 import { apiCache } from './api-cache';
 
@@ -278,6 +281,10 @@ export const api = {
         updateStatus: (id: string, status: string) => fetchAPI(`/api/v2/invoices/${id}/status`, {
             method: 'PATCH',
             body: JSON.stringify({ status }),
+        }),
+        update: (id: string, data: any) => fetchAPI(`/api/v2/invoices/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
         }),
         delete: (id: string) => fetchAPI(`/api/v2/invoices/${id}`, { method: 'DELETE' }),
     },

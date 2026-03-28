@@ -24,8 +24,24 @@ class SocketModule {
     init(server) {
         this.io = new Server(server, {
             cors: {
-                origin: "*", // في بيئة الإنتاج يفضل تحديد النطاقات بدقة
-                methods: ["GET", "POST"]
+                origin: process.env.NODE_ENV === 'production'
+                    ? (origin, callback) => {
+                        const allowed = [
+                            'https://hmcar.okigo.net',
+                            'https://www.hmcar.okigo.net',
+                            'https://car-auction-sand.vercel.app',
+                            'https://client-app-iota-eight.vercel.app',
+                            ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) : [])
+                        ];
+                        if (!origin || allowed.includes(origin) || origin.endsWith('.okigo.net')) {
+                            callback(null, true);
+                        } else {
+                            callback(new Error('Not allowed by CORS'));
+                        }
+                    }
+                    : '*',
+                methods: ["GET", "POST"],
+                credentials: true
             }
         });
 

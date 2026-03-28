@@ -2,7 +2,7 @@
 
 const { requireAuth } = require('./auth');
 const User = require('../models/User');
-const Settings = require('../models/Settings');
+// Settings imported via SiteSettings when needed
 
 // دالة التحقق من الصلاحيات
 const checkPermission = (user, permission) => {

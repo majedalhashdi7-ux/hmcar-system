@@ -23,8 +23,8 @@ function parseBool(value, fallback = false) {
 
 class ServerConfig {
   constructor() {
-    this.isDevelopment = process.env.NODE_ENV === 'development';
-    this.isProduction = process.env.NODE_ENV === 'production';
+    this.isDevelopment = (process.env.NODE_ENV || '').trim().replace(/\r?\n/g, '') === 'development';
+    this.isProduction = (process.env.NODE_ENV || '').trim().replace(/\r?\n/g, '') === 'production';
     this.isVercel = !!process.env.VERCEL;
     
     // إعدادات المنافذ

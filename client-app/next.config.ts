@@ -103,26 +103,16 @@ const nextConfig: NextConfig = {
   // [[ARABIC_COMMENT]] إعادة توجيه الطلبات
   // ─────────────────────────────────────────────
   async rewrites() {
-    // [[ARABIC_COMMENT]] إذا وُجد NEXT_PUBLIC_API_URL يُطبَّق proxy في كل البيئات
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (apiUrl) {
+    // vercel.json يتولى توجيه /api/* للباكند
+    // في التطوير المحلي فقط نوجه لـ localhost
+    if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
       return [
         {
           source: "/api/:path*",
-          destination: `${apiUrl}/api/:path*`,
+          destination: "http://localhost:4001/api/:path*",
         },
       ];
     }
-    // [[ARABIC_COMMENT]] في التطوير المحلي بدون NEXT_PUBLIC_API_URL: توجيه إلى Express على localhost:4002
-    if (process.env.NODE_ENV !== 'production') {
-      return [
-        {
-          source: "/api/:path*",
-          destination: "http://localhost:4002/api/:path*",
-        },
-      ];
-    }
-    // [[ARABIC_COMMENT]] في الإنتاج من الجذر: vercel.json يتولى التوجيه
     return [];
   },
 

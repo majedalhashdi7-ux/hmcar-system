@@ -238,7 +238,7 @@ function CarsContent() {
             const submitData = { 
                 ...formData,
                 source: formData.source || inventorySource,
-                listingType: (formData.source || inventorySource) === 'korean_import' ? 'showroom' : 'store',
+                listingType: formData.listingType || ((formData.source || inventorySource) === 'korean_import' ? 'showroom' : 'store'),
                 priceUsd: formData.usdPrice,
                 priceKrw: formData.krwPrice
             };

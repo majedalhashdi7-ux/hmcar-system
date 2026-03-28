@@ -225,7 +225,7 @@ function translateCar(car) {
         badge: badge,
         title: `${manuAr} ${translateTokens(model)} ${translateTokens(badge)}`.trim(),
         titleKr: `${manufacturer} ${model} ${badge}`.trim(),
-        year: car.Year || 0,
+        year: car.Year > 9999 ? Math.floor(car.Year / 100) : (car.Year || 0), // إصلاح YYYYMM → YYYY
         mileage: car.Mileage || 0,
         priceKrw: priceKrw,
         fuel: fuel,
@@ -321,7 +321,7 @@ router.get('/cars', async (req, res) => {
             badge: '',
             title: car.title || '',
             titleKr: car.title || '',
-            year: car.year || 0,
+            year: (car.year > 9999 ? Math.floor(car.year / 100) : (car.year || 0)),
             mileage: car.mileage || 0,
             priceKrw: car.priceKrw || Math.round((Number(car.priceUsd || 0) * usdToKrw)),
             priceUsd: Number(car.priceUsd || ((car.priceKrw || 0) / usdToKrw) || ((car.priceSar || car.price || 0) / usdToSar) || 0),
@@ -424,7 +424,7 @@ router.post('/scrape', requireAuthAPI, requireAdmin, async (req, res) => {
                         make: item.manufacturerAr,
                         makeLogoUrl: brand ? brand.logoUrl : '',
                         model: item.model,
-                        year: item.year,
+                        year: item.year > 9999 ? Math.floor(item.year / 100) : item.year, // إصلاح YYYYMM → YYYY
                         mileage: item.mileage,
                         price: computedSar,
                         priceSar: computedSar,

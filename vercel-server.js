@@ -1,57 +1,74 @@
 // vercel-server.js - المدخل الرئيسي لبيئة Vercel Serverless
-// مُحسَّن بالكامل لتجنب أخطاء الـ Cold Start و DB Connection
 
 const mongoose = require('mongoose');
 
-// ── 1. ثوابت ──
+// ── ثوابت ──
 const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
+const IS_VERCEL = !!(process.env.VERCEL || process.env.VERCEL_ENV);
+
 const DB_OPTIONS = {
-  maxPoolSize: 5,
-  serverSelectionTimeoutMS: 20000,
-  socketTimeoutMS: 45000,
-  connectTimeoutMS: 20000,
-  bufferCommands: true,
+  maxPoolSize: 10, // زيادة للـ serverless
+  minPoolSize: 2,
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 60000,
+  connectTimeoutMS: 30000,
+  bufferCommands: false, // أفضل للـ serverless
   retryWrites: true,
   w: 'majority',
+  maxIdleTimeMS: 10000, // إغلاق الاتصالات الخاملة
 };
 
-// ── 2. كاش مشترك بين invocations (Warm Lambda) ──
-let cachedApp = null;
 let connectionPromise = null;
 
-// ── 3. إنشاء اتصال DB آمن مع Promise caching ──
 async function connectDB() {
-  // إذا كان الاتصال قائماً، لا تعيد الاتصال
-  if (mongoose.connection.readyState === 1) {
-    return;
-  }
-
-  // إذا كان هناك اتصال جاري، انتظره
-  if (connectionPromise) {
-    return connectionPromise;
-  }
-
-  // إنشاء اتصال جديد
+  if (mongoose.connection.readyState === 1) return;
+  if (connectionPromise) return connectionPromise;
   connectionPromise = mongoose.connect(MONGO_URI, DB_OPTIONS)
-    .then(() => {
-      console.log('[Vercel] ✅ MongoDB connected successfully');
-      connectionPromise = null;
-    })
-    .catch((err) => {
-      console.error('[Vercel] ❌ MongoDB connection failed:', err.message);
-      connectionPromise = null;
-      throw err;
-    });
-
+    .then(() => { connectionPromise = null; })
+    .catch((err) => { connectionPromise = null; throw err; });
   return connectionPromise;
 }
 
-// ── 4. بناء تطبيق Express ──
-function buildApp() {
-  if (cachedApp) return cachedApp;
+// قائمة الـ origins المسموح بها
+const ALLOWED_ORIGINS = [
+  'https://hmcar.okigo.net',
+  'https://www.hmcar.okigo.net',
+  'https://car-auction-sand.vercel.app',
+  'https://client-app-iota-eight.vercel.app',
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean) : []),
+];
 
+function isOriginAllowed(origin) {
+  if (!origin) return true;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  
+  // السماح فقط للدومينات الموثوقة
+  if (origin.endsWith('.okigo.net')) return true;
+  if (origin.includes('localhost') || origin.includes('127.0.0.1')) return true;
+  
+  // Vercel domains - فقط للمشروع الحالي
+  if (origin.includes('car-auction') && origin.endsWith('.vercel.app')) return true;
+  if (origin.includes('client-app') && origin.endsWith('.vercel.app')) return true;
+  
+  return false;
+}
+
+function setCorsHeaders(req, res) {
+  const origin = req.headers.origin;
+  if (origin && isOriginAllowed(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  } else if (!origin) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,X-Tenant-ID');
+  res.setHeader('Access-Control-Max-Age', '86400');
+}
+
+function buildApp() {
   const express = require('express');
-  const cors = require('cors');
   const helmet = require('helmet');
   const compression = require('compression');
   const path = require('path');
@@ -59,126 +76,77 @@ function buildApp() {
 
   const app = express();
 
-  // Security
-  app.use(helmet({
-    contentSecurityPolicy: false, // تعطيل CSP لتسهيل Vercel
-  }));
+  // CORS middleware - أول شيء
+  app.use((req, res, next) => {
+    setCorsHeaders(req, res);
+    if (req.method === 'OPTIONS') return res.status(204).end();
+    next();
+  });
 
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.use(compression());
-
-  // CORS
-  app.use(cors({
-    origin: function(origin, callback) {
-      if (!origin) return callback(null, true);
-      const allowed = [
-        'https://hmcar.okigo.net',
-        'https://car-auction-sand.vercel.app',
-        'https://client-app-iota-eight.vercel.app',
-      ];
-      const isOk = allowed.includes(origin)
-        || origin.endsWith('.vercel.app')
-        || origin.endsWith('.okigo.net')
-        || origin.includes('localhost');
-      callback(isOk ? null : new Error('CORS blocked'), isOk);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Tenant-ID'],
-  }));
-
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-  // Uploads (static)
   app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
   app.use('/public', express.static(path.join(__dirname, 'public')));
-
-  // Multi-Tenant Middleware
   app.use(tenantMiddleware({ required: false, connectDb: true }));
 
-  // ── Routes ──
   app.get('/health', (req, res) => {
     res.json({
       status: 'ok',
       db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-      env: process.env.NODE_ENV,
+      env: (process.env.NODE_ENV || '').trim(),
+      isVercel: IS_VERCEL,
       timestamp: new Date().toISOString(),
     });
   });
 
-  // Load API v2 routes
   try {
     const apiV2Router = require('./routes/api/v2/index');
     app.use('/api/v2', apiV2Router);
     app.use('/v2', apiV2Router);
     app.use('/api', apiV2Router);
-    console.log('[Vercel] ✅ API routes loaded successfully');
   } catch (err) {
     console.error('[Vercel] ❌ Failed to load API routes:', err.message);
-    console.error('[Vercel] ❌ Stack trace:', err.stack);
-    // تقديم route بديل لإعطاء رسالة واضحة
     app.use('/api', (req, res) => {
-      res.status(503).json({
-        success: false,
-        message: 'API routes failed to load',
-        error: err.message,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-      });
+      res.status(503).json({ success: false, message: 'API routes failed to load', error: err.message });
     });
   }
 
-  // 404 Handler
   app.use((req, res) => {
     res.status(404).json({ success: false, message: 'Route not found', path: req.path });
   });
 
-  // Error Handler
   app.use((err, req, res, next) => {
     console.error('[Vercel] Express error:', err.message);
-    res.status(err.status || 500).json({
-      success: false,
-      message: err.message || 'Internal Server Error',
-    });
+    res.status(err.status || 500).json({ success: false, message: err.message || 'Internal Server Error' });
   });
 
-  cachedApp = app;
   return app;
 }
 
-// ── 5. الـ Handler الرئيسي ──
+// ── Handler الرئيسي ──
 module.exports = async (req, res) => {
+  // CORS على مستوى الـ handler - قبل أي شيء
+  setCorsHeaders(req, res);
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
   try {
-    // اتصال DB
     if (!MONGO_URI) {
-      return res.status(500).json({
-        success: false,
-        message: 'MONGO_URI environment variable is not set',
-        code: 'MISSING_ENV',
-      });
+      return res.status(500).json({ success: false, message: 'MONGO_URI is not set', code: 'MISSING_ENV' });
     }
 
-    // حاول الاتصال بقاعدة البيانات
-    try {
-      await connectDB();
-    } catch (dbError) {
-      console.error('[Vercel] DB connection error:', dbError.message);
-      // لا نوقف التطبيق - نستمر وقد يعمل من الـ connection pool
+    try { await connectDB(); } catch (dbError) {
+      console.error('[Vercel] DB error:', dbError.message);
     }
 
-    // بناء التطبيق (مرة واحدة)
     const app = buildApp();
-
-    // تمرير الطلب لـ Express
     return app(req, res);
 
   } catch (fatalError) {
-    console.error('[Vercel] FATAL ERROR:', fatalError.message, fatalError.stack);
+    console.error('[Vercel] FATAL:', fatalError.message);
     if (!res.headersSent) {
-      return res.status(500).json({
-        success: false,
-        message: 'Server initialization failed',
-        code: 'INIT_ERROR',
-      });
+      return res.status(500).json({ success: false, message: 'Server initialization failed' });
     }
   }
 };

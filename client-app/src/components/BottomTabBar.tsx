@@ -2,17 +2,20 @@
 
 /**
  * شريط التنقل السفلي (Bottom Tab Bar)
- * يظهر badge الإشعارات غير المقروءة والطلبات النشطة
+ * يظهر badge الإشعارات غير المقروءة والطلبات النشطة والمفضلة
  */
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Home, Car, Bell, Wrench, User } from 'lucide-react';
+import { Home, Car, Bell, Wrench, User, Heart } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+
+const FAVORITES_KEY = 'hm_favorites';
+const CART_KEY = 'hm_cart';
 
 const TABS = [
     {
@@ -64,6 +67,28 @@ export default function BottomTabBar() {
     const { user, isLoggedIn } = useAuth();
     const [unreadNotifs, setUnreadNotifs] = useState(0);
     const [activeOrders, setActiveOrders] = useState(0);
+    const [favCount, setFavCount] = useState(0);
+    const [cartCount, setCartCount] = useState(0);
+
+    // جلب عدد المفضلة والسلة من localStorage
+    const refreshLocalCounts = () => {
+        try {
+            const favs = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
+            setFavCount(Array.isArray(favs) ? favs.length : 0);
+            const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+            setCartCount(Array.isArray(cart) ? cart.length : 0);
+        } catch { /* silent */ }
+    };
+
+    useEffect(() => {
+        refreshLocalCounts();
+        window.addEventListener('favorites_updated', refreshLocalCounts);
+        window.addEventListener('cart_updated', refreshLocalCounts);
+        return () => {
+            window.removeEventListener('favorites_updated', refreshLocalCounts);
+            window.removeEventListener('cart_updated', refreshLocalCounts);
+        };
+    }, []);
 
     // جلب عدد الإشعارات والطلبات غير المقروءة
     useEffect(() => {
@@ -71,7 +96,6 @@ export default function BottomTabBar() {
 
         const fetchBadges = async () => {
             try {
-                // جلب بيانات لوحة التحكم الموحدة (تشمل الإشعارات والطلبات)
                 const dashRes = await api.dashboard.getClientData();
                 const data = dashRes?.data || dashRes;
                 const stats = data?.stats || data;
@@ -79,19 +103,16 @@ export default function BottomTabBar() {
                 if (stats?.unreadNotifications !== undefined) {
                     setUnreadNotifs(stats.unreadNotifications);
                 }
-                
                 if (stats?.activeOrders !== undefined) {
                     setActiveOrders(stats.activeOrders);
                 } else if (stats?.myOrders !== undefined) {
                     setActiveOrders(stats.myOrders);
                 }
-            } catch (err) { 
-                console.error("[BottomTab] Failed to fetch badges:", err);
-            }
+            } catch { /* silent */ }
         };
 
         fetchBadges();
-        const interval = setInterval(fetchBadges, 3 * 60 * 1000); // كل 3 دقائق
+        const interval = setInterval(fetchBadges, 3 * 60 * 1000);
         return () => clearInterval(interval);
     }, [isLoggedIn, user]);
 
@@ -101,9 +122,8 @@ export default function BottomTabBar() {
     };
 
     const getBadge = (tab: typeof TABS[0]) => {
-        if (!isLoggedIn) return 0;
-        if (tab.badgeKey === 'notifications') return unreadNotifs;
-        if (tab.badgeKey === 'orders') return activeOrders;
+        if (tab.badgeKey === 'notifications') return isLoggedIn ? unreadNotifs : 0;
+        if (tab.badgeKey === 'orders') return isLoggedIn ? activeOrders : 0;
         return 0;
     };
 

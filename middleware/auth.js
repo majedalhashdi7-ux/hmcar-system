@@ -1,6 +1,55 @@
 // [[ARABIC_HEADER]] هذا الملف (middleware/auth.js) جزء من مشروع HM CAR
+// ملف موحد للمصادقة والصلاحيات - يجمع: auth, jwt, roles, adminAuth
 
 const jwt = require('jsonwebtoken');
+
+// ── JWT Helpers ──
+
+function generateToken(user) {
+  const payload = {
+    id: user._id,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    permissions: user.permissions || []
+  };
+  return jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d'
+  });
+}
+
+function verifyToken(token) {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+function authenticateJWT(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ success: false, message: 'غير مصرح - يجب تقديم Token' });
+  }
+  const decoded = verifyToken(authHeader.substring(7));
+  if (!decoded) {
+    return res.status(401).json({ success: false, message: 'Token غير صالح أو منتهي الصلاحية' });
+  }
+  req.user = decoded;
+  next();
+}
+
+// ── Role Middleware ──
+
+const requireRole = (...roles) => (req, res, next) => {
+  const user = req.user || (req.session && req.session.user);
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+  const normalizedRoles = (roles.length === 1 && Array.isArray(roles[0])) ? roles[0] : roles;
+  if (!normalizedRoles.includes(user.role) && user.role !== 'admin' && user.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  next();
+};
 
 // middleware/auth.js - يستخدم JWT فقط (بدون session) في Vercel
 const requireAuth = (req, res, next) => {
@@ -109,4 +158,16 @@ const requireAdmin = (req, res, next) => {
   next();
 };
 
-module.exports = { requireAuth, requireAuthAPI, auth, requirePermissionAPI, requireAdmin };
+module.exports = {
+  // JWT helpers
+  generateToken,
+  verifyToken,
+  authenticateJWT,
+  // Role & permission middleware
+  requireRole,
+  requireAuth,
+  requireAuthAPI,
+  auth,
+  requirePermissionAPI,
+  requireAdmin,
+};

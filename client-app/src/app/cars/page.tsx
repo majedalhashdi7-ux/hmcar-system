@@ -4,13 +4,10 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Search, ArrowRight,
-    Gauge, Fuel,
-    X, SlidersHorizontal, ArrowLeft,
-    Car
+    Search, ArrowRight, X, SlidersHorizontal, ArrowLeft, Car
 } from "lucide-react";
 import Navbar from '@/components/Navbar';
-// CurrencySwitcher removed
+import CarCard from '@/components/CarCard';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -380,93 +377,19 @@ function CarsContent() {
                     </div>
                 ) : (
                     <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 md:gap-12">
-                            {cars.map((car, i) => {
-                                const cardKey = String(car.id || car._id || `car-${i}`);
-                                const imageSrc = resolveCarImage(car);
-                                const showFallback = !imageSrc || imageErrors[cardKey];
-                                return (
-                                <motion.div
-                                    key={cardKey}
-                                    initial={{ opacity: 0, y: 30 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: (i % 4) * 0.1 }}
-                                    className="group relative"
-                                >
-                                    <div 
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            if (!isLoggedIn) {
-                                                router.push('/login');
-                                            } else {
-                                                router.push(`/cars/${car.id || car._id}`);
-                                            }
-                                        }}
-                                        className="block obsidian-card obsidian-card-hover overflow-hidden rounded-[2.5rem] cursor-pointer"
-                                    >
-                                        {/* Image wrapper */}
-                                        <div className="relative h-72 w-full bg-zinc-900">
-                                            {showFallback ? (
-                                                <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white/5 via-black/40 to-black/80">
-                                                    <div className="text-center">
-                                                        <Car className="w-10 h-10 text-white/15 mx-auto mb-2" />
-                                                        <div className="text-[9px] font-black uppercase tracking-[0.3em] text-white/30">No Image</div>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <Image
-                                                    src={imageSrc}
-                                                    alt={car.title}
-                                                    fill
-                                                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                                                    className="object-cover grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:scale-110 opacity-60 group-hover:opacity-100"
-                                                    onError={() => setImageErrors(prev => ({ ...prev, [cardKey]: true }))}
-                                                />
-                                            )}
-                                            <div className="absolute inset-0 bg-linear-to-t from-cinematic-dark via-transparent to-transparent opacity-90" />
-
-                                            {/* Top badges */}
-                                            <div className="absolute top-6 left-6 flex flex-col gap-2">
-                                                <span className="bg-black/60 backdrop-blur-xl border border-white/10 px-4 py-1.5 rounded-full text-[9px] font-black text-luxury-gold tracking-widest uppercase">
-                                                    {car.year}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Body */}
-                                        <div className="p-8 space-y-6">
-                                            <div className="space-y-2">
-                                                <span className="text-[8px] font-black text-luxury-gold/50 tracking-[0.4em] uppercase">{getCarMakeLabel(car.make)}</span>
-                                                <h3 className="text-2xl font-black tracking-tighter uppercase italic line-clamp-1 group-hover:text-luxury-gold transition-colors">{car.title}</h3>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="flex items-center gap-2 text-[10px] text-white/30 font-bold uppercase italic">
-                                                    <Gauge className="w-3.5 h-3.5 text-luxury-gold/30" />
-                                                    {car.mileage?.toLocaleString()} {rawText('km')}
-                                                </div>
-                                                <div className="flex items-center gap-2 text-[10px] text-white/30 font-bold uppercase italic">
-                                                    <Fuel className="w-3.5 h-3.5 text-luxury-gold/30" />
-                                                    {car.fuel || rawText('GDI')}
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center justify-between pt-6 border-t border-white/5 mt-auto">
-                                                <div>
-                                                    <span className="text-[8px] font-black text-white/20 tracking-widest uppercase block mb-1">{rawText('MARKET VALUE')}</span>
-                                                    <div className="text-2xl font-black italic gold-glow leading-none">
-                                                          {formatPrice(Number(car.price || car.priceSar || 0))}
-                                                    </div>
-                                                </div>
-                                                <div className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-luxury-gold group-hover:text-black group-hover:border-luxury-gold transition-all duration-500">
-                                                    <ArrowRight className={cn("w-5 h-5 transition-transform group-hover:-rotate-45", isRTL && "rotate-180")} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                                );
-                            })}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                            {cars.map((car, i) => (
+                                <CarCard
+                                    key={String(car.id || car._id || `car-${i}`)}
+                                    car={car}
+                                    index={i}
+                                    onClick={() => {
+                                        if (!isLoggedIn) router.push('/login');
+                                        else router.push(`/cars/${car.id || car._id}`);
+                                    }}
+                                    onLoginRequired={() => router.push('/login')}
+                                />
+                            ))}
                         </div>
 
                         {/* Pagination */}

@@ -82,13 +82,22 @@ carSchema.post('save', function (doc) {
 
 // تخزين حالة isNew قبل الحفظ
 carSchema.pre('save', function (next) {
-  // [[ARABIC_COMMENT]] ضمان التوافق: توحيد source مع listingType للبيانات القديمة والجديدة
+  // [[ARABIC_COMMENT]] محاولة ذكية لتحديد المصدر بناءً على البيانات المتوفرة
+  const isKorean = this.source === 'korean_import' || 
+                   this.listingType === 'showroom' || 
+                   (this.externalUrl && this.externalUrl.includes('encar.com')) ||
+                   (this.priceKrw > 0);
+
   if (!this.source) {
-    this.source = this.listingType === 'showroom' ? 'korean_import' : 'hm_local';
+    this.source = isKorean ? 'korean_import' : 'hm_local';
   }
+  
   if (!this.listingType) {
     this.listingType = this.source === 'korean_import' ? 'showroom' : 'store';
   }
+
+  // ضمان توافق listingType مع source إذا كانا متعارضين بشكل واضح (اختياري، يفضل تركه للمسؤول)
+  // if (this.source === 'korean_import' && this.listingType !== 'showroom') this.listingType = 'showroom';
 
   this.wasNew = this.isNew;
   next();

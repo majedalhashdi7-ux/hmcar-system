@@ -166,7 +166,44 @@ export default function CarModal({
                                         className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-3 px-4 text-sm font-bold text-white focus:outline-none focus:border-cinematic-neon-blue/40" />
                                 </div>
 
-                                {/* ── حقل الماركة ── */}
+                                                                 {/* ── حقل المصدر (محلي / كوري) ── */}
+                                 <div>
+                                     <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-white/60 mb-2">{isRTL ? 'المصدر' : 'SOURCE'}</label>
+                                     <select 
+                                         title={isRTL ? 'المصدر' : 'Source'}
+                                         value={formData.source} 
+                                         onChange={e => {
+                                             const val = e.target.value as 'hm_local' | 'korean_import';
+                                             onFormChange({
+                                                 ...formData,
+                                                 source: val,
+                                                 // Only auto-change listingType if it's showroom but source is local
+                                                 listingType: val === 'korean_import' ? 'showroom' : (formData.listingType === 'showroom' ? 'store' : formData.listingType)
+                                             });
+                                         }}
+                                         className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-3 px-4 text-sm font-bold text-white focus:outline-none focus:border-cinematic-neon-blue/40"
+                                     >
+                                         <option value="hm_local">{isRTL ? 'معرض HM CAR (محلي)' : 'HM CAR (LOCAL)'}</option>
+                                         <option value="korean_import">{isRTL ? 'المعرض الكوري (مستورد)' : 'KOREAN (IMPORT)'}</option>
+                                     </select>
+                                 </div>
+
+                                 {/* Type selection ONLY for local cars */}
+                                 {formData.source === 'hm_local' && (
+                                     <div>
+                                         <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-white/60 mb-2">{isRTL ? 'نوع القائمة' : 'LISTING TYPE'}</label>
+                                         <select 
+                                             value={formData.listingType} 
+                                             onChange={e => update('listingType', e.target.value)}
+                                             className="w-full bg-white/[0.03] border border-white/10 rounded-xl py-3 px-4 text-sm font-bold text-white focus:outline-none focus:border-cinematic-neon-blue/40"
+                                         >
+                                             <option value="store">{isRTL ? 'متجر (بيع مباشر)' : 'STORE (DIRECT SALE)'}</option>
+                                             <option value="auction">{isRTL ? 'مزاد' : 'AUCTION'}</option>
+                                         </select>
+                                     </div>
+                                 )}
+
+                                 {/* ── حقل الماركة ── */}
                                 <div>
                                     <label className="block text-[10px] font-black uppercase tracking-[0.3em] text-white/60 mb-2">{isRTL ? 'الماركة' : 'BRAND'}</label>
                                     <select value={formData.make} 

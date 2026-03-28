@@ -18,9 +18,11 @@ function normalizeCarPricing(payload, rates) {
     const usdToSar = Number(rates?.usdToSar || 3.75);
     const usdToKrw = Number(rates?.usdToKrw || 1350);
 
+    const krwPrice = toFiniteNumber(payload.priceKrw || payload.krwPrice || 0);
+
     const candidateUsd = toFiniteNumber(payload.basePriceUsd || payload.priceUsd || payload.usdPrice);
     const candidateSar = toFiniteNumber(payload.priceSar || payload.price);
-    const candidateKrw = toFiniteNumber(payload.priceKrw || payload.krwPrice);
+    const candidateKrw = krwPrice;
 
     let basePriceUsd = candidateUsd;
     if (!basePriceUsd && candidateKrw > 0) basePriceUsd = candidateKrw / usdToKrw;
@@ -28,12 +30,15 @@ function normalizeCarPricing(payload, rates) {
 
     const normalizedUsd = Number(basePriceUsd.toFixed(2));
     const normalizedSar = Number((normalizedUsd * usdToSar).toFixed(2));
-    const normalizedKrw = Math.round(normalizedUsd * usdToKrw);
+    const normalizedKrw = candidateKrw > 0 ? candidateKrw : Math.round(normalizedUsd * usdToKrw);
 
-    const source = payload?.source === 'korean_import'
-        ? 'korean_import'
-        : (payload?.source === 'hm_local' ? 'hm_local' : (payload?.listingType === 'showroom' ? 'korean_import' : 'hm_local'));
-    const listingType = payload?.listingType || (source === 'korean_import' ? 'showroom' : 'store');
+    const isKorean = payload?.source === 'korean_import' || 
+                     payload?.listingType === 'showroom' || 
+                     (payload?.externalUrl && payload.externalUrl.includes('encar.com')) ||
+                     (normalizedKrw > 0 && payload?.displayCurrency === 'KRW' && payload?.listingType !== 'store');
+
+    const source = isKorean ? 'korean_import' : 'hm_local';
+    const listingType = payload?.listingType || (isKorean ? 'showroom' : 'store');
 
     return {
         ...payload,
@@ -94,25 +99,28 @@ router.get('/', cacheResponse(300), async (req, res, next) => {
 
         if (source === 'hm_local') {
             conditions.push({
-                $or: [
-                    { source: 'hm_local' },
-                    {
-                        source: { $exists: false },
+                $and: [
+                    { 
                         $or: [
-                            { listingType: 'store' },
-                            { listingType: 'auction' },
-                            { listingType: { $exists: false } },
-                            { listingType: null },
-                            { listingType: '' }
+                            { source: 'hm_local' },
+                            { 
+                                $and: [
+                                    { source: { $exists: false } },
+                                    { priceKrw: { $lte: 0 } }
+                                ]
+                            }
                         ]
-                    }
+                    },
+                    { listingType: { $ne: 'showroom' } }
                 ]
             });
         } else if (source === 'korean_import') {
             conditions.push({
                 $or: [
                     { source: 'korean_import' },
-                    { source: { $exists: false }, listingType: 'showroom' }
+                    { listingType: 'showroom' },
+                    { priceKrw: { $gt: 0 } },
+                    { externalUrl: { $regex: 'encar.com' } }
                 ]
             });
         }

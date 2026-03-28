@@ -12,7 +12,7 @@ module.exports = {
       max_memory_restart: '1G',
       env: {
         NODE_ENV: 'production',
-        PORT: 4000
+        PORT: 4001
       },
       error_file: './logs/pm2-error.log',
       out_file: './logs/pm2-out.log',
@@ -46,7 +46,7 @@ module.exports = {
       'post-deploy': 'npm ci && pm2 reload ecosystem.config.js --env staging',
       env: {
         NODE_ENV: 'staging',
-        PORT: 4002
+        PORT: 4001
       }
     }
   }

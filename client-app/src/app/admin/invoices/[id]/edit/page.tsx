@@ -115,14 +115,7 @@ export default function EditInvoicePage() {
                 totalUsd: totals.usd,
                 totalSar: totals.sar
             };
-            const res = await fetch(`/api/v2/invoices/${id}`, {
-                method: 'PUT',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('hm_token')}`
-                },
-                body: JSON.stringify(payload)
-            }).then(r => r.json());
+            const res = await api.invoices.update(id as string, payload);
 
             if (res.success && res.data) {
                 alert(isRTL ? 'تم حفظ التعديلات بنجاح' : 'Invoice updated successfully');

@@ -34,6 +34,27 @@ router.get('/', async (req, res) => {
         const settings = await SiteSettings.getSettings().catch(() => null);
         const auctionMultiplier = normalizeMultiplier(settings?.currencySettings?.auctionMultiplier || 1);
 
+        const now = new Date();
+
+        // تحديث حالة المزادات تلقائياً قبل الإرجاع
+        // 1) أي مزاد قيد التشغيل وانتهى وقته → أنهِه
+        await Auction.updateMany(
+            { status: 'running', endsAt: { $lt: now } },
+            { $set: { status: 'ended' } }
+        ).catch(() => {});
+
+        // 2) أي مزاد مجدول وانتهى وقته بالكامل → اجعله 'ended'
+        await Auction.updateMany(
+            { status: 'scheduled', endsAt: { $lte: now } },
+            { $set: { status: 'ended' } }
+        ).catch(() => {});
+
+        // 3) أي مزاد مجدول بدأ الآن لكنه لم ينتهِ بعد → اجعله 'running'
+        await Auction.updateMany(
+            { status: 'scheduled', startsAt: { $lte: now }, endsAt: { $gt: now } },
+            { $set: { status: 'running' } }
+        ).catch(() => {});
+
         const auctions = await Auction.find(query)
             .populate('car')
             .populate('highestBidder', 'name email')

@@ -56,10 +56,10 @@ RUN mkdir -p logs uploads/images public/images && chmod -R 777 logs uploads publ
 
 # إعدادات البيئة
 ENV NODE_ENV=production
-ENV PORT=4000
+ENV PORT=4001
 
 # فتح المنفذ
-EXPOSE 4000
+EXPOSE 4001
 
 # بدء تشغيل السيرفر
 CMD ["node", "server.js"]
