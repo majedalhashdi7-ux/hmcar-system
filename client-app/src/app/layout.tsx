@@ -16,6 +16,7 @@ import { cookies } from "next/headers";
 import AppShell from "@/components/AppShell";
 import SmartPrefetchProvider from "@/components/SmartPrefetchProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import NetworkStatus from "@/components/NetworkStatus";
 
 // إعدادات نافذة العرض (Viewport) للجوال والحاسوب
 export const viewport: Viewport = {
@@ -177,6 +178,17 @@ export default async function RootLayout({
               console.log('[Self-Healing] Recovered from crash.');
               sessionStorage.removeItem('hm_crash_recovery');
             }
+            
+            // تسجيل Service Worker للعمل Offline
+            if ('serviceWorker' in navigator && typeof window !== 'undefined') {
+              window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                  console.log('[SW] Registered successfully:', registration.scope);
+                }).catch(function(error) {
+                  console.log('[SW] Registration failed:', error);
+                });
+              });
+            }
           `
         }} />
       </head>
@@ -197,6 +209,7 @@ export default async function RootLayout({
           }} />
         )}
         <Providers>
+          <NetworkStatus />
           <ErrorBoundary>
             <SmartPrefetchProvider>
               <AppShell>
@@ -206,6 +219,8 @@ export default async function RootLayout({
                 {children}
               </AppShell>
             </SmartPrefetchProvider>
+          </ErrorBoundary>
+        </Providers>
           </ErrorBoundary>
         </Providers>
       </body>
