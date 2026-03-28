@@ -15,6 +15,7 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import AppShell from "@/components/AppShell";
 import SmartPrefetchProvider from "@/components/SmartPrefetchProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // إعدادات نافذة العرض (Viewport) للجوال والحاسوب
 export const viewport: Viewport = {
@@ -196,14 +197,16 @@ export default async function RootLayout({
           }} />
         )}
         <Providers>
-          <SmartPrefetchProvider>
-            <AppShell>
-              <Suspense fallback={null}>
-                <GoogleAnalytics />
-              </Suspense>
-              {children}
-            </AppShell>
-          </SmartPrefetchProvider>
+          <ErrorBoundary>
+            <SmartPrefetchProvider>
+              <AppShell>
+                <Suspense fallback={null}>
+                  <GoogleAnalytics />
+                </Suspense>
+                {children}
+              </AppShell>
+            </SmartPrefetchProvider>
+          </ErrorBoundary>
         </Providers>
       </body>
     </html>
