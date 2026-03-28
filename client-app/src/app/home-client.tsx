@@ -58,6 +58,7 @@ interface HomeClientProps {
 function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boolean; deferredInstall: any; onInstall: () => void }) {
   const [showPopup, setShowPopup] = useState(false);
   const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
     // إظهار البطاقة تلقائياً بعد 2.5 ثانية لجذب انتباه العميل
@@ -70,8 +71,14 @@ function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boole
     return () => clearTimeout(timer);
   }, []);
 
+  const handleMinimize = () => {
+    setIsMinimized(true);
+    setShowPopup(false);
+  };
+
   const handleClose = () => {
     setShowPopup(false);
+    setIsMinimized(false);
     localStorage.setItem('pwa_popup_dismissed', 'true');
   };
 
@@ -81,7 +88,10 @@ function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boole
       {/* أيقونة الهاتف الثابتة */}
       <motion.button
         id="pwa-float-btn"
-        onClick={() => setShowPopup(!showPopup)}
+        onClick={() => {
+          setShowPopup(!showPopup);
+          setIsMinimized(false);
+        }}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         whileTap={{ scale: 0.9 }}
@@ -89,6 +99,13 @@ function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boole
         title={isRTL ? 'تطبيق HM CAR' : 'HM CAR App'}
       >
         <Smartphone className="w-5 h-5" />
+        {isMinimized && (
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="absolute -top-1 -right-1 w-3 h-3 bg-accent-gold rounded-full"
+          />
+        )}
       </motion.button>
 
       {/* Popup النافذة المنبثقة المميزة */}
@@ -106,11 +123,11 @@ function PWAFloatingButton({ isRTL, deferredInstall, onInstall }: { isRTL: boole
             <div className="absolute inset-0 bg-gradient-to-tr from-accent-gold/0 via-accent-gold/10 to-transparent opacity-50 pointer-events-none" />
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-accent-gold/20 blur-[60px] rounded-full pointer-events-none" />
 
-            {/* زر إغلاق صغير */}
+            {/* زر تصغير (X) */}
             <button 
-              onClick={handleClose}
-              aria-label="Close"
-              title="Close"
+              onClick={handleMinimize}
+              aria-label={isRTL ? "تصغير" : "Minimize"}
+              title={isRTL ? "تصغير" : "Minimize"}
               className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white transition-all`}
             >
               <X className="w-4 h-4" />
