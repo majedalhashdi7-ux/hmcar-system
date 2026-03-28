@@ -221,8 +221,6 @@ export default async function RootLayout({
             </SmartPrefetchProvider>
           </ErrorBoundary>
         </Providers>
-          </ErrorBoundary>
-        </Providers>
       </body>
     </html>
   );
