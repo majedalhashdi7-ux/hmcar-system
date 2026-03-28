@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 /**
  * Dynamic Component Imports
  * تحميل المكونات الثقيلة بشكل ديناميكي لتحسين الأداء
