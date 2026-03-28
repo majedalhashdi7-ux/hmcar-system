@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useSettings } from '@/lib/SettingsContext';
+import type { PartCardProps } from '@/types';
 
 const FAVORITES_KEY = 'hm_favorites';
 const CART_KEY = 'hm_cart';
@@ -27,14 +28,7 @@ function dispatchCartUpdate() {
     window.dispatchEvent(new CustomEvent('cart_updated'));
 }
 
-interface PartCardProps {
-    part: any;
-    index?: number;
-    onClick?: () => void;
-    onLoginRequired?: () => void;
-}
-
-export default function PartCard({ part, index = 0, onClick, onLoginRequired }: PartCardProps) {
+export default function PartCard({ part, index = 0, onClick, onLoginRequired, showActions = true }: PartCardProps) {
     const { isRTL } = useLanguage();
     const { isLoggedIn } = useAuth();
     const { formatPrice } = useSettings() as any;
