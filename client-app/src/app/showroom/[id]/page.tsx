@@ -194,7 +194,7 @@ export default function ShowroomCarDetail() {
 
     return (
         <div
-            className="relative min-h-screen bg-[#050505] text-white overflow-x-hidden"
+            className="relative min-h-screen bg-[#050505] text-white overflow-x-hidden scroll-smooth"
             dir={isRTL ? 'rtl' : 'ltr'}
         >
             <Navbar />
@@ -210,7 +210,10 @@ export default function ShowroomCarDetail() {
                 <motion.button
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    onClick={() => router.back()}
+                    onClick={() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => router.back(), 300);
+                    }}
                     className="flex items-center gap-2 mb-10 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all group w-fit"
                 >
                     <ChevronLeft className={cn('w-4 h-4 transition-transform group-hover:-translate-x-1', isRTL && 'rotate-180 group-hover:translate-x-1')} />
@@ -358,7 +361,7 @@ export default function ShowroomCarDetail() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6"
+                        className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto"
                         onClick={() => setShowInvoice(false)}
                     >
                         <motion.div
@@ -366,7 +369,7 @@ export default function ShowroomCarDetail() {
                             animate={{ scale: 1, y: 0 }}
                             exit={{ scale: 0.9, y: 20 }}
                             onClick={e => e.stopPropagation()}
-                            className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-md overflow-hidden"
+                            className="bg-[#0a0a0a] border border-white/10 rounded-3xl w-full max-w-md overflow-hidden my-8"
                         >
                             {/* رأس الفاتورة */}
                             <div className="p-8 border-b border-white/5 text-center bg-[#c9a96e]/5">
