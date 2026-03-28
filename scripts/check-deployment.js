@@ -6,7 +6,7 @@
 
 const https = require('https');
 
-const SITE_URL = 'https://hmcar-system.vercel.app';
+const SITE_URL = 'https://hmcar.xyz';
 const BRANDS_URL = 'https://hmcar.okigo.net/brands';
 
 console.log('🔍 جاري التحقق من النشر...\n');
