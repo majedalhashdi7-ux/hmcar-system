@@ -23,24 +23,6 @@ const AUTH_ROUTES = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    const hostname = request.headers.get('host') || '';
-
-    // ── Multi-Tenancy Routing ──
-    // إذا كان الزائر قادم من دومين "carx" أو "daood.okigo.net"
-    // نعيد توجيهه داخلياً ليقرأ من صفحات معرض كوريا "showroom" وكأنها الصفحة الرئيسية لحسابه المستقل
-    if (hostname.toLowerCase().includes('carx') || hostname.toLowerCase().includes('daood.okigo.net')) {
-        if (pathname === '/' || pathname === '') {
-            return NextResponse.rewrite(new URL('/showroom', request.url));
-        }
-        if (pathname.startsWith('/cars/')) {
-            // توجيه /cars/ID إلى /showroom/ID
-            const newPath = pathname.replace(/^\/cars\//, '/showroom/');
-            return NextResponse.rewrite(new URL(newPath, request.url));
-        }
-        if (pathname === '/cars') {
-            return NextResponse.rewrite(new URL('/showroom', request.url));
-        }
-    }
 
     // قراءة التوكن (Token) من ملفات تعريف الارتباط للتحقق من الجلسة
     const token = request.cookies.get('hm_token')?.value;
