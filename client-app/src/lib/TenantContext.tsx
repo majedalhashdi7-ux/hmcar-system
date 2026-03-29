@@ -63,7 +63,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://hmcar.okigo.net';
+      const baseUrl = (typeof window !== 'undefined' && window.location.hostname !== 'localhost') 
+          ? '' 
+          : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001');
+
       const response = await fetch(`${baseUrl}/api/v2/tenant/info`, {
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +150,10 @@ function applyTheme(theme: TenantTheme) {
 function updateFavicon(faviconUrl: string) {
   if (typeof document === 'undefined') return;
 
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://hmcar.okigo.net';
+  const baseUrl = (typeof window !== 'undefined' && window.location.hostname !== 'localhost') 
+      ? '' 
+      : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001');
+
   const fullUrl = faviconUrl.startsWith('http') ? faviconUrl : `${baseUrl}${faviconUrl}`;
 
   let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;

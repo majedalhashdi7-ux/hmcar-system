@@ -5,9 +5,6 @@
  * يفحص: المعارض، قواعد البيانات، الدومينات، الملفات
  */
 
-// تحميل متغيرات البيئة
-require('dotenv').config();
-
 const fs = require('fs');
 const path = require('path');
 const { getAllTenants, getTenantById } = require('../tenants/tenant-resolver');
