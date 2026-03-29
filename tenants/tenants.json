@@ -127,8 +127,8 @@
       "nameEn": "CAR X",
       "description": "معرض وأمزاد CAR X",
       "descriptionEn": "CAR X Showroom & Auctions",
-      "domains": ["localhost:3001", "carx.localhost", "carx-motors.com", "www.carx-motors.com", "carx-system.vercel.app"],
-      "mongoUri": "ENV:MONGO_URI",
+      "domains": ["localhost:3001", "carx.localhost", "carx-motors.com", "www.carx-motors.com", "carx-system.vercel.app", "daood.okigo.net"],
+      "mongoUri": "ENV:MONGO_URI_CARX",
       "logo": "/uploads/tenants/carx/logo.png",
       "favicon": "/uploads/tenants/carx/favicon.ico",
       "theme": {

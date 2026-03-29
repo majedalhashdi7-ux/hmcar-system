@@ -26,9 +26,9 @@ export function middleware(request: NextRequest) {
     const hostname = request.headers.get('host') || '';
 
     // ── Multi-Tenancy Routing ──
-    // إذا كان الزائر قادم من دومين "carx" (سواء carx-system أو أي دومين فرعي لـ carx)
-    // نعيد توجيهه داخلياً ليقرأ من صفحات معرض كوريا "showroom" وكأنها الصفحة الرئيسية الخاصة به
-    if (hostname.toLowerCase().includes('carx')) {
+    // إذا كان الزائر قادم من دومين "carx" أو "daood.okigo.net"
+    // نعيد توجيهه داخلياً ليقرأ من صفحات معرض كوريا "showroom" وكأنها الصفحة الرئيسية لحسابه المستقل
+    if (hostname.toLowerCase().includes('carx') || hostname.toLowerCase().includes('daood.okigo.net')) {
         if (pathname === '/' || pathname === '') {
             return NextResponse.rewrite(new URL('/showroom', request.url));
         }
