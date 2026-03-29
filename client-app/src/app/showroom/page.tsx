@@ -30,6 +30,7 @@ import { WhatsAppService } from '@/lib/WhatsAppService';
 import Image from 'next/image';
 import CurrencySwitcher from '@/components/CurrencySwitcher';
 import { useRouter } from 'next/navigation';
+import UltraModernCarCard from '@/components/UltraModernCarCard';
 
 const rawText = (value: string) => value;
 
@@ -823,7 +824,7 @@ export default function ShowroomPage() {
                         </div>
                     ) : (
                         <>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
                                 {filteredCars.map((car, i) => (
                                     <motion.div
                                         key={car.id}
@@ -831,11 +832,31 @@ export default function ShowroomPage() {
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: i * 0.05 }}
                                     >
-                                        <CarCard
-                                            car={car}
-                                            priceText={formatPriceFromUsd(getBaseUsd(car))}
-                                            onContact={openWhatsApp}
-                                            onViewDetails={setSelectedCar}
+                                        <UltraModernCarCard
+                                            car={{
+                                                id: car.id,
+                                                title: car.title,
+                                                make: car.manufacturerAr || car.manufacturer,
+                                                model: car.model,
+                                                year: car.year,
+                                                price: getBaseUsd(car) * Number(currency.usdToSar || 3.75),
+                                                priceUsd: getBaseUsd(car),
+                                                images: car.images || [car.imageUrl || car.image].filter(Boolean),
+                                                imageUrl: car.imageUrl || car.image,
+                                                mileage: car.mileage,
+                                                fuelType: car.fuelAr || car.fuel,
+                                                transmission: car.transmissionAr || car.transmission,
+                                                category: 'korean_import',
+                                                isActive: true,
+                                                isSold: false,
+                                                source: 'korean_import',
+                                                isInspected: car.isInspected,
+                                                condition: 'used'
+                                            }}
+                                            index={i}
+                                            formatPrice={(price) => formatPriceFromUsd(price / Number(currency.usdToSar || 3.75))}
+                                            onContact={() => openWhatsApp(car)}
+                                            onViewDetails={() => setSelectedCar(car)}
                                         />
                                     </motion.div>
                                 ))}

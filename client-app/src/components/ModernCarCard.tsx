@@ -2,10 +2,11 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Share2, Eye, Calendar, Gauge, Fuel, Settings, Star, ArrowRight } from "lucide-react";
+import { Heart, Share2, Eye, Calendar, Gauge, Fuel, Settings, Star, ArrowRight, Home } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 interface CarCardProps {
     car: {
@@ -31,9 +32,14 @@ interface CarCardProps {
 
 export default function ModernCarCard({ car, index, formatPrice }: CarCardProps) {
     const { isRTL } = useLanguage();
+    const router = useRouter();
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
     const [imageError, setImageError] = useState(false);
+
+    const handleBackToHome = () => {
+        router.push('/');
+    };
 
     const handleImageError = () => {
         setImageError(true);
@@ -144,6 +150,19 @@ export default function ModernCarCard({ car, index, formatPrice }: CarCardProps)
                     </button>
                 </div>
 
+                {/* زر الرجوع للصفحة الرئيسية */}
+                <div className="absolute top-4 start-4">
+                    <motion.button
+                        onClick={handleBackToHome}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className="w-10 h-10 rounded-xl bg-black/60 backdrop-blur-md border border-white/20 hover:border-red-500/50 flex items-center justify-center text-white/80 hover:text-red-400 hover:bg-black/80 transition-all duration-300 group/back"
+                        title={isRTL ? 'العودة للصفحة الرئيسية' : 'Back to Home'}
+                    >
+                        <Home className="w-5 h-5 group-hover/back:scale-110 transition-transform" />
+                    </motion.button>
+                </div>
+
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
             </div>
@@ -200,10 +219,26 @@ export default function ModernCarCard({ car, index, formatPrice }: CarCardProps)
 
                 {/* Action Button */}
                 <Link href={`/cars/${car.id}`}>
-                    <button className="w-full py-3 bg-gradient-to-r from-red-600/20 to-red-700/20 hover:from-red-600 hover:to-red-700 border border-red-600/30 hover:border-red-500 rounded-2xl font-bold text-white transition-all duration-300 flex items-center justify-center gap-2 group-hover:scale-[1.02]">
-                        <span>{isRTL ? 'عرض التفاصيل' : 'View Details'}</span>
-                        <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${isRTL ? 'rotate-180' : ''}`} />
-                    </button>
+                    <motion.button 
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full py-3 bg-gradient-to-r from-red-600/20 to-red-700/20 hover:from-red-600 hover:to-red-700 border border-red-600/30 hover:border-red-500 rounded-2xl font-bold text-white transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden"
+                    >
+                        {/* Button glow effect */}
+                        <motion.div
+                            className="absolute inset-0 bg-gradient-to-r from-red-500/0 via-red-500/20 to-red-500/0"
+                            animate={{
+                                x: [-100, 100]
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "linear"
+                            }}
+                        />
+                        <span className="relative z-10">{isRTL ? 'عرض التفاصيل' : 'View Details'}</span>
+                        <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 relative z-10 ${isRTL ? 'rotate-180' : ''}`} />
+                    </motion.button>
                 </Link>
             </div>
 

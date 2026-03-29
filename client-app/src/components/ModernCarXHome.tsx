@@ -224,9 +224,26 @@ export default function ModernCarXHome() {
                         target="_blank"
                         rel="noopener noreferrer"
                         initial={{ opacity: 0, x: isRTL ? 20 : -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className={`w-12 h-12 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center ${social.color} hover:scale-110 transition-all duration-300 hover:bg-white/10`}
+                        animate={{ 
+                            opacity: 1, 
+                            x: 0,
+                            y: [0, -5, 0]
+                        }}
+                        transition={{ 
+                            delay: idx * 0.1,
+                            y: {
+                                duration: 2,
+                                repeat: Infinity,
+                                delay: idx * 0.3,
+                                ease: "easeInOut"
+                            }
+                        }}
+                        whileHover={{ 
+                            scale: 1.2,
+                            rotate: 5,
+                            boxShadow: "0 0 25px rgba(255,0,0,0.5)"
+                        }}
+                        className={`w-12 h-12 rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center ${social.color} transition-all duration-300 hover:bg-white/10`}
                     >
                         <social.icon className="w-5 h-5" />
                     </motion.a>
@@ -250,6 +267,30 @@ export default function ModernCarXHome() {
 
                 {/* طبقة التعتيم */}
                 <div className="absolute inset-0 bg-black/60" />
+
+                {/* جسيمات متحركة */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    {[...Array(15)].map((_, i) => (
+                        <motion.div
+                            key={i}
+                            className="absolute w-1 h-1 bg-red-400 rounded-full opacity-60"
+                            style={{
+                                left: `${Math.random() * 100}%`,
+                                top: `${Math.random() * 100}%`,
+                            }}
+                            animate={{
+                                y: [-20, -100],
+                                opacity: [0, 1, 0],
+                                scale: [0, 1, 0],
+                            }}
+                            transition={{
+                                duration: 3 + Math.random() * 2,
+                                repeat: Infinity,
+                                delay: Math.random() * 2,
+                            }}
+                        />
+                    ))}
+                </div>
 
                 {/* أزرار التحكم في الفيديو */}
                 <div className="absolute bottom-8 right-8 flex gap-3 z-30">
@@ -283,9 +324,23 @@ export default function ModernCarXHome() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1 }}
                     >
-                        <h1 className="text-6xl md:text-8xl font-black text-white mb-6 tracking-wider drop-shadow-2xl">
+                        <motion.h1 
+                            className="text-6xl md:text-8xl font-black text-white mb-6 tracking-wider drop-shadow-2xl"
+                            animate={{
+                                textShadow: [
+                                    "0 0 20px rgba(255,0,0,0.5)",
+                                    "0 0 40px rgba(255,0,0,0.8)",
+                                    "0 0 20px rgba(255,0,0,0.5)"
+                                ]
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "easeInOut"
+                            }}
+                        >
                             {tenant?.name || 'CAR X'}
-                        </h1>
+                        </motion.h1>
                         <p className="text-xl md:text-2xl text-white/80 mb-8 font-light">
                             {isRTL ? tenant?.description || 'منصة السيارات المتقدمة' : tenant?.descriptionEn || 'Advanced Car Platform'}
                         </p>
@@ -293,36 +348,65 @@ export default function ModernCarXHome() {
                         {/* أزرار الإجراءات */}
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                             {!isLoggedIn && (
-                                <button
+                                <motion.button
                                     onClick={() => setShowRegisterModal(true)}
-                                    className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all hover:scale-105 shadow-2xl"
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all shadow-2xl hover:shadow-red-500/25"
                                 >
                                     <UserPlus className="w-5 h-5" />
                                     {isRTL ? 'إنشاء حساب جديد' : 'Create New Account'}
-                                </button>
+                                </motion.button>
                             )}
-                            <button className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 hover:border-white/40 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all hover:scale-105">
-                                <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
-                                {isRTL ? 'استكشف المعرض' : 'Explore Showroom'}
-                            </button>
+                            <Link href="/showroom">
+                                <motion.button 
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    className="px-8 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 hover:border-white/40 rounded-2xl font-bold text-lg flex items-center gap-3 transition-all"
+                                >
+                                    <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
+                                    {isRTL ? 'استكشف المعرض' : 'Explore Showroom'}
+                                </motion.button>
+                            </Link>
                         </div>
                     </motion.div>
                 </div>
             </section>
 
             {/* ── الشريط الإعلاني تحت الفيديو ── */}
-            <section className="relative z-10 py-8 bg-gradient-to-r from-red-900/20 via-black to-red-900/20">
+            <section className="relative z-10 py-8 bg-gradient-to-r from-red-900/20 via-black to-red-900/20 border-y border-red-900/20">
                 <div className="overflow-hidden">
-                    <div className="flex animate-marquee whitespace-nowrap">
+                    <motion.div 
+                        className="flex animate-marquee whitespace-nowrap"
+                        animate={{
+                            x: [0, -50]
+                        }}
+                        transition={{
+                            duration: 30,
+                            repeat: Infinity,
+                            ease: "linear"
+                        }}
+                    >
                         {repeatedItems.map((text, i) => (
                             <span key={i} className="inline-flex items-center gap-6 mx-8 shrink-0">
-                                <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(255,0,0,1)] animate-pulse" />
+                                <motion.span 
+                                    className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_12px_rgba(255,0,0,1)]"
+                                    animate={{
+                                        scale: [1, 1.5, 1],
+                                        opacity: [0.7, 1, 0.7]
+                                    }}
+                                    transition={{
+                                        duration: 1.5,
+                                        repeat: Infinity,
+                                        delay: i * 0.1
+                                    }}
+                                />
                                 <span className="text-lg font-black text-white/90 tracking-wider uppercase">
                                     {text}
                                 </span>
                             </span>
                         ))}
-                    </div>
+                    </motion.div>
                 </div>
             </section>
 
@@ -461,13 +545,22 @@ export default function ModernCarXHome() {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                                 transition={{ delay: idx * 0.2 }}
-                                className="text-center p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-red-500/30 transition-all duration-500 hover:bg-white/10"
+                                whileHover={{ 
+                                    y: -10,
+                                    scale: 1.05,
+                                    boxShadow: "0 20px 40px rgba(255,0,0,0.1)"
+                                }}
+                                className="text-center p-8 rounded-3xl bg-white/5 backdrop-blur-md border border-white/10 hover:border-red-500/30 transition-all duration-500 hover:bg-white/10 group"
                             >
-                                <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center">
+                                <motion.div 
+                                    className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center"
+                                    whileHover={{ rotate: 360 }}
+                                    transition={{ duration: 0.6 }}
+                                >
                                     <feature.icon className="w-8 h-8 text-white" />
-                                </div>
-                                <h3 className="text-xl font-bold text-white mb-4">{feature.title}</h3>
-                                <p className="text-white/60">{feature.desc}</p>
+                                </motion.div>
+                                <h3 className="text-xl font-bold text-white mb-4 group-hover:text-red-100 transition-colors">{feature.title}</h3>
+                                <p className="text-white/60 group-hover:text-white/80 transition-colors">{feature.desc}</p>
                             </motion.div>
                         ))}
                     </div>

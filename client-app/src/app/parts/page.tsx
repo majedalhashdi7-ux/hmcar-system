@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Search, AlertCircle, Zap, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import PartCard from "@/components/PartCard";
+import UltraModernPartCard from "@/components/UltraModernPartCard";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 import { api } from "@/lib/api";
@@ -507,11 +507,12 @@ export default function PartsPage() {
                                 ) : (
                                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5">
                                         {filteredParts.map((part, idx) => (
-                                            <PartCard
+                                            <UltraModernPartCard
                                                 key={part.id}
                                                 part={part}
                                                 index={idx}
                                                 onClick={() => openPartModal(part)}
+                                                onLoginRequired={() => router.push('/login')}
                                             />
                                         ))}
                                     </div>

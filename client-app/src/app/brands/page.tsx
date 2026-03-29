@@ -12,6 +12,7 @@ import { Car, Search, ArrowLeft, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import Navbar from '@/components/Navbar';
+import CircularBrandCard from '@/components/CircularBrandCard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -130,7 +131,7 @@ export default function BrandsPage() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-56 rounded-3xl bg-white/5 border border-white/10 animate-pulse" />
+              <div key={i} className="h-80 rounded-3xl bg-white/5 border border-white/10 animate-pulse" />
             ))}
           </div>
         ) : filteredBrands.length === 0 ? (
@@ -150,96 +151,11 @@ export default function BrandsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
             {filteredBrands.map((brand, index) => (
-              <motion.div
+              <CircularBrandCard
                 key={brand.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Link href={`/brands/${brand.key}`}>
-                  <div className="group relative h-56 rounded-3xl bg-gradient-to-br from-white/[0.03] to-white/[0.01] border border-white/10 hover:border-amber-500/40 transition-all duration-500 overflow-hidden cursor-pointer hover:shadow-2xl hover:shadow-amber-500/10">
-                    
-                    {/* خلفية متحركة */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    
-                    {/* شبكة خلفية */}
-                    <div className="absolute inset-0 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
-                      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px]" />
-                    </div>
-                    
-                    {/* المحتوى */}
-                    <div className="relative h-full flex items-center gap-8 p-8">
-                      
-                      {/* اللوجو الدائري الكبير */}
-                      <div className="relative shrink-0">
-                        {/* الحلقة الخارجية المتوهجة */}
-                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500 scale-110" />
-                        
-                        {/* الحلقة الوسطى */}
-                        <div className="absolute inset-0 rounded-full border-2 border-amber-500/0 group-hover:border-amber-500/30 transition-all duration-500 scale-105 animate-pulse" />
-                        
-                        {/* اللوجو */}
-                        <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-white/10 to-white/5 border-2 border-white/20 group-hover:border-amber-500/50 transition-all duration-500 flex items-center justify-center overflow-hidden shadow-2xl group-hover:shadow-amber-500/30 group-hover:scale-105">
-                          {brand.logo ? (
-                            <Image
-                              src={brand.logo}
-                              alt={brand.name}
-                              width={96}
-                              height={96}
-                              className="object-contain p-4 group-hover:scale-110 transition-transform duration-500 filter brightness-110"
-                              unoptimized
-                            />
-                          ) : (
-                            <Building2 className="w-14 h-14 text-white/30 group-hover:text-amber-500/50 transition-colors" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* التفاصيل */}
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-3xl font-black text-white group-hover:text-amber-400 transition-colors duration-300 mb-3 truncate uppercase tracking-tight">
-                          {isRTL ? (brand.nameAr || brand.name) : brand.name}
-                        </h3>
-                        
-                        {brand.description && (
-                          <p className="text-sm text-white/50 group-hover:text-white/70 line-clamp-2 mb-4 leading-relaxed transition-colors">
-                            {isRTL ? (brand.descriptionAr || brand.description) : brand.description}
-                          </p>
-                        )}
-
-                        {/* عدد السيارات */}
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl group-hover:bg-amber-500/10 group-hover:border-amber-500/30 transition-all">
-                            <Car className="w-4 h-4 text-white/50 group-hover:text-amber-400 transition-colors" />
-                            <span className="font-bold text-white/70 group-hover:text-amber-400 transition-colors">
-                              {brand.carCount || 0}
-                            </span>
-                            <span className="text-xs text-white/40 group-hover:text-amber-400/70 transition-colors">
-                              {isRTL ? 'سيارة' : 'cars'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* سهم */}
-                      <div className="shrink-0 w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-amber-500 group-hover:border-amber-400 transition-all duration-300 group-hover:scale-110">
-                        <ArrowLeft className={cn(
-                          "w-5 h-5 text-white/40 group-hover:text-black transition-all duration-300 group-hover:translate-x-1",
-                          isRTL && "rotate-180 group-hover:-translate-x-1"
-                        )} />
-                      </div>
-                    </div>
-
-                    {/* تأثير الإضاءة العلوي */}
-                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none">
-                      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-2/3 bg-amber-500/10 blur-3xl" />
-                    </div>
-                    
-                    {/* خط متوهج في الأسفل */}
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500/0 to-transparent group-hover:via-amber-500/50 transition-all duration-500" />
-                  </div>
-                </Link>
-              </motion.div>
+                brand={brand}
+                index={index}
+              />
             ))}
           </div>
         )}
