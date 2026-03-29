@@ -61,11 +61,42 @@ interface KoreanCar {
     isInspected: boolean;
 }
 
-function resolveCarImage(car: KoreanCar): string | null {
-    const candidate = car.imageUrl || car.images?.[0] || car.image || null;
-    if (!candidate || typeof candidate !== 'string') return null;
-    const trimmed = candidate.trim();
-    return trimmed.length > 0 ? trimmed : null;
+function resolveCarImage(car: KoreanCar): string {
+    let candidate = car.imageUrl || car.images?.[0] || car.image || null;
+    
+    // إذا لم توجد صورة، نرجع صورة افتراضية
+    if (!candidate || typeof candidate !== 'string') {
+        return 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000&auto=format&fit=crop';
+    }
+    
+    let url = candidate.trim();
+    if (!url) {
+        return 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000&auto=format&fit=crop';
+    }
+    
+    // إزالة التكرار في الرابط
+    if (url.includes('https://ci.encar.comhttps://ci.encar.com')) {
+        url = url.replace('https://ci.encar.comhttps://ci.encar.com', 'https://ci.encar.com');
+    }
+    
+    // إصلاح الروابط التي تنتهي بـ _
+    if (url.endsWith('_')) {
+        if (url.startsWith('http')) {
+            return `${url}001.jpg`;
+        }
+        return `https://ci.encar.com${url}001.jpg`;
+    }
+    
+    // إضافة النطاق إذا كان الرابط نسبي
+    if (url.startsWith('/carpicture')) {
+        return `https://ci.encar.com${url}`;
+    }
+    
+    if (url.startsWith('/') && !url.startsWith('http')) {
+        return `https://ci.encar.com/carpicture${url}`;
+    }
+    
+    return url;
 }
 
 // ─── تنسيق الأرقام ───
@@ -81,7 +112,6 @@ function CarCard({ car, onContact, onViewDetails, priceText }: {
     onViewDetails: (car: KoreanCar) => void;
     priceText: string;
 }) {
-    const [imgErr, setImgErr] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
     const [isInCart, setIsInCart] = useState(false);
     const { currency } = useSettings();
@@ -100,18 +130,18 @@ function CarCard({ car, onContact, onViewDetails, priceText }: {
             <div className="cursor-pointer flex-1 flex flex-col" onClick={() => onViewDetails(car)}>
                 {/* ─ صورة السيارة ─ */}
                 <div className="relative h-48 bg-zinc-900 overflow-hidden">
-                    {carImage && !imgErr ? (
-                        <Image
-                            src={carImage} alt={car.title}
-                            fill sizes="(max-width:768px) 100vw, 33vw"
-                            className="object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={() => setImgErr(true)}
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <Car className="w-16 h-16 text-white/10" />
-                        </div>
-                    )}
+                    <Image
+                        src={carImage}
+                        alt={car.title}
+                        fill
+                        sizes="(max-width:768px) 100vw, 33vw"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                            // في حالة فشل تحميل الصورة، نستخدم صورة افتراضية
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000&auto=format&fit=crop';
+                        }}
+                    />
                     <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
                     {car.isInspected && (
                         <div className="absolute top-3 right-3 bg-green-500/90 backdrop-blur-sm text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-full flex items-center gap-1">
@@ -255,9 +285,16 @@ function CarModal({ car, onClose, onContact, isRTL, priceText }: {
     isRTL: boolean;
     priceText: string;
 }) {
-    const [imgErr, setImgErr] = useState(false);
     const [activeImageIndex, setActiveImageIndex] = useState(0);
     const carImage = resolveCarImage(car);
+    
+    // معالجة الصور في المودال
+    const getModalImage = (index: number): string => {
+        const img = car.images?.[index];
+        if (!img) return carImage;
+        return resolveCarImage({ ...car, imageUrl: img, images: [img] } as KoreanCar);
+    };
+    
     const detailsRows = [
         { label: rawText('السنة'), value: car.year.toString() },
         { label: rawText('المسافة'), value: formatMileage(car.mileage) },
@@ -280,24 +317,22 @@ function CarModal({ car, onClose, onContact, isRTL, priceText }: {
                     <div className="relative h-64 sm:h-72 bg-zinc-900">
                         <AnimatePresence mode="wait">
                             <motion.div
-                                key={car.images?.[activeImageIndex] || carImage}
+                                key={activeImageIndex}
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 exit={{ opacity: 0 }}
                                 className="w-full h-full"
                             >
-                                {(car.images?.[activeImageIndex] || carImage) ? (
-                                    <Image 
-                                        src={car.images?.[activeImageIndex] || carImage!} 
-                                        alt={car.title} 
-                                        fill 
-                                        className="object-cover" 
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center">
-                                        <Car className="w-20 h-20 text-white/10" />
-                                    </div>
-                                )}
+                                <Image 
+                                    src={getModalImage(activeImageIndex)} 
+                                    alt={car.title} 
+                                    fill 
+                                    className="object-cover"
+                                    onError={(e) => {
+                                        const target = e.target as HTMLImageElement;
+                                        target.src = 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000&auto=format&fit=crop';
+                                    }}
+                                />
                             </motion.div>
                         </AnimatePresence>
                         <div className="absolute inset-0 bg-linear-to-t from-cinematic-dark via-transparent to-transparent" />

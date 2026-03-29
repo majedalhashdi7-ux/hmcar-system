@@ -48,6 +48,37 @@ export default function CarCard({ car, index, usdToSar, onEdit, onDelete, onMark
         ? `${((car.price || 0) / usdToSar).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} USD`
         : `${Number(car.price || 0).toLocaleString()} SAR`;
 
+    // معالجة رابط الصورة لإصلاح الروابط الكورية
+    const getImageUrl = (url: string | undefined): string => {
+        if (!url) return 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000&auto=format&fit=crop';
+        
+        // إزالة التكرار في الرابط
+        if (url.includes('https://ci.encar.comhttps://ci.encar.com')) {
+            url = url.replace('https://ci.encar.comhttps://ci.encar.com', 'https://ci.encar.com');
+        }
+        
+        // إصلاح الروابط التي تنتهي بـ _
+        if (url.endsWith('_')) {
+            if (url.startsWith('http')) {
+                return `${url}001.jpg`;
+            }
+            return `https://ci.encar.com${url}001.jpg`;
+        }
+        
+        // إضافة النطاق إذا كان الرابط نسبي
+        if (url.startsWith('/carpicture')) {
+            return `https://ci.encar.com${url}`;
+        }
+        
+        if (url.startsWith('/') && !url.startsWith('http')) {
+            return `https://ci.encar.com/carpicture${url}`;
+        }
+        
+        return url;
+    };
+
+    const imageUrl = getImageUrl(car.images?.[0]);
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -56,15 +87,20 @@ export default function CarCard({ car, index, usdToSar, onEdit, onDelete, onMark
             className="ck-card overflow-hidden group ck-hover-lift"
         >
             {/* ── صورة السيارة ── */}
-            <div className="relative h-52 overflow-hidden">
+            <div className="relative h-52 overflow-hidden bg-zinc-900">
                 <Image
-                    src={car.images?.[0] || 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000&auto=format&fit=crop'}
+                    src={imageUrl}
                     alt={car.title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     quality={70}
                     priority={index < 3}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    onError={(e) => {
+                        // في حالة فشل تحميل الصورة، نستخدم صورة افتراضية
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=1000&auto=format&fit=crop';
+                    }}
                 />
                 {/* تدرج سفلي لتحسين قراءة النص */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#070711] via-transparent to-transparent" />

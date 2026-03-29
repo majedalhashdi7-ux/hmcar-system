@@ -23,6 +23,24 @@ const AUTH_ROUTES = ['/login', '/register'];
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
+    const hostname = request.headers.get('host') || '';
+
+    // ── Multi-Tenancy Routing ──
+    // إذا كان الزائر قادم من دومين "carx" (سواء carx-system أو أي دومين فرعي لـ carx)
+    // نعيد توجيهه داخلياً ليقرأ من صفحات معرض كوريا "showroom" وكأنها الصفحة الرئيسية الخاصة به
+    if (hostname.toLowerCase().includes('carx')) {
+        if (pathname === '/' || pathname === '') {
+            return NextResponse.rewrite(new URL('/showroom', request.url));
+        }
+        if (pathname.startsWith('/cars/')) {
+            // توجيه /cars/ID إلى /showroom/ID
+            const newPath = pathname.replace(/^\/cars\//, '/showroom/');
+            return NextResponse.rewrite(new URL(newPath, request.url));
+        }
+        if (pathname === '/cars') {
+            return NextResponse.rewrite(new URL('/showroom', request.url));
+        }
+    }
 
     // قراءة التوكن (Token) من ملفات تعريف الارتباط للتحقق من الجلسة
     const token = request.cookies.get('hm_token')?.value;
@@ -69,15 +87,9 @@ export function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        '/admin/:path*',
-        '/client/:path*',
-        '/profile/:path*',
-        '/orders/:path*',
-        '/favorites/:path*',
-        '/messages/:path*',
-        '/notifications/:path*',
-        '/comparisons/:path*',
-        '/login',
-        '/register',
+        /*
+         * Match all paths except API, _next/static, _next/image, uploads, favicon.ico
+         */
+        '/((?!api|_next/static|_next/image|uploads|favicon.ico).*)',
     ],
 };

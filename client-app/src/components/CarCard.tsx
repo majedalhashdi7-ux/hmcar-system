@@ -8,11 +8,12 @@
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { Heart, ShoppingCart, Gauge, Fuel, ArrowRight, Car, Check } from 'lucide-react';
+import { Heart, ShoppingCart, Gauge, Fuel, ArrowRight, Car, Check, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useSettings } from '@/lib/SettingsContext';
+import CurrencySwitcher from '@/components/CurrencySwitcher';
 
 const FAVORITES_KEY = 'hm_favorites';
 const CART_KEY = 'hm_cart';
@@ -97,7 +98,6 @@ export default function CarCard({ car, index = 0, onClick, onLoginRequired }: Ca
                             sizes="(max-width: 768px) 100vw, 50vw"
                             className="object-cover transition-all duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100"
                             onError={() => setImgError(true)}
-                            unoptimized
                         />
                     ) : (
                         <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-white/3 to-black/60">
@@ -130,6 +130,19 @@ export default function CarCard({ car, index = 0, onClick, onLoginRequired }: Ca
                             title={isRTL ? 'المفضلة' : 'Favorite'}
                         >
                             <Heart className={cn("w-4 h-4 transition-all", isFav ? "fill-white text-white" : "text-white/60")} />
+                        </motion.button>
+
+                        {/* زر التفاصيل (الوصف) */}
+                        <motion.button
+                            whileTap={{ scale: 0.85 }}
+                            onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+                            className={cn(
+                                "w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-md border transition-all duration-300 shadow-lg",
+                                "bg-black/60 border-white/15 hover:bg-blue-500/20 hover:border-blue-400/40"
+                            )}
+                            title={isRTL ? 'الوصف والتفاصيل' : 'Details'}
+                        >
+                            <FileText className="w-4 h-4 text-white/60" />
                         </motion.button>
 
                         {/* سلة التسوق */}
@@ -185,23 +198,33 @@ export default function CarCard({ car, index = 0, onClick, onLoginRequired }: Ca
                         </div>
                     </div>
 
-                    {/* السعر وزر التفاصيل */}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/6">
-                        <div>
-                            <p className="text-[8px] text-white/20 font-bold uppercase tracking-widest mb-0.5">
+                    {/* السعر وزر الشراء والعملة */}
+                    <div className="flex items-center justify-between pt-3 border-t border-white/10 gap-2">
+                        <div className="flex-1 overflow-hidden">
+                            <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest mb-0.5">
                                 {isRTL ? 'السعر' : 'PRICE'}
                             </p>
-                            <p className="text-xl font-black text-amber-400 leading-none">
+                            <p className="text-xl font-black text-amber-400 leading-none truncate">
                                 {displayPrice}
                             </p>
                         </div>
-                        <div className={cn(
-                            "w-10 h-10 rounded-full border border-white/10 flex items-center justify-center",
-                            "group-hover:bg-amber-400 group-hover:border-amber-400 group-hover:text-black",
-                            "transition-all duration-400"
-                        )}>
-                            <ArrowRight className={cn("w-4 h-4 transition-transform group-hover:-rotate-45", isRTL && "rotate-180")} />
+                        <div onClick={e => e.stopPropagation()}>
+                            <CurrencySwitcher variant="minimal" />
                         </div>
+                        <motion.button 
+                            whileHover={{ scale: 1.05 }} 
+                            whileTap={{ scale: 0.95 }}
+                            onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+                            title={isRTL ? 'شراء الآن' : 'Buy Now'}
+                            className={cn(
+                                "h-10 px-4 rounded-xl border border-white/10 flex items-center justify-center gap-2",
+                                "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400",
+                                "hover:from-amber-500 hover:to-orange-500 hover:text-black hover:border-amber-400",
+                                "transition-all duration-400 shadow-[0_0_15px_rgba(245,158,11,0.1)] hover:shadow-[0_0_20px_rgba(245,158,11,0.5)]"
+                        )}>
+                            <span className="text-[10px] font-black uppercase tracking-widest">{isRTL ? 'شراء' : 'BUY'}</span>
+                            <ArrowRight className={cn("w-3.5 h-3.5 transition-transform", isRTL && "rotate-180")} />
+                        </motion.button>
                     </div>
                 </div>
             </div>

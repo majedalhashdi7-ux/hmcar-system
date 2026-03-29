@@ -473,6 +473,42 @@ function CarsContent() {
                     </div>
                 )}
 
+                {requestedSource === 'hm_local' && (
+                    <div className="mb-8 p-6 bg-black/40 rounded-2xl border border-white/5">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-sm font-black tracking-widest uppercase">{isRTL ? 'الوكالات (الماركات)' : 'AGENCIES & BRANDS'}</h3>
+                             <NextLink href="/admin/brands" className="text-[10px] h-8 px-4 flex items-center gap-2 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20 hover:bg-orange-500 hover:text-black transition-all">
+                                <Plus className="w-3 h-3" />
+                                {isRTL ? 'إضافة / إدارة وكالة' : 'Manage Agencies'}
+                             </NextLink>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                             {brands.map(b => (
+                                 <button 
+                                     key={b._id} 
+                                     onClick={() => { 
+                                         resetForm();
+                                         setFormData(prev => ({...prev, agency: b._id, make: b.name})); 
+                                         setShowModal(true); 
+                                     }}
+                                     className="min-w-[140px] p-4 bg-white/5 rounded-2xl border border-white/10 flex flex-col items-center justify-center gap-4 hover:border-orange-500/50 hover:bg-orange-500/5 transition-all group"
+                                 >
+                                     <div className="w-16 h-16 rounded-full bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500 group-hover:scale-110 shadow-lg transition-transform">
+                                         <CarIcon className="w-8 h-8" />
+                                     </div>
+                                     <span className="text-sm tracking-widest font-black uppercase">{b.name}</span>
+                                     <span className="text-[9px] font-bold text-orange-400 bg-orange-500/10 px-3 py-1.5 rounded-full whitespace-nowrap opacity-50 group-hover:opacity-100 transition-opacity">
+                                         {isRTL ? '+ أضف سيارة هنا' : '+ ADD CAR HERE'}
+                                     </span>
+                                 </button>
+                             ))}
+                             {brands.length === 0 && (
+                                 <div className="w-full text-center py-8 text-white/30 text-xs font-black uppercase tracking-widest">{isRTL ? 'لا توجد وكالات بعد، يرجى إضافتها أولاً.' : 'NO AGENCIES FOUND, PLEASE ADD ONE.'}</div>
+                             )}
+                        </div>
+                    </div>
+                )}
+
                 {!requestedSource ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-10">
                         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>

@@ -6,7 +6,10 @@ import {
     MessageCircle, Mail, RefreshCw, 
     Search, CheckCircle, 
     User, X, Send,
-    CheckCheck, Circle, ArrowLeft
+    CheckCheck, Circle, ArrowLeft,
+    Bell, AlertCircle, CheckCircle2, Clock, Shield,
+    Trash2, RefreshCcw, Terminal,
+    ShoppingCart, Users, Gavel
 } from "lucide-react";
 
 import { useSearchParams } from 'next/navigation';
@@ -46,12 +49,43 @@ interface Message {
 // ── Tab Constants ──
 const MODE_CHATS = 'chats';
 const MODE_INQUIRIES = 'inquiries';
+const MODE_NOTIF = 'notifications';
+
+interface Notification {
+    id: string;
+    type: 'CRITICAL' | 'TRANSACTION' | 'SYSTEM' | 'WARNING' | 'ORDER' | 'USER' | 'AUCTION';
+    title: string;
+    content: string;
+    time: string;
+    status: string;
+    isRead: boolean;
+}
+
+const NOTIF_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
+    CRITICAL: { icon: Shield, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
+    TRANSACTION: { icon: CheckCircle2, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+    SYSTEM: { icon: Clock, color: 'text-white/40', bg: 'bg-white/5 border-white/10' },
+    WARNING: { icon: AlertCircle, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+    ORDER: { icon: ShoppingCart, color: 'text-green-400', bg: 'bg-green-500/10 border-green-500/20' },
+    USER: { icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10 border-purple-500/20' },
+    AUCTION: { icon: Gavel, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+};
+
+function timeAgo(iso: string, isRTL: boolean) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return isRTL ? 'الآن' : 'Now';
+    if (m < 60) return `${m}${isRTL ? ' د' : 'm ago'}`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}${isRTL ? ' س' : 'h ago'}`;
+    return `${Math.floor(h / 24)}${isRTL ? ' ي' : 'd ago'}`;
+}
 
 function CommsHubContent() {
     const { isRTL } = useLanguage();
     const searchParams = useSearchParams();
     
-    const [activeMode, setActiveMode] = useState(searchParams?.get('mode') === MODE_INQUIRIES ? MODE_INQUIRIES : MODE_CHATS);
+    const [activeMode, setActiveMode] = useState(searchParams?.get('mode') === MODE_INQUIRIES ? MODE_INQUIRIES : (searchParams?.get('mode') === MODE_NOTIF ? MODE_NOTIF : MODE_CHATS));
 
     // ── Shared State ──
     const [loading, setLoading] = useState(true);
@@ -69,6 +103,36 @@ function CommsHubContent() {
     const [newMessage, setNewMessage] = useState('');
     const [sending, setSending] = useState(false);
     const [chatSearch, setChatSearch] = useState('');
+
+    // ── Notifications State ──
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+    const [notifFilter, setNotifFilter] = useState('ALL');
+    const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+    const [isBroadcasting, setIsBroadcasting] = useState(false);
+    const [broadcastForm, setBroadcastForm] = useState({ title: '', message: '', url: '' });
+
+    // ── Load Notifications ──
+    const loadNotifications = useCallback(async () => {
+        setLoading(true);
+        try {
+            const res = await api.analytics.getSummary();
+            const live: Notification[] = [];
+            const stats = res?.stats || {};
+            if (stats.totalOrders > 0) {
+                live.push({ id: 'live-1', type: 'ORDER', title: isRTL ? 'إجمالي الطلبات النشطة' : 'ACTIVE ORDERS', content: isRTL ? `${stats.pendingOrders || 0} طلبات معلقة من إجمالي ${stats.totalOrders}` : `${stats.pendingOrders || 0} pending orders out of ${stats.totalOrders} total`, time: new Date().toISOString(), status: 'LIVE', isRead: false });
+            }
+            if (stats.runningAuctions > 0) {
+                live.push({ id: 'live-2', type: 'AUCTION', title: isRTL ? 'مزادات جارية الآن' : 'LIVE AUCTIONS', content: isRTL ? `${stats.runningAuctions} مزاد نشط الآن على المنصة` : `${stats.runningAuctions} auctions currently live`, time: new Date().toISOString(), status: 'ACTIVE', isRead: false });
+            }
+            if (stats.totalUsers > 0) {
+                live.push({ id: 'live-3', type: 'USER', title: isRTL ? 'تقرير المستخدمين' : 'USER SUMMARY', content: isRTL ? `${stats.totalUsers} مستخدم مسجل في المنصة` : `${stats.totalUsers} total registered users on platform`, time: new Date(Date.now() - 3600000).toISOString(), status: 'INFO', isRead: true });
+            }
+            setNotifications(live);
+            setUnreadNotifCount(live.filter(n => !n.isRead).length);
+        } catch {}
+        finally { setLoading(false); }
+    }, [isRTL]);
 
     // ── Load Inquiries ──
     const loadInquiries = useCallback(async () => {
@@ -100,7 +164,8 @@ function CommsHubContent() {
 
     useEffect(() => {
         if (activeMode === MODE_CHATS) loadConversations();
-        else loadInquiries();
+        else if (activeMode === MODE_INQUIRIES) loadInquiries();
+        else loadNotifications();
         
         // Auto-refresh polling every 10 seconds
         const intervalId = setInterval(() => {
@@ -126,7 +191,7 @@ function CommsHubContent() {
                         }
                     }).catch(() => {});
                 }
-            } else {
+            } else if (activeMode === MODE_INQUIRIES) {
                 // Background refresh inquiries
                 api.contact.list({ status: inquiryFilter === 'all' ? '' : inquiryFilter, search: inquirySearch })
                     .then(res => { if (res.success) setInquiries(res.data); })
@@ -135,7 +200,26 @@ function CommsHubContent() {
         }, 10000);
         
         return () => clearInterval(intervalId);
-    }, [activeMode, inquiryFilter, selectedConv, inquirySearch, loadConversations, loadInquiries]);
+    }, [activeMode, inquiryFilter, selectedConv, inquirySearch, loadConversations, loadInquiries, loadNotifications]);
+
+    const handleBroadcast = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!broadcastForm.title || !broadcastForm.message) return;
+        setIsBroadcasting(true);
+        try {
+            const res = await api.notifications.broadcast(broadcastForm.title, broadcastForm.message, broadcastForm.url);
+            if (res.success) {
+                setShowBroadcastModal(false);
+                setBroadcastForm({ title: '', message: '', url: '' });
+                alert(isRTL ? 'تم إرسال الإشعار بنجاح!' : 'Broadcast sent successfully!');
+                loadNotifications();
+            } else {
+                alert(isRTL ? 'فشل إرسال الإشعار' : 'Failed to send broadcast');
+            }
+        } catch {
+            alert(isRTL ? 'حدث خطأ' : 'Error occurred');
+        } finally { setIsBroadcasting(false); }
+    };
 
     // ── Actions: Inquiries ──
     const updateInquiryStatus = async (id: string, status: string) => {
@@ -186,13 +270,20 @@ function CommsHubContent() {
                 backHref="/admin/dashboard"
                 isRTL={isRTL}
                 actions={
-                    <button onClick={() => activeMode === MODE_CHATS ? loadConversations() : loadInquiries()} title={isRTL ? "تحديث" : "Refresh"} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-blue-400">
-                        <RefreshCw className={cn('w-5 h-5', loading && 'animate-spin')} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {activeMode === MODE_NOTIF && (
+                            <button onClick={() => setShowBroadcastModal(true)} title={isRTL ? "إرسال للكل" : "Broadcast"} className="flex items-center gap-2 px-4 h-12 bg-cinematic-neon-blue/10 border border-cinematic-neon-blue/20 text-cinematic-neon-blue rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-cinematic-neon-blue hover:text-black transition-all">
+                                <Send className="w-4 h-4" /> <span className="hidden sm:inline">{isRTL ? 'إرسال للكل' : 'BROADCAST'}</span>
+                            </button>
+                        )}
+                        <button onClick={() => activeMode === MODE_CHATS ? loadConversations() : activeMode === MODE_NOTIF ? loadNotifications() : loadInquiries()} title={isRTL ? "تحديث" : "Refresh"} className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-blue-400">
+                            <RefreshCw className={cn('w-5 h-5', loading && 'animate-spin')} />
+                        </button>
+                    </div>
                 }
             >
                 {/* ── Comms Mode Select ── */}
-                <div className="flex bg-white/5 p-1 rounded-2xl border border-white/5 mb-8 w-full max-w-md">
+                <div className="flex flex-wrap sm:flex-nowrap bg-white/5 p-1 rounded-2xl border border-white/5 mb-8 w-full max-w-xl gap-1">
                     <button onClick={() => setActiveMode(MODE_CHATS)}
                         className={cn('flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.1em] transition-all flex items-center justify-center gap-3', 
                         activeMode === MODE_CHATS ? 'bg-blue-500 text-black shadow-[0_0_20px_rgba(59,130,246,0.3)]' : 'text-white/40 hover:text-white/60')}>
@@ -200,10 +291,19 @@ function CommsHubContent() {
                         {isRTL ? 'المحادثات المباشرة' : 'LIVE CHATS'}
                     </button>
                     <button onClick={() => setActiveMode(MODE_INQUIRIES)}
-                        className={cn('flex-1 py-3 rounded-xl text-[11px] font-black uppercase tracking-[0.1em] transition-all flex items-center justify-center gap-3', 
+                        className={cn('flex-1 py-3 px-2 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-[0.1em] transition-all flex items-center justify-center gap-2', 
                         activeMode === MODE_INQUIRIES ? 'bg-orange-500 text-black shadow-[0_0_20px_rgba(249,115,22,0.3)]' : 'text-white/40 hover:text-white/60')}>
                         <Mail size={16} />
                         {isRTL ? 'رسائل الموقع' : 'INQUIRIES'}
+                    </button>
+                    <button onClick={() => setActiveMode(MODE_NOTIF)}
+                        className={cn('flex-1 py-3 px-2 rounded-xl text-[10px] sm:text-[11px] font-black uppercase tracking-[0.1em] transition-all flex items-center justify-center gap-2', 
+                        activeMode === MODE_NOTIF ? 'bg-cinematic-neon-blue text-black shadow-[0_0_20px_rgba(0,240,255,0.3)]' : 'text-white/40 hover:text-white/60')}>
+                        <div className="relative">
+                            <Bell size={16} />
+                            {unreadNotifCount > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />}
+                        </div>
+                        {isRTL ? 'الإشعارات' : 'NOTIFICATIONS'}
                     </button>
                 </div>
 
@@ -278,7 +378,7 @@ function CommsHubContent() {
                             )}
                         </div>
                     </div>
-                ) : (
+                ) : activeMode === MODE_INQUIRIES ? (
                     <div className="space-y-4">
                         <div className="flex gap-2 mb-6">
                             {['new', 'read', 'replied', 'all'].map(f => (
@@ -311,8 +411,78 @@ function CommsHubContent() {
                             ))}
                         </div>
                     </div>
+                ) : (
+                    <div className="space-y-6">
+                        <div className="flex gap-2 pb-4 overflow-x-auto ck-scroll">
+                            {['ALL', 'ORDER', 'AUCTION', 'USER', 'SYSTEM'].map(f => (
+                                <button key={f} onClick={() => setNotifFilter(f)} className={cn('ck-tab shrink-0', notifFilter === f && 'ck-tab-active')}>
+                                    {isRTL ? (f === 'ALL' ? 'الكل' : f === 'ORDER' ? 'الطلبات' : f === 'AUCTION' ? 'مزادات' : f === 'USER' ? 'مستخدمون' : 'النظام') : f}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        <div className="space-y-3">
+                            {loading ? (
+                                Array.from({ length: 3 }).map((_, i) => (
+                                    <div key={i} className="h-24 rounded-2xl bg-white/[0.02] animate-pulse border border-white/5" />
+                                ))
+                            ) : notifications.length === 0 ? (
+                                <div className="ck-empty py-24"><div className="ck-empty-icon"><Bell className="w-8 h-8" /></div><p className="cockpit-mono">{isRTL ? 'لا توجد إشعارات' : 'NO ALERTS FOUND'}</p></div>
+                            ) : (
+                                <AnimatePresence mode="popLayout">
+                                    {notifications.filter(n => notifFilter === 'ALL' || n.type === notifFilter).map((notif, i) => {
+                                        const cfg = NOTIF_CONFIG[notif.type] ?? NOTIF_CONFIG['SYSTEM'];
+                                        const Icon = cfg.icon;
+                                        return (
+                                            <motion.div key={notif.id} layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+                                                className={cn('ck-card p-5 flex flex-col md:flex-row items-start md:items-center gap-5 group relative', !notif.isRead && 'border-cinematic-neon-blue/30 bg-cinematic-neon-blue/5')}>
+                                                {!notif.isRead && <div className="absolute top-4 end-4 w-2 h-2 rounded-full bg-cinematic-neon-blue shadow-[0_0_8px_rgba(0,240,255,0.8)]" />}
+                                                <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 border', cfg.bg)}><Icon size={24} className={cfg.color} /></div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                                        <span className={cn('cockpit-mono text-[9px] px-2 py-0.5 rounded-lg uppercase tracking-widest bg-white/5 border border-white/5', cfg.color)}>{notif.type}</span>
+                                                        <span className="cockpit-mono text-[9px] text-white/20">{timeAgo(notif.time, isRTL)}</span>
+                                                    </div>
+                                                    <h3 className={cn('text-sm font-bold uppercase tracking-tight mb-0.5', notif.isRead ? 'text-white/50' : 'text-white')}>{notif.title}</h3>
+                                                    <p className="cockpit-mono text-[10px] text-white/40 leading-relaxed">{notif.content}</p>
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => setNotifications(prev => prev.filter(n => n.id !== notif.id))} className="px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all">{isRTL ? 'حذف' : 'DISMISS'}</button>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
+                                </AnimatePresence>
+                            )}
+                        </div>
+                    </div>
                 )}
             </AdminPageShell>
+
+            {/* Broadcast Modal */}
+            <AnimatePresence>
+                {showBroadcastModal && (
+                    <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-zinc-950 border border-white/10 p-8 rounded-3xl w-full max-w-lg relative">
+                            <button onClick={() => setShowBroadcastModal(false)} className="absolute top-6 right-6 text-white/40 hover:text-white transition-all"><X className="w-6 h-6" /></button>
+                            <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3 text-cinematic-neon-blue"><Send className="w-6 h-6" />{isRTL ? 'إرسال للكل' : 'BROADCAST'}</h2>
+                            <form onSubmit={handleBroadcast} className="space-y-6">
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{isRTL ? 'العنوان' : 'TITLE'}</label>
+                                    <input required placeholder={isRTL ? 'مثال: عرض جديد!' : 'e.g., NEW OFFER!'} value={broadcastForm.title} onChange={e => setBroadcastForm(prev => ({ ...prev, title: e.target.value }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cinematic-neon-blue focus:outline-none transition-all text-white" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">{isRTL ? 'النص' : 'MESSAGE'}</label>
+                                    <textarea required rows={4} placeholder={isRTL ? 'اكتب رسالتك...' : 'Write your message...'} value={broadcastForm.message} onChange={e => setBroadcastForm(prev => ({ ...prev, message: e.target.value }))} className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-cinematic-neon-blue focus:outline-none transition-all resize-none text-white"></textarea>
+                                </div>
+                                <button type="submit" disabled={isBroadcasting} className="w-full py-4 bg-cinematic-neon-blue text-black font-black uppercase text-[11px] tracking-widest rounded-xl hover:shadow-[0_0_30px_rgba(0,240,255,0.3)] transition-all disabled:opacity-50">
+                                    {isBroadcasting ? (isRTL ? 'جاري الإرسال...' : 'SENDING...') : (isRTL ? 'نشر الإشعار' : 'PUBLISH BROADCAST')}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Inquiry Detail Modal */}
             <AnimatePresence>

@@ -8,12 +8,13 @@
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { Heart, ShoppingCart, Check, Wrench, Package, DollarSign, Coins } from 'lucide-react';
+import { Heart, ShoppingCart, Check, Wrench, Package, DollarSign, Coins, FileText, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useSettings } from '@/lib/SettingsContext';
 import type { PartCardProps } from '@/types';
+import CurrencySwitcher from '@/components/CurrencySwitcher';
 
 const FAVORITES_KEY = 'hm_favorites';
 const CART_KEY = 'hm_cart';
@@ -146,7 +147,6 @@ export default function PartCard({ part, index = 0, onClick, onLoginRequired }: 
                             fill
                             className="object-cover group-hover:scale-110 transition-transform duration-700"
                             onError={() => setImgError(true)}
-                            unoptimized
                             referrerPolicy="no-referrer"
                         />
                     ) : (
@@ -175,14 +175,15 @@ export default function PartCard({ part, index = 0, onClick, onLoginRequired }: 
 
                     {/* ── أزرار علوية ── */}
                     <div className="absolute top-3 right-3 flex gap-2">
-                        {/* زر تغيير العملة */}
+                        {/* زر التفاصيل (الوصف) */}
                         <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={toggleCurrency}
-                            className="w-9 h-9 rounded-xl flex items-center justify-center backdrop-blur-xl bg-black/60 border border-white/20 hover:bg-amber-500/20 hover:border-amber-400/40 transition-all duration-300 shadow-lg"
+                            onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+                            className="w-9 h-9 rounded-xl flex items-center justify-center backdrop-blur-xl bg-black/60 border border-white/20 hover:bg-blue-500/20 hover:border-blue-400/40 transition-all duration-300 shadow-lg"
+                            title={isRTL ? 'التفاصيل' : 'Details'}
                         >
-                            <Coins className="w-4 h-4 text-amber-400" />
+                            <FileText className="w-4 h-4 text-white/70" />
                         </motion.button>
 
                         {/* زر القلب */}
@@ -241,16 +242,20 @@ export default function PartCard({ part, index = 0, onClick, onLoginRequired }: 
                         </p>
                     )}
 
-                    {/* السعر وزر الشراء */}
-                    <div className="flex items-center justify-between gap-3 pt-3 border-t border-white/10">
+                    {/* السعر وزر الشراء والعملة */}
+                    <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/10">
                         {/* السعر */}
-                        <div className="flex-1">
-                            <p className="text-xs text-white/40 mb-1 font-bold uppercase tracking-wider">
-                                {isRTL ? 'السعر' : 'Price'}
+                        <div className="flex-1 overflow-hidden">
+                            <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest mb-0.5">
+                                {isRTL ? 'السعر' : 'PRICE'}
                             </p>
-                            <p className="text-xl font-black text-amber-400 leading-none">
+                            <p className="text-xl font-black text-amber-400 leading-none truncate">
                                 {displayPrice}
                             </p>
+                        </div>
+                        
+                        <div onClick={e => e.stopPropagation()}>
+                            <CurrencySwitcher variant="minimal" />
                         </div>
 
                         {/* زر الشراء */}
@@ -259,24 +264,25 @@ export default function PartCard({ part, index = 0, onClick, onLoginRequired }: 
                             whileTap={{ scale: 0.95 }}
                             onClick={addToCart}
                             disabled={stock === 0}
+                            title={isRTL ? 'شراء' : 'Buy'}
                             className={cn(
-                                "px-5 py-3 rounded-xl font-black text-sm uppercase tracking-wider transition-all duration-300 shadow-lg flex items-center gap-2",
+                                "h-10 px-4 rounded-xl border flex items-center justify-center gap-2 transition-all duration-400",
                                 inCart
-                                    ? "bg-emerald-500 text-black border-2 border-emerald-400"
+                                    ? "bg-emerald-500/20 text-emerald-400 border-emerald-400/50"
                                     : stock === 0
-                                        ? "bg-white/5 text-white/30 border-2 border-white/10 cursor-not-allowed"
-                                        : "bg-amber-500 hover:bg-amber-400 text-black border-2 border-amber-400 hover:shadow-amber-500/50"
+                                        ? "bg-white/5 text-white/30 border-white/10 cursor-not-allowed"
+                                        : "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400 border-white/10 hover:from-amber-500 hover:to-orange-500 hover:text-black hover:border-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.1)] hover:shadow-[0_0_20px_rgba(245,158,11,0.5)]"
                             )}
                         >
                             {cartAdded || inCart ? (
                                 <>
-                                    <Check className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{isRTL ? 'تم' : 'Added'}</span>
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">{isRTL ? 'تم' : 'ADDED'}</span>
                                 </>
                             ) : (
                                 <>
-                                    <ShoppingCart className="w-4 h-4" />
-                                    <span>{isRTL ? 'شراء' : 'Buy'}</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">{isRTL ? 'شراء' : 'BUY'}</span>
+                                    <ShoppingCart className="w-3.5 h-3.5" />
                                 </>
                             )}
                         </motion.button>

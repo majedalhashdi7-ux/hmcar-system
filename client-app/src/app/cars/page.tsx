@@ -17,7 +17,6 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 const rawText = (value: string) => value;
-const getCarMakeLabel = (make: CarModel['make']) => (typeof make === 'object' && make ? make.name : make);
 
 interface CarModel {
     id?: string;
@@ -51,16 +50,13 @@ function CarsContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { isRTL } = useLanguage();
-    const { formatPrice } = useSettings();
     const { isLoggedIn } = useAuth();
 
     const [cars, setCars] = useState<CarModel[]>([]);
     const [brands, setBrands] = useState<BrandModel[]>([]);
     const [loading, setLoading] = useState(true);
-    const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [page, setPage] = useState(1);
-    const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
     // Filters state
     const [q, setQ] = useState(searchParams.get('q') || '');
@@ -92,7 +88,6 @@ function CarsContent() {
 
             if (res.success) {
                 setCars(res.data.cars || []);
-                setTotal(res.data.pagination?.total || 0);
                 setTotalPages(res.data.pagination?.pages || 1);
             }
         } catch (err) {
@@ -136,11 +131,6 @@ function CarsContent() {
         { id: rawText('100-500k'), label: isRTL ? rawText('١٠٠ - ٥٠٠ ألف') : rawText('100K - 500K') },
         { id: rawText('500k+'), label: isRTL ? rawText('فوق ٥٠٠ ألف') : rawText('> 500K') },
     ];
-
-    const resolveCarImage = (car: CarModel) => {
-        const src = car.images?.[0] || '';
-        return typeof src === 'string' ? src.trim() : '';
-    };
 
     return (
         <div className={cn("min-h-screen bg-cinematic-darker text-white selection:bg-luxury-gold selection:text-black", isRTL && "font-arabic")} dir={isRTL ? 'rtl' : 'ltr'}>
@@ -272,7 +262,6 @@ function CarsContent() {
                                                 <Image 
                                                     src={b.logoUrl} alt={b.name} fill 
                                                     className={cn("object-contain transition-all duration-500", brand === b.name ? "" : "brightness-0 invert opacity-40 group-hover/btn:opacity-100 group-hover/btn:brightness-100")} 
-                                                    unoptimized
                                                 />
                                             ) : (
                                                 <Car className={cn("w-10 h-10", brand === b.name ? "text-luxury-gold" : "text-white/20")} />
