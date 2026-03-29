@@ -9,7 +9,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 
 export default function AdminLiveAuctions() {
-    const { t, isRTL } = useLanguage();
+    const { isRTL } = useLanguage();
     const [sessions, setSessions] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -269,7 +269,7 @@ export default function AdminLiveAuctions() {
 
                                                 <div className="flex gap-2 overflow-x-auto pb-2">
                                                     {car.images?.map((img: string, i: number) => (
-                                                        <img key={i} src={img} className="w-16 h-16 object-cover rounded-lg border border-white/10" />
+                                                        <img key={i} src={img} alt={`${car.title || 'Car'} image ${i + 1}`} className="w-16 h-16 object-cover rounded-lg border border-white/10" />
                                                     ))}
                                                 </div>
                                             </div>

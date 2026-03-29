@@ -17,8 +17,17 @@ import { countryDialCodes } from "@/lib/countries";
 import { useSocket } from "@/lib/SocketContext";
 import { useAuth } from "@/lib/AuthContext";
 import CinematicVideoBackground from "@/components/CinematicVideoBackground";
+import { useTenant } from "@/lib/TenantContext";
+import dynamic from "next/dynamic";
+const CarXLogin = dynamic(() => import("@/components/CarXLogin"), { ssr: false });
 
 export default function Login() {
+    const { tenant } = useTenant();
+    if (tenant?.id === 'carx') return <CarXLogin />;
+    return <HMCarLogin />;
+}
+
+function HMCarLogin() {
     const { isRTL } = useLanguage();
     
     // --- حالات الواجهة (States) ---

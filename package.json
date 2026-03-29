@@ -50,7 +50,11 @@
     "fix:assets": "node scripts/fixAssetPaths.js",
     "setup:railway": "node scripts/setup-railway.js",
     "health": "node scripts/healthCheck.js",
-    "backup": "node scripts/production-backup.js"
+    "backup": "node scripts/production-backup.js",
+    "domain:update": "node scripts/update-domain.js",
+    "domain:verify": "node scripts/verify-domain.js",
+    "add:tenant": "node scripts/add-tenant.js",
+    "list:tenants": "node scripts/list-tenants.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^6.5.2",

@@ -8,6 +8,7 @@
  */
 
 import { ReactNode } from 'react';
+import { TenantProvider } from '@/lib/TenantContext';
 import { LanguageProvider } from '@/lib/LanguageContext';
 import { AuthProvider } from '@/lib/AuthContext';
 import { SocketProvider } from '@/lib/SocketContext';
@@ -19,20 +20,22 @@ import PushNotificationManager from './PushNotificationManager';
 
 export function Providers({ children }: { children: ReactNode }) {
     return (
-        <LanguageProvider>
-            <SettingsProvider>
-                <ToastProvider>
-                    <UIProvider>
-                        <AuthProvider>
-                            <SocketProvider>
-                                <PWAUpdater />
-                                <PushNotificationManager />
-                                {children}
-                            </SocketProvider>
-                        </AuthProvider>
-                    </UIProvider>
-                </ToastProvider>
-            </SettingsProvider>
-        </LanguageProvider>
+        <TenantProvider>
+            <LanguageProvider>
+                <SettingsProvider>
+                    <ToastProvider>
+                        <UIProvider>
+                            <AuthProvider>
+                                <SocketProvider>
+                                    <PWAUpdater />
+                                    <PushNotificationManager />
+                                    {children}
+                                </SocketProvider>
+                            </AuthProvider>
+                        </UIProvider>
+                    </ToastProvider>
+                </SettingsProvider>
+            </LanguageProvider>
+        </TenantProvider>
     );
 }

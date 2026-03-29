@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { useStandalone } from '@/lib/useStandalone';
 import { useUI } from '@/lib/UIContext';
 import { Bell } from 'lucide-react';
+import { useTenant } from '@/lib/TenantContext';
 // Removed CurrencySwitcher as per user request for cleaner UI
 
 const rawText = (value: string) => value;
@@ -54,6 +55,8 @@ export default function Navbar() {
     const { isRTL, toggleLanguage } = useLanguage();
     const { siteInfo } = useSettings();
     const { setFavoritesOpen, setNotificationsOpen } = useUI();
+    const { tenant } = useTenant();
+    const isCarX = tenant?.id === 'carx';
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -87,6 +90,67 @@ export default function Navbar() {
     // في وضع التطبيق المثبت، لا نعرض الـ Navbar - BottomTabBar يتولى التنقل
     if (isStandalone) return null;
 
+    // ── تصميم CAR X المنفصل تماماً (لا يؤثر على HM CAR) ──
+    if (isCarX) {
+        return (
+            <motion.nav
+                initial={{ y: -100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.8 }}
+                className={cn(
+                    "fixed top-0 left-0 right-0 z-50 transition-all duration-700",
+                    scrolled
+                        ? "bg-black/80 backdrop-blur-xl border-b border-red-600/30 shadow-[0_10px_40px_rgba(255,0,0,0.1)]"
+                        : "bg-gradient-to-b from-black/60 to-transparent py-4"
+                )}
+                dir={isRTL ? 'rtl' : 'ltr'}
+            >
+                <div className="max-w-7xl mx-auto px-6 relative flex flex-col items-center justify-center">
+                    
+                    {/* الشعار واسم المتجر في المنتصف */}
+                    <div className="flex flex-col items-center gap-3">
+                        <Link href="/" className="group flex flex-col items-center text-center">
+                            <span className="text-4xl md:text-5xl font-black tracking-widest text-white drop-shadow-[0_0_15px_rgba(255,0,0,0.5)] transition-all group-hover:text-red-600">
+                                CAR X
+                            </span>
+                        </Link>
+                        
+                        {!isLoggedIn ? (
+                            <Link href="/login">
+                                <div className="px-8 py-2.5 rounded-full bg-red-600 border border-red-500 text-sm font-black uppercase tracking-widest text-white hover:bg-red-700 transition-all cursor-pointer shadow-[0_0_15px_rgba(255,0,0,0.5)] hover:shadow-[0_0_25px_rgba(255,0,0,0.8)]">
+                                    {isRTL ? rawText('تسجيل الدخول') : rawText('SIGN IN')}
+                                </div>
+                            </Link>
+                        ) : (
+                            <Link href="/profile">
+                                <div className="px-8 py-2.5 rounded-full bg-white/10 border border-red-500/50 text-sm font-black text-white hover:bg-white/20 transition-all cursor-pointer">
+                                    {isRTL ? rawText('حسابي') : rawText('MY ACCOUNT')}
+                                </div>
+                            </Link>
+                        )}
+                    </div>
+
+                    {/* الأزرار على اليمين (تغيير اللغة والتواصل) */}
+                    <div className={cn("absolute top-1/2 -translate-y-1/2 flex items-center gap-4", isRTL ? "right-6" : "left-6")}>
+                        {/* أيقونة الترجمة المميزة */}
+                        <button
+                            onClick={toggleLanguage}
+                            className="w-12 h-12 rounded-full bg-black/50 border border-red-600/50 flex items-center justify-center text-red-500 hover:text-white hover:bg-red-600 transition-all group"
+                            title={isRTL ? "English" : "العربية"}
+                        >
+                            <Languages className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        </button>
+
+                        <a href="https://wa.me/967781007805" target="_blank" rel="noopener noreferrer" aria-label="WhatsApp Contact" className="w-12 h-12 rounded-full bg-black/50 border border-red-600/50 flex items-center justify-center text-red-500 hover:text-white hover:bg-red-600 transition-all group">
+                            <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        </a>
+                    </div>
+                </div>
+            </motion.nav>
+        );
+    }
+
+    // ── تصميم HM CAR الافتراضي ──
     return (
         <>
             <motion.nav

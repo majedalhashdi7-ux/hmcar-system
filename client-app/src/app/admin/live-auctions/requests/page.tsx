@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { api } from "@/lib/api";
 import { useLanguage } from "@/lib/LanguageContext";
-import { Clock, CheckCircle, XCircle, Trophy, X, Search, DollarSign } from "lucide-react";
 
 export default function LiveAuctionRequests() {
     const { isRTL } = useLanguage();
@@ -67,7 +66,7 @@ export default function LiveAuctionRequests() {
                 alert(isRTL ? 'تم تحديث حالة الطلب بنجاح' : 'Status updated successfully');
                 loadRequests();
             }
-        } catch (error) {
+        } catch {
             alert('Failed to update status');
         }
     };

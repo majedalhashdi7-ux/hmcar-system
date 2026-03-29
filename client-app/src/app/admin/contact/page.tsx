@@ -4,13 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useCallback } from "react";
 import {
     Mail, Search, Trash2, CheckCircle,
-    Clock, User, Phone, MessageSquare, X, ArrowLeft, RefreshCcw
+    Clock, User, Phone, MessageSquare, X, RefreshCcw
 } from "lucide-react";
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 import { api } from "@/lib/api";
-import { useToast } from "@/lib/ToastContext";
 import AdminPageShell from "@/components/AdminPageShell";
 
 interface ContactMessage {
@@ -25,8 +23,7 @@ interface ContactMessage {
 }
 
 export default function AdminContactPage() {
-    const { isRTL, rawText } = useLanguage();
-    const { showToast } = useToast();
+    const { isRTL } = useLanguage();
     const [messages, setMessages] = useState<ContactMessage[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');

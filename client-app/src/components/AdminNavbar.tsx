@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
+import { useTenant } from '@/lib/TenantContext';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -229,13 +230,20 @@ function SidebarInner({
 }
 
 // ── Main Category Configuration ──
-function buildNavCategories(isRTL: boolean, user: any): NavCategory[] {
+function buildNavCategories(isRTL: boolean, user: any, tenant: any): NavCategory[] {
     const permissions = user?.permissions || [];
     const isSuper = user?.role === 'super_admin';
 
     const hasP = (p: string) => isSuper || permissions.includes(p);
 
     const categories: NavCategory[] = [
+        ...(tenant?.id === 'carx' ? [{
+            label: isRTL ? 'إدارة CAR X' : 'CAR X MANAGER',
+            items: [
+                { id: 'carx-settings', icon: Settings, label: isRTL ? 'إعدادات المنصة' : 'SETTINGS', href: '/admin/carx-settings' },
+                { id: 'carx-permissions', icon: Shield, label: isRTL ? 'الصلاحيات' : 'PERMISSIONS', href: '/admin/carx-permissions' }
+            ]
+        }] : []),
         {
             label: isRTL ? 'القيادة والتحكم' : 'COMMAND',
             items: [
@@ -284,6 +292,7 @@ function buildNavCategories(isRTL: boolean, user: any): NavCategory[] {
 export default function AdminNavbar() {
     const { isRTL, lang, toggleLanguage } = useLanguage();
     const { logout, user } = useAuth();
+    const { tenant } = useTenant();
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -328,7 +337,7 @@ export default function AdminNavbar() {
         } catch { /* ignore */ }
     };
 
-    const categories = buildNavCategories(isRTL, user);
+    const categories = buildNavCategories(isRTL, user, tenant);
     const handleForceRefresh = () => {
         if (confirm(isRTL ? 'سيتم مسح الذاكرة المؤقتة للتطبيق وتحديث الصفحة لإصلاح التنسيق. هل أنت متأكد؟' : 'Clear cache and fix UI layout? This will perform a hard refresh.')) {
             if ('serviceWorker' in navigator) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { 
     MessageCircle, Mail, RefreshCw, 
     Search, CheckCircle, 
@@ -71,17 +71,17 @@ function CommsHubContent() {
     const [chatSearch, setChatSearch] = useState('');
 
     // ── Load Inquiries ──
-    const loadInquiries = async () => {
+    const loadInquiries = useCallback(async () => {
         setLoading(true);
         try {
             const res = await api.contact.list({ status: inquiryFilter === 'all' ? '' : inquiryFilter, search: inquirySearch });
             if (res.success) setInquiries(res.data);
         } catch (err) { console.error(err); }
         finally { setLoading(false); }
-    };
+    }, [inquiryFilter, inquirySearch]);
 
     // ── Load Conversations ──
-    const loadConversations = async () => {
+    const loadConversations = useCallback(async () => {
         setLoading(true);
         try {
             const res = await api.messages.conversations();
@@ -96,7 +96,7 @@ function CommsHubContent() {
             }
         } catch { console.error('Failed to load conversations'); }
         finally { setLoading(false); }
-    };
+    }, []);
 
     useEffect(() => {
         if (activeMode === MODE_CHATS) loadConversations();
@@ -135,7 +135,7 @@ function CommsHubContent() {
         }, 10000);
         
         return () => clearInterval(intervalId);
-    }, [activeMode, inquiryFilter, selectedConv, inquirySearch]);
+    }, [activeMode, inquiryFilter, selectedConv, inquirySearch, loadConversations, loadInquiries]);
 
     // ── Actions: Inquiries ──
     const updateInquiryStatus = async (id: string, status: string) => {

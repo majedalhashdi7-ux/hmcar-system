@@ -1,14 +1,13 @@
 'use client';
 
 import { motion } from "framer-motion";
-import { ShieldCheck, Target, Award, Users, MapPin, Globe, ArrowUpRight } from "lucide-react";
+import { ShieldCheck, Award, MapPin, Globe } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useLanguage } from "@/lib/LanguageContext";
-import { cn } from "@/lib/utils";
 import ClientPageHeader from "@/components/ClientPageHeader";
 
 export default function About() {
-    const { t, isRTL } = useLanguage();
+    const { isRTL } = useLanguage();
 
     const stats = [
         { val: "2024", label: isRTL ? "سنة التأسيس" : "ESTABLISHED" },

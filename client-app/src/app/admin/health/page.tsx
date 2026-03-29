@@ -6,7 +6,7 @@ import {
     CheckCircle, XCircle, RefreshCw, Zap, Server, 
     Cpu, HardDrive
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { api } from "@/lib/api";
 import AdminPageShell from "@/components/AdminPageShell";
@@ -44,7 +44,7 @@ export default function AdminHealthPage() {
         info: isRTL ? 'معلومات:' : 'INFO:'
     };
 
-    const runDiagnostics = async () => {
+    const runDiagnostics = useCallback(async () => {
         setIsScanning(true);
         setScanProgress(0);
         setResults([]);
@@ -159,14 +159,14 @@ export default function AdminHealthPage() {
 
         setScanProgress(100);
         setTimeout(() => setIsScanning(false), 500);
-    };
+    }, [isRTL]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             runDiagnostics();
         }, 100);
         return () => clearTimeout(timer);
-    }, []);
+    }, [runDiagnostics]);
 
     const getStatusIcon = (status: string) => {
         switch (status) {

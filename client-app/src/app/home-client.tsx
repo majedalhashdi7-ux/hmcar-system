@@ -25,6 +25,7 @@ import dynamic from "next/dynamic";
 const LandingShowcase = dynamic(() => import("@/components/LandingShowcase"), { ssr: false });
 const AppHome = dynamic(() => import("@/components/AppHome"), { ssr: false });
 const SmartAdBanner = dynamic(() => import("@/components/SmartAdBanner"), { ssr: false });
+const CarXHome = dynamic(() => import("@/components/CarXHome"), { ssr: false });
 
 import { useRouter } from "next/navigation";
 import { useSocket } from "@/lib/SocketContext";
@@ -33,6 +34,7 @@ import { useAuth } from "@/lib/AuthContext";
 import { useSettings } from "@/lib/SettingsContext";
 import { cn } from "@/lib/utils";
 import { useStandalone } from "@/lib/useStandalone";
+import { useTenant } from "@/lib/TenantContext";
 
 export type CarType = {
   id?: string;
@@ -216,6 +218,8 @@ export default function HomeClient({ latestCars }: HomeClientProps) {
   const { user, isLoggedIn } = useAuth();
   const { socket, isConnected } = useSocket();
   const { siteInfo, homeContent, formatPrice, features } = useSettings();
+  const { tenant } = useTenant();
+  const isCarX = tenant?.id === 'carx';
   const containerRef = useRef<HTMLDivElement>(null);
   const liveRef = useRef<HTMLDivElement>(null);
   const [videoHeight, setVideoHeight] = useState<string>("55vh");
@@ -373,6 +377,10 @@ export default function HomeClient({ latestCars }: HomeClientProps) {
   };
 
   const whatsappUrl = socialConfig.whatsapp ? `https://wa.me/${String(socialConfig.whatsapp).replace(/\D/g, '')}` : "#";
+
+  if (isCarX) {
+    return <CarXHome />;
+  }
 
   return (
     <main ref={containerRef} className="relative min-h-screen overflow-x-hidden bg-black text-white" dir={isRTL ? "rtl" : "ltr"}>

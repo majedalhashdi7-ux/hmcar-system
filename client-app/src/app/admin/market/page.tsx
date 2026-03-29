@@ -221,7 +221,7 @@ function MarketHubContent() {
                                                 <img
                                                     src={imageSrc}
                                                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
-                                                    alt=""
+                                                    alt={auc.car?.title || 'Auction car'}
                                                     onError={() => setImageErrors(prev => ({ ...prev, [imageKey]: true }))}
                                                 />
                                             );

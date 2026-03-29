@@ -1,16 +1,15 @@
 'use client';
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Clock, TrendingUp, Users, Eye, Trash2, Edit2, ArrowLeft, X, Trophy } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Plus, Clock, TrendingUp, Eye, Trash2, X, Trophy } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
-import Link from "next/link";
 import { api } from "@/lib/api";
 import AdminPageShell from '@/components/AdminPageShell';
 
 export default function AdminAuctionsControl() {
-    const { t, isRTL } = useLanguage();
+    const { isRTL } = useLanguage();
     const [activeArena, setActiveArena] = useState('LIVE');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -25,11 +24,7 @@ export default function AdminAuctionsControl() {
         endsAt: '',
     });
 
-    useEffect(() => {
-        loadData();
-    }, [activeArena]);
-
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
             // Load auctions
@@ -55,7 +50,11 @@ export default function AdminAuctionsControl() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [activeArena]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
 
     const handleLaunch = async () => {
         if (!formData.carId || !formData.startPrice || !formData.startsAt || !formData.endsAt) {
