@@ -119,36 +119,6 @@
         "direction": "rtl"
       },
       "enabled": true
-    },
-    
-    "carx": {
-      "id": "carx",
-      "name": "CAR X",
-      "nameEn": "CAR X",
-      "description": "معرض وأمزاد CAR X",
-      "descriptionEn": "CAR X Showroom & Auctions",
-      "domains": ["localhost:3001", "carx.localhost", "carx-motors.com", "www.carx-motors.com", "carx-system.vercel.app", "daood.okigo.net"],
-      "mongoUri": "ENV:MONGO_URI_CARX",
-      "logo": "/uploads/tenants/carx/logo.png",
-      "favicon": "/uploads/tenants/carx/favicon.ico",
-      "theme": {
-        "primaryColor": "#000000",
-        "secondaryColor": "#ff0000",
-        "accentColor": "#cc0000",
-        "backgroundColor": "#111111",
-        "textColor": "#ffffff"
-      },
-      "contact": {
-        "whatsapp": "+967781007805",
-        "email": "info@carx-motors.com",
-        "phone": "+967781007805"
-      },
-      "settings": {
-        "currency": "SAR",
-        "language": "ar",
-        "direction": "rtl"
-      },
-      "enabled": true
     }
   }
 }
