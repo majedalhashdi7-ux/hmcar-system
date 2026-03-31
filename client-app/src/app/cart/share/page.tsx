@@ -9,7 +9,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useSettings } from '@/lib/SettingsContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { ProductModalData } from '@/components/ProductModal';
 
 function SharedCartContent() {

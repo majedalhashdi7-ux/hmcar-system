@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Printer, ArrowLeft } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useLanguage } from '@/lib/LanguageContext';
 import { motion } from 'framer-motion';
 

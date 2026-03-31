@@ -7,7 +7,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 
 interface CurrencySettings {
     usdToSar: number; // سعر تحويل الدولار إلى ريال

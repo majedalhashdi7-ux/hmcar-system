@@ -12,7 +12,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/LanguageContext";
 import { Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { useRouter } from "next/navigation";
 
 // اقتراحات الإيميل السريع

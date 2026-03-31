@@ -13,7 +13,7 @@ import {
     LogOut
 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import ClientPageHeader from "@/components/ClientPageHeader";
 
 const rawText = (value: string) => value;

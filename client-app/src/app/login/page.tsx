@@ -12,7 +12,7 @@ import { User, ShieldCheck, Lock, ArrowRight, ChevronLeft, ChevronRight, Key, Us
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { countryDialCodes } from "@/lib/countries";
 import { useSocket } from "@/lib/SocketContext";
 import { useAuth } from "@/lib/AuthContext";

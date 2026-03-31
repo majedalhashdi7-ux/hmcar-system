@@ -18,7 +18,7 @@ import Image from 'next/image';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useSettings } from '@/lib/SettingsContext';
 import { useToast } from '@/lib/ToastContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useAuth } from '@/lib/AuthContext';
 
 // [[ARABIC_COMMENT]] نوع المنتج - سيارة أو قطعة غيار

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle, AlertCircle, MessageCircle } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useLanguage } from '@/lib/LanguageContext';
 import Navbar from '@/components/Navbar';
 import { cn } from '@/lib/utils';

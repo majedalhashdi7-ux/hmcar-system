@@ -11,7 +11,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { useToast } from "@/lib/ToastContext";
 import LiveNotificationsList from "@/components/LiveNotificationsList";
 

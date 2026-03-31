@@ -10,7 +10,7 @@ import { MessageCircle, X, ExternalLink, ChevronLeft, ShieldCheck, Tag, AlertTri
 import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import Image from "next/image";
 
 export default function LiveAuctionDetails() {

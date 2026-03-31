@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchAPI } from '@/lib/api';
+import { fetchAPI } from '@/lib/api-original';
 
 /**
  * SmartPrefetchProvider - مزود نظام التحميل المسبق الذكي

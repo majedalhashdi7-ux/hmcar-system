@@ -7,7 +7,7 @@ import {
     Download, Trash2, Eye,
     ArrowUpRight, Clock, CheckCircle, AlertCircle
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useLanguage } from '@/lib/LanguageContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';

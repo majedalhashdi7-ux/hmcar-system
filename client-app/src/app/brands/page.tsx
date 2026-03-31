@@ -14,7 +14,7 @@ import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import CircularBrandCard from '@/components/CircularBrandCard';
 import { useLanguage } from '@/lib/LanguageContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 

@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { User, Mail, Lock, ArrowRight, ChevronLeft, ChevronRight, ShieldCheck, Phone } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { useSocket } from "@/lib/SocketContext";
 import { useAuth } from "@/lib/AuthContext";
 import CinematicVideoBackground from "@/components/CinematicVideoBackground";

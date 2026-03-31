@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 
 interface Notification {
     id: string;

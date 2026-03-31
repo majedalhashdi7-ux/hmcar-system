@@ -12,7 +12,7 @@ import { Home, Car, Bell, Wrench, User, Heart } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 
 const FAVORITES_KEY = 'hm_favorites';
 const CART_KEY = 'hm_cart';

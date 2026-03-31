@@ -9,7 +9,7 @@ import NextLink from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useToast } from '@/lib/ToastContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminPageShell from '@/components/AdminPageShell';

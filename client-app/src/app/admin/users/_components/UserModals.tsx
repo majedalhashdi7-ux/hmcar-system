@@ -21,7 +21,7 @@ import {
     Trash2, Save, AlertCircle, CheckCircle2, User, Mail, Phone
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import PermissionsGrid from './PermissionsGrid';
 
 // ─────────────────────────────────

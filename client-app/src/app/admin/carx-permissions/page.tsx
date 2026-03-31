@@ -14,7 +14,7 @@ import {
     Check, Loader2, Search,
     Smartphone, SmartphoneNfc
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useLanguage } from '@/lib/LanguageContext';
 
 // الصلاحيات المتاحة لكل آدمن

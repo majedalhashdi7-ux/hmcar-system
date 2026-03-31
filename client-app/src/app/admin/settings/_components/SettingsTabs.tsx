@@ -18,7 +18,7 @@ import {
     Send, Linkedin, Phone, Mail, MapPin, Clock, DollarSign, LayoutDashboard, Shield
 } from 'lucide-react';
 import NextImage from 'next/image';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 
 const EMPTY_STRING = '';
 const rawText = (value: string) => value;

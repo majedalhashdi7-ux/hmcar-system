@@ -25,7 +25,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import AdminPageShell from '@/components/AdminPageShell';
 
 // ── المكونات المقسمة ──

@@ -19,7 +19,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import CinematicVideoBackground from "@/components/CinematicVideoBackground";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 
 import dynamic from "next/dynamic";
 const LandingShowcase = dynamic(() => import("@/components/LandingShowcase"), { ssr: false });

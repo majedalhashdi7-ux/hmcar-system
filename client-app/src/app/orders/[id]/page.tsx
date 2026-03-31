@@ -11,7 +11,7 @@ import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useSettings } from "@/lib/SettingsContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams } from "next/navigation";

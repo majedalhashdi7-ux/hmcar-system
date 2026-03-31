@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Bell, ChevronRight, Clock, Gavel, ShoppingBag, Car, Gift, Settings, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 
 const NOTIFICATION_TYPES = {
     bid: { icon: Gavel, color: 'from-amber-500 to-orange-600' },

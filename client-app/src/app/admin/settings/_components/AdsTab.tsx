@@ -15,7 +15,7 @@ import {
     Megaphone, Radio, Car, Check, EyeOff,
     Save, Loader2, Globe, Zap
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { cn } from '@/lib/utils';
 
 // ── نوع إعدادات الإعلانات ──

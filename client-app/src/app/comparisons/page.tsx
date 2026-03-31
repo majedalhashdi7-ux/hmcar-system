@@ -8,7 +8,7 @@ import {
     Scale, X, Plus, Car, Gauge, Fuel, Settings,
     Calendar, Trash2
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useLocale } from '@/hooks/useLocale';
 import ClientPageHeader from '@/components/ClientPageHeader';
 import { useSettings } from '@/lib/SettingsContext';

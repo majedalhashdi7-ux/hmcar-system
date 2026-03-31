@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useRouter } from 'next/navigation';
 
 // ===================== Types =====================

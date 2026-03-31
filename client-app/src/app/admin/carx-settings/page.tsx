@@ -10,7 +10,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Phone, Shield, Video, CheckCircle, Loader2, AlertTriangle } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface CarXSettings {

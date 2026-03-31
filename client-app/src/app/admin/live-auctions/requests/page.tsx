@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { useLanguage } from "@/lib/LanguageContext";
 
 export default function LiveAuctionRequests() {

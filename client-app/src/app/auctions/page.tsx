@@ -15,7 +15,7 @@ import { Gavel, AlertCircle, Radio, Car } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { useSettings } from "@/lib/SettingsContext";
 import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, Activity, Database, Server, Clock, GitCommit, HardDrive, Zap, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { fetchAPI } from '@/lib/api';
+import { fetchAPI } from '@/lib/api-original';
 import AdminPageShell from '@/components/AdminPageShell';
 
 export default function SystemAuditPage() {

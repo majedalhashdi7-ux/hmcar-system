@@ -9,7 +9,7 @@ import {
     ChevronLeft, ChevronRight, AlertCircle, CheckCircle
 } from 'lucide-react';
 import Image from 'next/image';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useLocale } from '@/hooks/useLocale';
 import ClientPageHeader from '@/components/ClientPageHeader';
 import { useSettings } from '@/lib/SettingsContext';

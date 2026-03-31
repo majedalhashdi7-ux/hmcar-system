@@ -16,7 +16,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import PullToRefresh from './PullToRefresh';
 
 export default function AppHome({ isRTL, latestCars, formatPrice }: { isRTL: boolean; latestCars: any[]; formatPrice: (p: number) => string }) {

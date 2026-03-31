@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Search, Plus, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useToast } from '@/lib/ToastContext';
 import AdminPageShell from '@/components/AdminPageShell';
 

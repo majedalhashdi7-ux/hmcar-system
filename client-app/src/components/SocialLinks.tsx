@@ -17,7 +17,7 @@ import {
     Send
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 
 // أيقونات مخصصة
 const TikTokIcon = ({ className }: { className?: string }) => (

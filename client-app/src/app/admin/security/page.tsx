@@ -10,7 +10,7 @@ import {
     Trash2, ChevronDown, Users, Wifi, Clock, Zap,
     BarChart3, FileText, CheckCircle2, XCircle
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useLanguage } from '@/lib/LanguageContext';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/lib/ToastContext';

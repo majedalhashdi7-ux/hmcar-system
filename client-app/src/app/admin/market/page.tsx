@@ -11,7 +11,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { useToast } from "@/lib/ToastContext";
 import AdminPageShell from '@/components/AdminPageShell';
 

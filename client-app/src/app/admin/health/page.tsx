@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import AdminPageShell from "@/components/AdminPageShell";
 import { cn } from "@/lib/utils";
 

@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/LanguageContext";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Upload, Save, Trash2, ArrowLeft, Tag, Car, X, Crop } from "lucide-react";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { cn } from "@/lib/utils";
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '@/lib/cropImage';

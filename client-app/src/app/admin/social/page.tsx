@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/LanguageContext";
 import { cn } from "@/lib/utils";
 import { getSocialIcon } from "@/lib/socialIcons";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 
 // Social config uses simple runtime-shape
 

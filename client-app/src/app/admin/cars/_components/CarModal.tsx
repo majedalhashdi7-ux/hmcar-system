@@ -11,7 +11,7 @@ import { X, Save, Upload, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import { useLanguage } from '@/lib/LanguageContext';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 
 // ── نوع بيانات النموذج ──
 interface FormData {

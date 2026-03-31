@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 import Link from "next/link";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 
 export default function AdminLiveAuctions() {
     const { isRTL } = useLanguage();

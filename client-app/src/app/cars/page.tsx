@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Navbar from '@/components/Navbar';
 import CarCard from '@/components/CarCard';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useSettings } from '@/lib/SettingsContext';

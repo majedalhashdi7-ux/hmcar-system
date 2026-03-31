@@ -5,7 +5,7 @@ import { Plus, Clock, TrendingUp, Eye, Trash2, X, Trophy } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import AdminPageShell from '@/components/AdminPageShell';
 
 export default function AdminAuctionsControl() {

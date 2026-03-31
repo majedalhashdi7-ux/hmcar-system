@@ -14,7 +14,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useSettings } from '@/lib/SettingsContext';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 
 const rawText = (value: string) => value;
 

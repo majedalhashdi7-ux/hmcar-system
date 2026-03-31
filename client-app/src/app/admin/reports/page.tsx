@@ -10,7 +10,7 @@ import 'jspdf-autotable';
 import Link from 'next/link';
 import { useLanguage } from '@/lib/LanguageContext';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useSettings } from '@/lib/SettingsContext';
 
 interface ReportStat {

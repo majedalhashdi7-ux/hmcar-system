@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { useTenant } from "@/lib/TenantContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import AuthModals from "./AuthModals";
 
 export default function ModernCarXHome() {

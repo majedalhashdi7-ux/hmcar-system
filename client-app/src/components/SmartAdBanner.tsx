@@ -29,7 +29,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useSettings } from '@/lib/SettingsContext';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { cn } from '@/lib/utils';
 
 // ── نوع السيارة المستخدمة في الشريط ──

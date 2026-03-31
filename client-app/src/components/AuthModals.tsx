@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Eye, EyeOff, Mail, Lock, User, Phone, MapPin, CheckCircle, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useAuth } from "@/lib/AuthContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 
 interface AuthModalsProps {
     showLoginModal: boolean;

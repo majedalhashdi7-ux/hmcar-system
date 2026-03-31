@@ -29,7 +29,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
-import { api } from "@/lib/api";
+import { api } from "@/lib/api-original";
 import { useToast } from "@/lib/ToastContext";
 
 // Removed CATEGORIES and CAT_LABELS_AR as per user request to simplify the UI

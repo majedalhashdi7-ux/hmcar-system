@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/lib/LanguageContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import ClientPageHeader from '@/components/ClientPageHeader';
 
 interface Message {

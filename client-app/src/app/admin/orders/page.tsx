@@ -16,7 +16,7 @@ import {
 import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { useToast } from '@/lib/ToastContext';
 import { useSettings } from '@/lib/SettingsContext';
 import { formatAmountWithSnapshot, getOrderGrandTotalSar } from '@/lib/orderCurrency';

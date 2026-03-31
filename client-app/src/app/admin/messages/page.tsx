@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import AdminPageShell from '@/components/AdminPageShell';
 
 interface Conversation {

@@ -15,7 +15,7 @@ import {
 import Navbar from '@/components/Navbar';
 import { useLanguage } from '@/lib/LanguageContext';
 import { cn } from '@/lib/utils';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import ClientPageHeader from '@/components/ClientPageHeader';
 
 const TAB_CAR = 'car';

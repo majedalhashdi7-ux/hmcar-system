@@ -12,7 +12,7 @@ import {
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useTenant } from '@/lib/TenantContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 import { cn } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────

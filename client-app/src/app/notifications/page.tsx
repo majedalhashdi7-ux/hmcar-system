@@ -12,7 +12,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
-import { api } from '@/lib/api';
+import { api } from '@/lib/api-original';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 const NOTIFICATION_TYPES = {
