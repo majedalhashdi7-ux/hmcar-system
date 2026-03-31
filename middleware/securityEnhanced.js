@@ -16,30 +16,44 @@ const crypto = require('crypto');
 
 /**
  * تخزين مؤقت لتتبع المحاولات المشبوهة
- * يتم تنظيفها تلقائياً كل ساعة لتجنب تسرب الذاكرة
+ * 
+ * ⚠️ تحذير Serverless: في بيئة Vercel Serverless تُعاد تهيئة هذه المتغيرات
+ * مع كل invocation جديد. لحماية فعلية في الإنتاج استخدم Redis (Upstash).
+ * للبيئة المحلية والـ VPS هذا يعمل بشكل صحيح تماماً.
  */
 const suspiciousAttempts = new Map();
 const blockedIPs = new Set();
 
+// في بيئة Serverless (Vercel) المتغيرات العالمية لا تُحفظ بين الطلبات
+// هذا التحذير يذكّر المطور بالقيود
+const IS_SERVERLESS = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+if (IS_SERVERLESS) {
+  // يمكن هنا لاحقاً ربط Redis للحماية الحقيقية في الإنتاج
+  // const redis = require('ioredis'); const client = new redis(process.env.REDIS_URL);
+}
+
 // [[ARABIC_COMMENT]] تنظيف دوري لتجنب تسرب الذاكرة في بيئة Non-Serverless
 const CLEANUP_INTERVAL = 60 * 60 * 1000; // ساعة واحدة
 const MAX_ENTRY_AGE = 2 * 60 * 60 * 1000; // ساعتان
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, data] of suspiciousAttempts) {
-    if (now - (data.lastAttempt || 0) > MAX_ENTRY_AGE) {
-      suspiciousAttempts.delete(ip);
+// لا ننشئ setInterval في Serverless لأنها لن تعمل
+if (!IS_SERVERLESS) {
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, data] of suspiciousAttempts) {
+      if (now - (data.lastAttempt || 0) > MAX_ENTRY_AGE) {
+        suspiciousAttempts.delete(ip);
+      }
     }
-  }
-  // الحفاظ على حجم blockedIPs معقول (أقصى 1000 عنوان)
-  if (blockedIPs.size > 1000) {
-    const toRemove = blockedIPs.size - 500;
-    const iterator = blockedIPs.values();
-    for (let i = 0; i < toRemove; i++) {
-      blockedIPs.delete(iterator.next().value);
+    // الحفاظ على حجم blockedIPs معقول (أقصى 1000 عنوان)
+    if (blockedIPs.size > 1000) {
+      const toRemove = blockedIPs.size - 500;
+      const iterator = blockedIPs.values();
+      for (let i = 0; i < toRemove; i++) {
+        blockedIPs.delete(iterator.next().value);
+      }
     }
-  }
-}, CLEANUP_INTERVAL);
+  }, CLEANUP_INTERVAL);
+}
 
 /**
  * تنظيف IP متعدد (proxy)

@@ -31,6 +31,10 @@ async function connectDB() {
 
 // قائمة الـ origins المسموح بها
 const ALLOWED_ORIGINS = [
+  'https://daood.okigo.net',
+  'https://www.daood.okigo.net',
+  'https://hmcar.xyz',
+  'https://www.hmcar.xyz',
   'https://hmcar.okigo.net',
   'https://www.hmcar.okigo.net',
   'https://car-auction-sand.vercel.app',

@@ -86,7 +86,7 @@ carSchema.pre('save', function (next) {
   const isKorean = this.source === 'korean_import' || 
                    this.listingType === 'showroom' || 
                    (this.externalUrl && this.externalUrl.includes('encar.com')) ||
-                   (this.priceKrw > 0);
+                   (this.priceKrw != null && this.priceKrw > 0);
 
   if (!this.source) {
     this.source = isKorean ? 'korean_import' : 'hm_local';

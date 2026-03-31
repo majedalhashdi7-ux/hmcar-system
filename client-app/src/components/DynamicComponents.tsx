@@ -1,10 +1,7 @@
 /* eslint-disable react/display-name */
 /**
- * Dynamic Component Imports
+ * Dynamic Component Imports - Fixed Version
  * تحميل المكونات الثقيلة بشكل ديناميكي لتحسين الأداء
- * 
- * ملاحظة: هذا الملف يحتوي على تعريفات للمكونات التي سيتم إنشاؤها مستقبلاً
- * يمكن استخدامها عند الحاجة بدون الحاجة لتعديل الكود
  */
 
 import dynamic from 'next/dynamic';
@@ -19,10 +16,9 @@ const createFallback = (name: string) => {
   );
 };
 
-// ─── Admin Components (Heavy) ───
-// يتم تحميلها فقط عند الحاجة لتقليل حجم Bundle
+// ─── Admin Components (Fallback Only) ───
 export const AdminDashboard = dynamic(
-  () => import('./admin/AdminDashboard').catch(() => ({ default: createFallback('لوحة التحكم') })),
+  () => Promise.resolve({ default: createFallback('لوحة التحكم') }),
   {
     ssr: false,
     loading: () => <TableSkeleton rows={10} />,
@@ -30,7 +26,7 @@ export const AdminDashboard = dynamic(
 );
 
 export const AdminCarManager = dynamic(
-  () => import('./admin/AdminCarManager').catch(() => ({ default: createFallback('إدارة السيارات') })),
+  () => Promise.resolve({ default: createFallback('إدارة السيارات') }),
   {
     ssr: false,
     loading: () => <GridSkeleton count={6} type="car" />,
@@ -38,7 +34,7 @@ export const AdminCarManager = dynamic(
 );
 
 export const AdminPartManager = dynamic(
-  () => import('./admin/AdminPartManager').catch(() => ({ default: createFallback('إدارة القطع') })),
+  () => Promise.resolve({ default: createFallback('إدارة القطع') }),
   {
     ssr: false,
     loading: () => <GridSkeleton count={6} type="part" />,
@@ -47,7 +43,7 @@ export const AdminPartManager = dynamic(
 
 // ─── 3D/Heavy Graphics Components ───
 export const ThreeScene = dynamic(
-  () => import('./ThreeScene').catch(() => ({ default: createFallback('المشهد ثلاثي الأبعاد') })),
+  () => Promise.resolve({ default: createFallback('المشهد ثلاثي الأبعاد') }),
   {
     ssr: false,
     loading: () => (
@@ -59,7 +55,7 @@ export const ThreeScene = dynamic(
 );
 
 export const Car360Viewer = dynamic(
-  () => import('./Car360Viewer').catch(() => ({ default: createFallback('عارض 360') })),
+  () => Promise.resolve({ default: createFallback('عارض 360') }),
   {
     ssr: false,
     loading: () => (
@@ -70,7 +66,7 @@ export const Car360Viewer = dynamic(
 
 // ─── Chart Components ───
 export const AnalyticsChart = dynamic(
-  () => import('./charts/AnalyticsChart').catch(() => ({ default: createFallback('الرسم البياني') })),
+  () => Promise.resolve({ default: createFallback('الرسم البياني') }),
   {
     ssr: false,
     loading: () => (
@@ -80,7 +76,7 @@ export const AnalyticsChart = dynamic(
 );
 
 export const RevenueChart = dynamic(
-  () => import('./charts/RevenueChart').catch(() => ({ default: createFallback('رسم الإيرادات') })),
+  () => Promise.resolve({ default: createFallback('رسم الإيرادات') }),
   {
     ssr: false,
     loading: () => (
@@ -89,11 +85,11 @@ export const RevenueChart = dynamic(
   }
 );
 
-// ─── Rich Text Editor ───
+// ─── Other Components ───
 export const RichTextEditor = dynamic(
-  () => import('./RichTextEditor').catch(() => ({ 
+  () => Promise.resolve({ 
     default: () => <textarea className="w-full p-4 rounded-lg bg-white/5 text-white" placeholder="محرر النصوص غير متاح" /> 
-  })),
+  }),
   {
     ssr: false,
     loading: () => (
@@ -102,9 +98,8 @@ export const RichTextEditor = dynamic(
   }
 );
 
-// ─── PDF Viewer ───
 export const PDFViewer = dynamic(
-  () => import('./PDFViewer').catch(() => ({ default: createFallback('عارض PDF') })),
+  () => Promise.resolve({ default: createFallback('عارض PDF') }),
   {
     ssr: false,
     loading: () => (
@@ -113,11 +108,10 @@ export const PDFViewer = dynamic(
   }
 );
 
-// ─── Video Player ───
 export const VideoPlayer = dynamic(
-  () => import('./VideoPlayer').catch(() => ({ 
+  () => Promise.resolve({ 
     default: () => <video controls className="w-full rounded-lg bg-black" /> 
-  })),
+  }),
   {
     ssr: false,
     loading: () => (
@@ -126,9 +120,8 @@ export const VideoPlayer = dynamic(
   }
 );
 
-// ─── Map Components ───
 export const LocationMap = dynamic(
-  () => import('./LocationMap').catch(() => ({ default: createFallback('الخريطة') })),
+  () => Promise.resolve({ default: createFallback('الخريطة') }),
   {
     ssr: false,
     loading: () => (
@@ -139,9 +132,8 @@ export const LocationMap = dynamic(
   }
 );
 
-// ─── Chat Components ───
 export const LiveChat = dynamic(
-  () => import('./LiveChat').catch(() => ({ default: createFallback('الدردشة المباشرة') })),
+  () => Promise.resolve({ default: createFallback('الدردشة المباشرة') }),
   {
     ssr: false,
     loading: () => (
@@ -150,9 +142,8 @@ export const LiveChat = dynamic(
   }
 );
 
-// ─── Calendar Components ───
 export const AuctionCalendar = dynamic(
-  () => import('./AuctionCalendar').catch(() => ({ default: createFallback('تقويم المزادات') })),
+  () => Promise.resolve({ default: createFallback('تقويم المزادات') }),
   {
     ssr: false,
     loading: () => (
@@ -161,9 +152,8 @@ export const AuctionCalendar = dynamic(
   }
 );
 
-// ─── Image Gallery ───
 export const ImageGallery = dynamic(
-  () => import('./ImageGallery').catch(() => ({ default: createFallback('معرض الصور') })),
+  () => Promise.resolve({ default: createFallback('معرض الصور') }),
   {
     ssr: false,
     loading: () => (
@@ -176,9 +166,8 @@ export const ImageGallery = dynamic(
   }
 );
 
-// ─── QR Code Generator ───
 export const QRCodeGenerator = dynamic(
-  () => import('./QRCodeGenerator').catch(() => ({ default: createFallback('مولد QR') })),
+  () => Promise.resolve({ default: createFallback('مولد QR') }),
   {
     ssr: false,
     loading: () => (
@@ -187,9 +176,8 @@ export const QRCodeGenerator = dynamic(
   }
 );
 
-// ─── Barcode Scanner ───
 export const BarcodeScanner = dynamic(
-  () => import('./BarcodeScanner').catch(() => ({ default: createFallback('ماسح الباركود') })),
+  () => Promise.resolve({ default: createFallback('ماسح الباركود') }),
   {
     ssr: false,
     loading: () => (
@@ -198,36 +186,33 @@ export const BarcodeScanner = dynamic(
   }
 );
 
-// ─── Export Utilities ───
 export const ExportToExcel = dynamic(
-  () => import('./ExportToExcel').catch(() => ({ 
+  () => Promise.resolve({ 
     default: () => <button disabled className="px-4 py-2 bg-white/10 rounded-lg text-white/50">تصدير Excel</button> 
-  })),
+  }),
   {
     ssr: false,
   }
 );
 
 export const ExportToPDF = dynamic(
-  () => import('./ExportToPDF').catch(() => ({ 
+  () => Promise.resolve({ 
     default: () => <button disabled className="px-4 py-2 bg-white/10 rounded-lg text-white/50">تصدير PDF</button> 
-  })),
+  }),
   {
     ssr: false,
   }
 );
 
-// ─── Social Share ───
 export const SocialShare = dynamic(
-  () => import('./SocialShare').catch(() => ({ default: createFallback('المشاركة الاجتماعية') })),
+  () => Promise.resolve({ default: createFallback('المشاركة الاجتماعية') }),
   {
     ssr: false,
   }
 );
 
-// ─── Payment Components ───
 export const PaymentForm = dynamic(
-  () => import('./PaymentForm').catch(() => ({ default: createFallback('نموذج الدفع') })),
+  () => Promise.resolve({ default: createFallback('نموذج الدفع') }),
   {
     ssr: false,
     loading: () => (
@@ -240,9 +225,8 @@ export const PaymentForm = dynamic(
   }
 );
 
-// ─── Notification Components ───
 export const NotificationCenter = dynamic(
-  () => import('./NotificationCenter').catch(() => ({ default: createFallback('مركز الإشعارات') })),
+  () => Promise.resolve({ default: createFallback('مركز الإشعارات') }),
   {
     ssr: false,
     loading: () => (

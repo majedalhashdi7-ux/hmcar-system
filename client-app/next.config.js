@@ -1,194 +1,55 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  turbopack: {},
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  // تحسين الأداء
-  compress: true,
-  poweredByHeader: false,
+  // Multi-Tenant HM CAR Configuration
   
-  // تحسين الصور
   images: {
-    domains: [
-      'res.cloudinary.com',
-      'hmcar.okigo.net',
-      'car-auction-sand.vercel.app',
-      'client-app-iota-eight.vercel.app',
+    remotePatterns: [
+      { protocol: 'https', hostname: 'localhost' },
+      { protocol: 'https', hostname: 'daood.okigo.net' },
+      { protocol: 'https', hostname: 'hmcar.vercel.app' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'ci.encar.com' },
+      { protocol: 'https', hostname: 'img.encar.com' },
+      { protocol: 'https', hostname: 'img1.encar.com' },
+      { protocol: 'https', hostname: 'img2.encar.com' },
+      { protocol: 'https', hostname: 'img3.encar.com' },
+      { protocol: 'https', hostname: 'img4.encar.com' },
+      { protocol: 'https', hostname: 'img5.encar.com' },
+      { protocol: 'https', hostname: 'via.placeholder.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: 'source.unsplash.com' }
     ],
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    unoptimized: false,
     minimumCacheTTL: 60,
-    dangerouslyAllowSVG: true,
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    formats: ['image/webp', 'image/avif'],
   },
 
-  // Code Splitting و Bundle Optimization
-  experimental: {
-    optimizeCss: true,
-    optimizePackageImports: [
-      'lucide-react',
-      'framer-motion',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-dropdown-menu',
-    ],
-  },
-
-  // Webpack Configuration
-  webpack: (config, { dev, isServer }) => {
-    // تحسين Bundle Size
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          cacheGroups: {
-            default: false,
-            vendors: false,
-            // Vendor chunk
-            vendor: {
-              name: 'vendor',
-              chunks: 'all',
-              test: /node_modules/,
-              priority: 20,
-            },
-            // Common chunk
-            common: {
-              name: 'common',
-              minChunks: 2,
-              chunks: 'all',
-              priority: 10,
-              reuseExistingChunk: true,
-              enforce: true,
-            },
-            // React chunk
-            react: {
-              name: 'react',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/,
-              priority: 30,
-            },
-            // UI Libraries chunk
-            ui: {
-              name: 'ui',
-              chunks: 'all',
-              test: /[\\/]node_modules[\\/](framer-motion|lucide-react|@radix-ui)[\\/]/,
-              priority: 25,
-            },
-          },
-        },
-      };
-    }
-
-    return config;
-  },
-
-  // Headers للأمان والأداء
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: '/(.*)',
         headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload',
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
-          },
-        ],
-      },
-      {
-        source: '/api/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'no-store, must-revalidate',
-          },
-        ],
-      },
-      {
-        source: '/_next/static/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
-      {
-        source: '/icons/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'origin-when-cross-origin' },
         ],
       },
     ];
   },
 
-  // Redirects
-  async redirects() {
-    return [
-      {
-        source: '/home',
-        destination: '/',
-        permanent: true,
-      },
-      {
-        source: '/car/:id',
-        destination: '/cars/:id',
-        permanent: true,
-      },
-      {
-        source: '/part/:id',
-        destination: '/parts/:id',
-        permanent: true,
-      },
-    ];
-  },
-
-  // Environment Variables
   env: {
-    NEXT_PUBLIC_APP_NAME: 'HM CAR',
-    NEXT_PUBLIC_APP_URL: 'https://hmcar.okigo.net',
+    SYSTEM_NAME: 'HM CAR',
+    SYSTEM_DOMAIN: process.env.VERCEL_URL || 'daood.okigo.net',
+    SYSTEM_VERSION: '2.0.0',
   },
 
-  // Output
   output: 'standalone',
-  
-  // Trailing Slash
+  compress: true,
+  poweredByHeader: false,
+  generateEtags: true,
+  pageExtensions: ['ts', 'tsx', 'js', 'jsx'],
   trailingSlash: false,
-  
-  // Skip Trailing Slash Redirect
-  skipTrailingSlashRedirect: true,
+  reactStrictMode: true,
 };
 
 module.exports = nextConfig;

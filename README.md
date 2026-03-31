@@ -1,65 +1,67 @@
-# نظام HM CAR - دليل التشغيل والإنتاج 🚀
+# 🚗 Multi-Tenant Car Auction System
 
-نظام متكامل واحترافي لإدارة وتسويق السيارات والمزادات، يجمع بين قوة الأداء (Node.js/Express) وسلاسة التجربة البصرية (Next.js/Framer Motion).
+## النظام الشامل لمزادات السيارات متعدد العملاء
 
-## 📋 المتطلبات التقنية
-- **Node.js**: v22.x أو أحدث
-- **MongoDB**: Atlas (Cloud) أو محلي (v7.0+)
-- **NPM**: v10.x أو أحدث
+### 🎯 المشاريع المتاحة
 
-## 🛠 إعداد المشروع (Setup)
+#### 1. **HM CAR** (client-app)
+- **الوصف**: منصة مزادات ومبيعات السيارات الفاخرة
+- **الدومين**: https://daood.okigo.net
+- **المجلد**: `client-app/`
+- **اللون الأساسي**: ذهبي (#D4AF37)
 
-### 1. تثبيت التبعيات
+#### 2. **CAR X** (carx-system)  
+- **الوصف**: معرض وأمزاد CAR X
+- **الدومين**: https://daood.okigo.net (نفس الدومين، معرض مختلف)
+- **المجلد**: `carx-system/`
+- **اللون الأساسي**: أسود وأحمر (#000000, #ff0000)
+
+### 🚀 التشغيل السريع
+
+#### تشغيل HM CAR:
 ```bash
-# تثبيت تبعيات الخادم والواجهة
+cd client-app
 npm install
-cd client-app && npm install
-```
-
-### 2. إعداد ملفات البيئة (.env)
-قم بنسخ ملفات الأمثلة وتعبئة القيم:
-- **للخادم (Root):** انسخ `.env.example` إلى `.env`
-- **للواجهة (client-app):** لا تحتاج لملف منفصل عادةً حيث تتواصل مع الخادم عبر الوكيل (Proxy) أو الروابط المباشرة.
-- **للنشر في Vercel:** استخدم `vercel.env.example` كدليل.
-
-> [!CAUTION]
-> **تنبيه أمني:** لا تقم أبداً برفع ملفات `.env` أو أي ملف يحتوي على كلمات مرور حقيقية إلى GitHub.
-
-## 🚀 أوامر التشغيل
-
-### وضع التطوير (Development)
-```bash
-# تشغيل الخادم والواجهة معاً (إذا كان السكربت مدعوماً)
 npm run dev
-
-# أو تشغيلهما بشكل منفصل:
-# Terminal 1 (Root): 
-npm run dev
-# Terminal 2 (client-app):
-cd client-app && npm run dev
+# يعمل على http://localhost:3000
 ```
 
-### وضع الإنتاج (Production)
+#### تشغيل CAR X:
 ```bash
-# بناء التطبيق
-npm run build
-
-# بدء التشغيل
-npm start
+cd carx-system  
+npm install
+npm run dev
+# يعمل على http://localhost:3001
 ```
 
-## 🏗 هيكلية النظام الموحدة (Unified Architecture)
+### 🔧 الإعدادات
 
-تم تنظيم النظام في "مراكز موحدة" (Hubs) لتسهيل الإدارة:
-- **MARKET HUB**: مركز المزادات المباشرة والنظام التقليدي.
-- **COMMS HUB**: مركز المحادثات واستفسارات العملاء.
-- **FULFILLMENT HUB**: مركز إدارة الطلبات والطلبات الخاصة.
-- **COMMAND DECK**: لوحة تحكم ذكية مع نظام بحث تشخيصي (Health Check).
+#### متغيرات البيئة المطلوبة في Vercel:
+```
+MONGO_URI=mongodb+srv://hmcar_user:PASSWORD@cluster.mongodb.net/hmcar_production
+MONGO_URI_CARX=mongodb+srv://carx_user:PASSWORD@cluster.mongodb.net/carx_production
+NEXTAUTH_SECRET=your-secure-secret-key
+ADMIN_PASSWORD=your-secure-admin-password
+```
 
-## 🛡 الأمان والمراقبة
-- **CI/CD**: يوصى بتفعيل فحص `npm run lint` و `npm test` قبل كل عملية دمج.
-- **Environment Management**: يجب نقل الأسرار (Secrets) إلى مديري بيئة السحاب (Vercel Secrets / Railway Variables).
-- **Audit Logs**: جميع العمليات الحساسة يتم تسجيلها في قاعدة البيانات للمراجعة الإدارية.
+### 📁 هيكل المشروع
+```
+├── client-app/          # HM CAR System
+├── carx-system/         # CAR X System  
+├── tenants/            # إعدادات العملاء
+├── scripts/            # سكريبتات الإدارة
+└── README.md           # هذا الملف
+```
+
+### 🔐 الأمان
+- جميع كلمات السر في متغيرات البيئة
+- لا توجد بيانات حساسة في الكود
+- تشفير قواعد البيانات
+- حماية من CSRF و XSS
+
+### 📞 الدعم
+- **الإيميل**: dawoodalhash@gmail.com
+- **واتساب**: +967781007805
 
 ---
-تم التطوير بواسطة **فريق HM CAR**. جميع الحقوق محفوظة 2026.
+*آخر تحديث: ٣٠‏/٣‏/٢٠٢٦*

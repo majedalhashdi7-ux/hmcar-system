@@ -1,163 +1,206 @@
-// [[ARABIC_HEADER]] هذا الملف (scripts/auto-deploy.js) جزء من مشروع HM CAR ويحتوي تعليقات عربية لضمان الوضوح.
+#!/usr/bin/env node
 
 /**
- * HM CAR - Auto Deploy Script
- * النشر التلقائي للتغييرات
- * 
- * يراقب التغييرات وينشر تلقائياً على Vercel
+ * نشر تلقائي للنظامين على Vercel
  */
 
-const { spawn, exec } = require('child_process');
+const { execSync } = require('child_process');
 const fs = require('fs');
-const path = require('path');
 
-// Configuration
-const CONFIG = {
-  watchDirs: ['views', 'public', 'routes', 'models', 'services', 'middleware'],
-  watchExtensions: ['.js', '.ejs', '.css', '.json'],
-  debounceTime: 5000, // Wait 5 seconds after last change before deploying
-  projectRoot: path.join(__dirname, '..'),
-};
+console.log('🚀 بدء النشر التلقائي للنظامين...\n');
 
-let deployTimer = null;
-let isDeploying = false;
-let changeCount = 0;
-
-// Colors for console output
-const colors = {
-  reset: '\x1b[0m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  red: '\x1b[31m',
-  cyan: '\x1b[36m',
-};
-
-function log(message, color = 'reset') {
-  const timestamp = new Date().toLocaleTimeString('ar-SA');
-  console.log(`${colors[color]}[${timestamp}] ${message}${colors.reset}`);
-}
-
-function logArabic(message, color = 'reset') {
-  log(`🚀 ${message}`, color);
-}
-
-// Deploy to Vercel
-function deployToVercel() {
-  if (isDeploying) {
-    logArabic('النشر جاري بالفعل... انتظر', 'yellow');
-    return;
-  }
-
-  isDeploying = true;
-  logArabic(`بدء النشر التلقائي (${changeCount} تغييرات)...`, 'cyan');
-  changeCount = 0;
-
-  const deploy = spawn('vercel', ['--prod', '--yes'], {
-    cwd: CONFIG.projectRoot,
-    shell: true,
-    stdio: 'pipe',
-  });
-
-  let output = '';
-
-  deploy.stdout.on('data', (data) => {
-    output += data.toString();
-    process.stdout.write(data);
-  });
-
-  deploy.stderr.on('data', (data) => {
-    output += data.toString();
-    process.stderr.write(data);
-  });
-
-  deploy.on('close', (code) => {
-    isDeploying = false;
-    
-    if (code === 0) {
-      // Extract deployment URL
-      const urlMatch = output.match(/https:\/\/[^\s]+\.vercel\.app/);
-      const url = urlMatch ? urlMatch[0] : 'https://hmcar.vercel.app';
-      
-      logArabic('✅ تم النشر بنجاح!', 'green');
-      logArabic(`🌐 الرابط: ${url}`, 'blue');
-      
-      // Show notification (Windows)
-      showNotification('HM CAR', 'تم النشر بنجاح على Vercel!');
-    } else {
-      logArabic('❌ فشل النشر!', 'red');
-    }
-  });
-}
-
-// Show Windows notification
-function showNotification(title, message) {
-  const script = `
-    [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
-    $template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
-    $textNodes = $template.GetElementsByTagName("text")
-    $textNodes.Item(0).AppendChild($template.CreateTextNode("${title}")) | Out-Null
-    $textNodes.Item(1).AppendChild($template.CreateTextNode("${message}")) | Out-Null
-    $toast = [Windows.UI.Notifications.ToastNotification]::new($template)
-    [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("HM CAR").Show($toast)
-  `;
-  
-  exec(`powershell -command "${script.replace(/"/g, '\\"')}"`, { shell: true });
-}
-
-// Schedule deployment with debounce
-function scheduleDeployment() {
-  changeCount++;
-  
-  if (deployTimer) {
-    clearTimeout(deployTimer);
-  }
-  
-  logArabic(`تم رصد تغيير (${changeCount})... سيتم النشر خلال ${CONFIG.debounceTime / 1000} ثواني`, 'yellow');
-  
-  deployTimer = setTimeout(() => {
-    deployToVercel();
-  }, CONFIG.debounceTime);
-}
-
-// Watch for file changes
-function watchFiles() {
-  logArabic('🔍 بدء مراقبة الملفات للنشر التلقائي...', 'cyan');
-  logArabic(`📁 المجلدات المراقبة: ${CONFIG.watchDirs.join(', ')}`, 'blue');
-  
-  CONFIG.watchDirs.forEach(dir => {
-    const fullPath = path.join(CONFIG.projectRoot, dir);
-    
-    if (fs.existsSync(fullPath)) {
-      fs.watch(fullPath, { recursive: true }, (eventType, filename) => {
-        if (filename) {
-          const ext = path.extname(filename);
-          if (CONFIG.watchExtensions.includes(ext)) {
-            logArabic(`📝 تغيير في: ${dir}/${filename}`, 'yellow');
-            scheduleDeployment();
-          }
+// معلومات النشر
+const deploymentInfo = {
+    hmcar: {
+        name: 'HM CAR',
+        directory: 'client-app',
+        envVars: {
+            'MONGO_URI': 'mongodb+srv://car-auction:jyT24fgC7TXfyKEt@cluster0.1bqjdzp.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority',
+            'NEXTAUTH_SECRET': 'hmcar-secure-secret-2024-production-final',
+            'NEXTAUTH_URL': 'https://daood.okigo.net',
+            'ADMIN_EMAIL': 'dawoodalhash@gmail.com',
+            'ADMIN_PASSWORD': 'daood@112233',
+            'WHATSAPP_NUMBER': '+967781007805',
+            'USD_TO_SAR': '3.75',
+            'USD_TO_KRW': '1300',
+            'NODE_ENV': 'production'
         }
-      });
-      
-      logArabic(`✅ مراقبة: ${dir}`, 'green');
+    },
+    carx: {
+        name: 'CAR X',
+        directory: 'carx-system',
+        envVars: {
+            'MONGO_URI': 'mongodb+srv://car-auction:jyT24fgC7TXfyKEt@cluster0.1bqjdzp.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority',
+            'NEXTAUTH_SECRET': 'carx-ultra-secure-secret-2024-production-final',
+            'NEXTAUTH_URL': 'https://daood.okigo.net',
+            'ADMIN_EMAIL': 'dawoodalhash@gmail.com',
+            'ADMIN_PASSWORD': 'daood@112233',
+            'WHATSAPP_NUMBER': '+967781007805',
+            'USD_TO_SAR': '3.75',
+            'USD_TO_KRW': '1300',
+            'NODE_ENV': 'production'
+        }
     }
-  });
-  
-  logArabic('', 'reset');
-  logArabic('='.repeat(50), 'cyan');
-  logArabic('🚀 نظام النشر التلقائي جاهز!', 'green');
-  logArabic('📌 أي تعديل سيُنشر تلقائياً على Vercel', 'blue');
-  logArabic('='.repeat(50), 'cyan');
-  logArabic('', 'reset');
+};
+
+// فحص Vercel CLI
+function checkVercelCLI() {
+    try {
+        execSync('vercel --version', { stdio: 'pipe' });
+        console.log('✅ Vercel CLI متوفر');
+        return true;
+    } catch (error) {
+        console.log('❌ Vercel CLI غير مثبت');
+        console.log('📥 تثبيت Vercel CLI...');
+        try {
+            execSync('npm install -g vercel', { stdio: 'inherit' });
+            console.log('✅ تم تثبيت Vercel CLI');
+            return true;
+        } catch (installError) {
+            console.error('❌ فشل في تثبيت Vercel CLI:', installError.message);
+            return false;
+        }
+    }
 }
 
-// Start watching
-watchFiles();
+// بناء المشروع
+function buildProject(directory, name) {
+    console.log(`🔨 بناء ${name}...`);
+    try {
+        execSync('npm run build', { 
+            cwd: directory, 
+            stdio: 'inherit',
+            timeout: 300000 // 5 دقائق
+        });
+        console.log(`✅ تم بناء ${name} بنجاح`);
+        return true;
+    } catch (error) {
+        console.error(`❌ فشل في بناء ${name}:`, error.message);
+        return false;
+    }
+}
 
-// Handle process termination
-process.on('SIGINT', () => {
-  logArabic('إيقاف النشر التلقائي...', 'yellow');
-  process.exit(0);
-});
+// نشر على Vercel
+function deployToVercel(directory, name) {
+    console.log(`🚀 نشر ${name} على Vercel...`);
+    try {
+        const result = execSync('vercel --prod --yes', { 
+            cwd: directory, 
+            encoding: 'utf8',
+            timeout: 600000 // 10 دقائق
+        });
+        
+        // استخراج URL من النتيجة
+        const lines = result.split('\n');
+        const deploymentUrl = lines.find(line => line.includes('https://'));
+        
+        if (deploymentUrl) {
+            console.log(`✅ تم نشر ${name} بنجاح!`);
+            console.log(`🔗 الرابط: ${deploymentUrl.trim()}`);
+            return deploymentUrl.trim();
+        } else {
+            console.log(`✅ تم نشر ${name} بنجاح!`);
+            return 'تم النشر بنجاح';
+        }
+    } catch (error) {
+        console.error(`❌ فشل في نشر ${name}:`, error.message);
+        return null;
+    }
+}
 
-console.log('\n📋 للإيقاف اضغط Ctrl+C\n');
+// إنشاء تقرير النشر
+function createDeploymentReport(results) {
+    const report = `# 🎉 تقرير النشر التلقائي
+
+## ✅ نتائج النشر
+
+### HM CAR:
+- **الحالة**: ${results.hmcar.success ? '✅ نجح' : '❌ فشل'}
+- **الرابط**: ${results.hmcar.url || 'غير متوفر'}
+
+### CAR X:
+- **الحالة**: ${results.carx.success ? '✅ نجح' : '❌ فشل'}
+- **الرابط**: ${results.carx.url || 'غير متوفر'}
+
+## 🔐 بيانات الدخول
+
+### حساب الإدارة:
+- **الإيميل**: dawoodalhash@gmail.com
+- **كلمة السر**: daood@112233
+
+### قاعدة البيانات:
+- **Connection String**: mongodb+srv://car-auction:jyT24fgC7TXfyKEt@cluster0.1bqjdzp.mongodb.net/
+
+## 📞 معلومات الاتصال:
+- **واتساب**: +967781007805
+- **إيميل**: dawoodalhash@gmail.com
+
+---
+**تاريخ النشر**: ${new Date().toLocaleString('ar-SA')}
+**النشر بواسطة**: سكريبت النشر التلقائي
+`;
+
+    fs.writeFileSync('DEPLOYMENT_REPORT.md', report);
+    console.log('📄 تم إنشاء تقرير النشر');
+}
+
+// تشغيل النشر التلقائي
+async function runAutoDeploy() {
+    const results = {
+        hmcar: { success: false, url: null },
+        carx: { success: false, url: null }
+    };
+
+    try {
+        // فحص Vercel CLI
+        if (!checkVercelCLI()) {
+            throw new Error('Vercel CLI غير متوفر');
+        }
+
+        // نشر HM CAR
+        console.log('\n🔥 نشر HM CAR...');
+        if (buildProject(deploymentInfo.hmcar.directory, deploymentInfo.hmcar.name)) {
+            const hmcarUrl = deployToVercel(deploymentInfo.hmcar.directory, deploymentInfo.hmcar.name);
+            if (hmcarUrl) {
+                results.hmcar.success = true;
+                results.hmcar.url = hmcarUrl;
+            }
+        }
+
+        // نشر CAR X
+        console.log('\n🔥 نشر CAR X...');
+        if (buildProject(deploymentInfo.carx.directory, deploymentInfo.carx.name)) {
+            const carxUrl = deployToVercel(deploymentInfo.carx.directory, deploymentInfo.carx.name);
+            if (carxUrl) {
+                results.carx.success = true;
+                results.carx.url = carxUrl;
+            }
+        }
+
+        // إنشاء التقرير
+        createDeploymentReport(results);
+
+        // عرض النتائج
+        console.log('\n🎉 انتهى النشر التلقائي!');
+        console.log('\n📊 النتائج:');
+        console.log(`HM CAR: ${results.hmcar.success ? '✅ نجح' : '❌ فشل'}`);
+        console.log(`CAR X: ${results.carx.success ? '✅ نجح' : '❌ فشل'}`);
+
+        if (results.hmcar.success && results.carx.success) {
+            console.log('\n🎊 مبروك! تم نشر النظامين بنجاح!');
+            console.log('\n🔗 الروابط:');
+            if (results.hmcar.url) console.log(`HM CAR: ${results.hmcar.url}`);
+            if (results.carx.url) console.log(`CAR X: ${results.carx.url}`);
+        }
+
+    } catch (error) {
+        console.error('❌ خطأ في النشر التلقائي:', error.message);
+        createDeploymentReport(results);
+    }
+}
+
+if (require.main === module) {
+    runAutoDeploy();
+}
+
+module.exports = { runAutoDeploy };

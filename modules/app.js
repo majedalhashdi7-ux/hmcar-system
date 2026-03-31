@@ -112,8 +112,12 @@ class App {
   setupApiRoutes() {
     try {
       const apiV2Router = require('../routes/api/v2/index');
+      // المسار الرئيسي v2
       this.app.use('/api/v2', apiV2Router);
+      // مسار مختصر للتطوير المحلي
       this.app.use('/v2', apiV2Router);
+      // /api هنا يعمل كـ alias لـ /api/v2 لأن الـ client يستدعي /api/v2/...
+      // وـ Vercel يوجه /api/* كله لهذا السيرفر
       this.app.use('/api', apiV2Router);
       logger.info('✅ تم تحميل جميع مسارات API v2 بنجاح');
     } catch (error) {

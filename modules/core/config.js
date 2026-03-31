@@ -124,6 +124,10 @@ const security = {
 
       // في بيئة الإنتاج: السماح لـ Vercel + OKIGO + ALLOWED_ORIGINS
       const allowedProd = [
+        'https://daood.okigo.net',
+        'https://www.daood.okigo.net',
+        'https://hmcar.xyz',
+        'https://www.hmcar.xyz',
         'https://hmcar.okigo.net',
         'https://www.hmcar.okigo.net',
         'https://car-auction-sand.vercel.app',
