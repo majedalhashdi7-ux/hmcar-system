@@ -71,62 +71,13 @@ function setCorsHeaders(req, res) {
   res.setHeader('Access-Control-Max-Age', '86400');
 }
 
-function buildApp() {
-  const express = require('express');
-  const helmet = require('helmet');
-  const compression = require('compression');
-  const path = require('path');
-  const { tenantMiddleware } = require('./middleware/tenantMiddleware');
-
-  const app = express();
-
-  // CORS middleware - أول شيء
-  app.use((req, res, next) => {
+// CORS middleware للـ serverless
+function createCorsMiddleware() {
+  return (req, res, next) => {
     setCorsHeaders(req, res);
     if (req.method === 'OPTIONS') return res.status(204).end();
     next();
-  });
-
-  app.use(helmet({ contentSecurityPolicy: false }));
-  app.use(compression());
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-  app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-  app.use('/public', express.static(path.join(__dirname, 'public')));
-  app.use(tenantMiddleware({ required: false, connectDb: true }));
-
-  app.get('/health', (req, res) => {
-    res.json({
-      status: 'ok',
-      db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-      env: (process.env.NODE_ENV || '').trim(),
-      isVercel: IS_VERCEL,
-      timestamp: new Date().toISOString(),
-    });
-  });
-
-  try {
-    const apiV2Router = require('./routes/api/v2/index');
-    app.use('/api/v2', apiV2Router);
-    app.use('/v2', apiV2Router);
-    app.use('/api', apiV2Router);
-  } catch (err) {
-    console.error('[Vercel] ❌ Failed to load API routes:', err.message);
-    app.use('/api', (req, res) => {
-      res.status(503).json({ success: false, message: 'API routes failed to load', error: err.message });
-    });
-  }
-
-  app.use((req, res) => {
-    res.status(404).json({ success: false, message: 'Route not found', path: req.path });
-  });
-
-  app.use((err, req, res, next) => {
-    console.error('[Vercel] Express error:', err.message);
-    res.status(err.status || 500).json({ success: false, message: err.message || 'Internal Server Error' });
-  });
-
-  return app;
+  };
 }
 
 // ── Handler الرئيسي ──
@@ -144,8 +95,15 @@ module.exports = async (req, res) => {
       console.error('[Vercel] DB error:', dbError.message);
     }
 
-    const app = buildApp();
-    return app(req, res);
+    // استخدام App class من modules/app.js
+    const App = require('./modules/app');
+    const appInstance = new App({
+      isServerless: true,
+      corsConfig: createCorsMiddleware()
+    });
+    const expressApp = appInstance.getExpressApp();
+    
+    return expressApp(req, res);
 
   } catch (fatalError) {
     console.error('[Vercel] FATAL:', fatalError.message);

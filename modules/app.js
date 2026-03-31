@@ -40,9 +40,19 @@ try {
  * فئة التطبيق (App Class)
  */
 class App {
-  constructor() {
+  constructor(options = {}) {
     this.app = express();
+    this.isServerless = options.isServerless || false;
+    this.corsConfig = options.corsConfig || null;
     this.setupApp();
+  }
+
+  /**
+   * الحصول على Express app بدون تشغيل السيرفر
+   * مفيد للـ serverless environments
+   */
+  getExpressApp() {
+    return this.app;
   }
 
   setupApp() {
@@ -52,15 +62,20 @@ class App {
   }
 
   setupMiddleware() {
+    // CORS - مخصص للـ serverless أو عادي
+    if (this.isServerless && this.corsConfig) {
+      this.app.use(this.corsConfig);
+    } else {
+      // CORS عادي للـ local development
+      this.app.use(cors(config.security.cors));
+    }
+
     // Helmet بإعدادات مرنة
     this.app.use(helmet({
       contentSecurityPolicy: false,
     }));
 
     this.app.use(compression());
-
-    // CORS
-    this.app.use(cors(config.security.cors));
 
     // Body parsing
     this.app.use(express.json({ limit: '10mb' }));
