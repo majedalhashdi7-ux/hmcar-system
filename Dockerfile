@@ -1,7 +1,7 @@
 # [[ARABIC_HEADER]] Dockerfile محسّن لمشروع HM CAR ليدعم كافة المكتبات على Railway.app
 
 # نصيحة: نستخدم نسخة slim من Node لتوفير المساحة مع دعم كامل للمكتبات
-FROM node:24-bookworm-slim
+FROM node:22-bookworm-slim
 
 # إعداد بيئة العمل
 WORKDIR /app

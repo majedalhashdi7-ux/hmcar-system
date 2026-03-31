@@ -3,9 +3,7 @@
 const express = require('express');
 const router = express.Router();
 const https = require('https');
-const SiteSettings = require('../../../models/SiteSettings');
-const Car = require('../../../models/Car');
-const Brand = require('../../../models/Brand');
+const { getModel } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI, requireAdmin } = require('../../../middleware/auth');
 
 // ─────────────────────────────────────────────────────────
@@ -252,6 +250,8 @@ function translateCar(car) {
  */
 router.get('/cars', async (req, res) => {
     try {
+        const SiteSettings = getModel(req, 'SiteSettings');
+        const Car = getModel(req, 'Car');
         const page = parseInt(req.query.page || '1');
         const limit = 20;
         const skip = (page - 1) * limit;
@@ -371,6 +371,9 @@ router.get('/cars', async (req, res) => {
 router.post('/scrape', requireAuthAPI, requireAdmin, async (req, res) => {
     let apiUrl = '';
     try {
+        const SiteSettings = getModel(req, 'SiteSettings');
+        const Car = getModel(req, 'Car');
+        const Brand = getModel(req, 'Brand');
         const { downloadAndOptimize } = require('../../../services/externalImageService');
         const settings = await SiteSettings.getSettings();
         const showroomUrl = settings?.showroomSettings?.encarUrl || '';
@@ -488,6 +491,7 @@ router.post('/scrape', requireAuthAPI, requireAdmin, async (req, res) => {
  */
 router.put('/settings', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
+        const SiteSettings = getModel(req, 'SiteSettings');
         const rawUrl = req.body?.encarUrl;
         const encarUrl = typeof rawUrl === 'string' ? rawUrl.trim() : '';
 
@@ -525,6 +529,7 @@ router.put('/settings', requireAuthAPI, requireAdmin, async (req, res) => {
  */
 router.get('/settings', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
+        const SiteSettings = getModel(req, 'SiteSettings');
         const settings = await SiteSettings.getSettings();
         res.json({
             success: true,

@@ -2,9 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const Car = require('../../../models/Car');
-const AuditLog = require('../../../models/AuditLog');
-const SiteSettings = require('../../../models/SiteSettings');
+const { getModel } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI, requirePermissionAPI } = require('../../../middleware/auth');
 const SmartAlertService = require('../../../services/SmartAlertService');
 const { cacheResponse, invalidateCache } = require('../../../middleware/cache');
@@ -55,6 +53,8 @@ function normalizeCarPricing(payload, rates) {
 // GET /api/v2/cars - جلب قائمة السيارات
 router.get('/', cacheResponse(300), async (req, res, next) => {
     try {
+        const Car = getModel(req, 'Car');
+        const SiteSettings = getModel(req, 'SiteSettings');
         const {
             page = 1,
             limit = 12,
@@ -216,7 +216,6 @@ router.get('/', cacheResponse(300), async (req, res, next) => {
         ]);
 
         // [[ARABIC_COMMENT]] جلب سعر الصرف من الإعدادات بدلاً من القيمة الثابتة
-        const SiteSettings = require('../../../models/SiteSettings');
         let usdToSar = 3.75;
         try {
             const settings = await SiteSettings.getSettings();
@@ -269,6 +268,7 @@ router.get('/', cacheResponse(300), async (req, res, next) => {
 // GET /api/v2/cars/makes - جلب قائمة الماركات
 router.get('/makes', cacheResponse(1800), async (req, res, next) => {
     try {
+        const Car = getModel(req, 'Car');
         const includeInactive = String(req.query.includeInactive || 'false') === 'true';
         const filter = includeInactive ? {} : { isActive: true, isSold: false };
 
@@ -287,6 +287,7 @@ router.get('/makes', cacheResponse(1800), async (req, res, next) => {
 // GET /api/v2/cars/:id - جلب تفاصيل سيارة محددة
 router.get('/:id', cacheResponse(600), async (req, res, next) => {
     try {
+        const Car = getModel(req, 'Car');
         const car = await Car.findById(req.params.id)
             .populate('agency')
             .lean();
@@ -310,6 +311,9 @@ router.get('/:id', cacheResponse(600), async (req, res, next) => {
 // POST /api/v2/cars - إضافة سيارة جديدة (Admin only)
 router.post('/', requireAuthAPI, requirePermissionAPI('manage_cars'), invalidateCache('/api/v2/cars*'), async (req, res, next) => {
     try {
+        const Car = getModel(req, 'Car');
+        const AuditLog = getModel(req, 'AuditLog');
+        const SiteSettings = getModel(req, 'SiteSettings');
         const settings = await SiteSettings.getSettings();
         const payload = normalizeCarPricing(req.body, settings?.currencySettings);
         const car = new Car(payload);
@@ -348,6 +352,9 @@ router.post('/', requireAuthAPI, requirePermissionAPI('manage_cars'), invalidate
 // PUT /api/v2/cars/:id - تحديث سيارة (Admin only)
 router.put('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), invalidateCache('/api/v2/cars*'), async (req, res, next) => {
     try {
+        const Car = getModel(req, 'Car');
+        const AuditLog = getModel(req, 'AuditLog');
+        const SiteSettings = getModel(req, 'SiteSettings');
         const oldCar = await Car.findById(req.params.id);
         if (!oldCar) {
             return res.status(404).json({
@@ -402,6 +409,7 @@ router.put('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), invalida
 // DELETE /api/v2/cars/:id - حذف سيارة (Admin only)
 router.delete('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), invalidateCache('/api/v2/cars*'), async (req, res, next) => {
     try {
+        const Car = getModel(req, 'Car');
         const car = await Car.findByIdAndDelete(req.params.id);
 
         if (!car) {
@@ -424,6 +432,8 @@ router.delete('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), inval
 // [[ARABIC_COMMENT]] بعد التنفيذ: isSold=true + isActive=false → تختفي من المعرض فوراً
 router.patch('/:id/sold', requireAuthAPI, requirePermissionAPI('manage_cars'), invalidateCache('/api/v2/cars*'), async (req, res, next) => {
     try {
+        const Car = getModel(req, 'Car');
+        const AuditLog = getModel(req, 'AuditLog');
         const { soldPrice, buyerNote } = req.body;
 
         const car = await Car.findByIdAndUpdate(

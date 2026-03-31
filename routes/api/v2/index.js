@@ -10,6 +10,7 @@ const express = require('express');
 const router = express.Router();
 const { apiRateLimiter } = require('../../../middleware/securityEnhanced');
 const { autoCacheMiddleware } = require('../../../middleware/autoCache');
+const { tenantMiddleware } = require('../../../middleware/tenantMiddleware');
 const { 
   generalLimiter, 
   authLimiter, 
@@ -24,6 +25,7 @@ const {
  * لحماية الخادم من الهجمات وزيادة عدد الطلبات من نفس العنوان.
  */
 router.use(generalLimiter);
+router.use(tenantMiddleware({ required: true, connectDb: true }));
 
 /**
  * معلومات الإصدار الحالي للـ API

@@ -75,43 +75,60 @@ function resolveTenant(req) {
 
   const tenants = config.tenants;
   let tenantId = null;
+  const isProduction = String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+  const host = (req.headers.host || '').toLowerCase();
+  const requestedHeaderTenant = req.headers['x-tenant-id'];
+  const requestedQueryTenant = req.query.tenant;
 
-  // ──────────────────────────────────────────────
-  // الطريقة 1: Header مخصص (للـ API والتطوير)
-  // ──────────────────────────────────────────────
-  const headerTenant = req.headers['x-tenant-id'];
-  if (headerTenant && tenants[headerTenant]) {
-    tenantId = headerTenant;
-  }
+  const findTenantByHost = () => {
+    if (!host) return null;
+    for (const [id, tenant] of Object.entries(tenants)) {
+      if (!tenant.enabled) continue;
+      if (!Array.isArray(tenant.domains)) continue;
+      const matched = tenant.domains.some(domain => {
+        const d = String(domain || '').toLowerCase();
+        return host === d || host.endsWith('.' + d);
+      });
+      if (matched) return id;
+    }
+    return null;
+  };
 
-  // ──────────────────────────────────────────────
-  // الطريقة 2: Query parameter (للتطوير والاختبار)
-  // ──────────────────────────────────────────────
-  if (!tenantId && req.query.tenant && tenants[req.query.tenant]) {
-    tenantId = req.query.tenant;
+  const hostTenantId = findTenantByHost();
+
+  // في الإنتاج: نعتمد الـ Host كأساس لمنع tenant hopping.
+  if (isProduction && hostTenantId) {
+    tenantId = hostTenantId;
+  } else if (!isProduction) {
+    // ──────────────────────────────────────────────
+    // الطريقة 1: Header مخصص (للتطوير)
+    // ──────────────────────────────────────────────
+    if (requestedHeaderTenant && tenants[requestedHeaderTenant]) {
+      tenantId = requestedHeaderTenant;
+    }
+
+    // ──────────────────────────────────────────────
+    // الطريقة 2: Query parameter (للتطوير)
+    // ──────────────────────────────────────────────
+    if (!tenantId && requestedQueryTenant && tenants[requestedQueryTenant]) {
+      tenantId = requestedQueryTenant;
+    }
   }
 
   // ──────────────────────────────────────────────
   // الطريقة 3: الدومين من Host header
   // ──────────────────────────────────────────────
   if (!tenantId) {
-    const host = (req.headers.host || '').toLowerCase();
+    tenantId = hostTenantId;
+  }
 
-    for (const [id, tenant] of Object.entries(tenants)) {
-      if (!tenant.enabled) continue;
-
-      // تحقق من تطابق الدومين
-      if (tenant.domains && Array.isArray(tenant.domains)) {
-        const matched = tenant.domains.some(domain => {
-          const d = domain.toLowerCase();
-          return host === d || host.endsWith('.' + d);
-        });
-
-        if (matched) {
-          tenantId = id;
-          break;
-        }
-      }
+  // إذا تم تحديد tenant من header/query في الإنتاج وكان مختلفاً عن host، تجاهله بالكامل.
+  if (isProduction && hostTenantId) {
+    if (
+      (requestedHeaderTenant && requestedHeaderTenant !== hostTenantId) ||
+      (requestedQueryTenant && requestedQueryTenant !== hostTenantId)
+    ) {
+      tenantId = hostTenantId;
     }
   }
 

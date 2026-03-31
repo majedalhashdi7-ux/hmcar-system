@@ -3,8 +3,7 @@
 // [[ARABIC_HEADER]] هذا الملف (routes/api/v2/parts.js) مسؤول عن إدارة قطع الغيار، وهو يحتوي على نظام جلب القطع (Scraping) من المواقع الخارجية.
 const express = require('express');
 const router = express.Router();
-const SparePart = require('../../../models/SparePart');
-const SiteSettings = require('../../../models/SiteSettings');
+const { getModel } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI, requireAdmin } = require('../../../middleware/auth');
 
 function normalizeExternalImage(url) {
@@ -76,6 +75,8 @@ function cleanModelName(value = '') {
 // GET /api/v2/parts - قائمة قطع الغيار
 router.get('/', async (req, res) => {
     try {
+        const SparePart = getModel(req, 'SparePart');
+        const SiteSettings = getModel(req, 'SiteSettings');
         const { category, q, brand, brandId, carModel, limit = 20 } = req.query;
         const filter = {};
 
@@ -101,7 +102,7 @@ router.get('/', async (req, res) => {
         if (brandId) {
             const mongoose = require('mongoose');
             try {
-                const Brand = require('../../../models/Brand');
+                const Brand = getModel(req, 'Brand');
                 const brandDoc = await Brand.findById(brandId).lean();
                 if (brandDoc) {
                     // Search by carMake matching the brand name OR by brand ObjectId
@@ -125,7 +126,7 @@ router.get('/', async (req, res) => {
             const brandConditions = [{ carMake: brandRegex }];
             
             try {
-                const Brand = require('../../../models/Brand');
+                const Brand = getModel(req, 'Brand');
                 const foundBrands = await Brand.find({ name: brandRegex }).select('_id').lean();
                 if (foundBrands.length > 0) {
                     brandConditions.push({ brand: { $in: foundBrands.map(b => b._id) } });
@@ -218,6 +219,7 @@ router.get('/', async (req, res) => {
 // POST /api/v2/parts - Add new part
 router.post('/', requireAuthAPI, async (req, res) => {
     try {
+        const SparePart = getModel(req, 'SparePart');
         const { name, brand, model, year, price, category, images, description, condition, stockQty } = req.body;
         const part = await SparePart.create({
             name,
@@ -242,6 +244,7 @@ router.post('/', requireAuthAPI, async (req, res) => {
 // PUT /api/v2/parts/:id - Update part
 router.put('/:id', requireAuthAPI, async (req, res) => {
     try {
+        const SparePart = getModel(req, 'SparePart');
         const { name, brand, model, year, price, category, images, description, condition, stockQty } = req.body;
         const part = await SparePart.findByIdAndUpdate(req.params.id, {
             name,
@@ -266,6 +269,7 @@ router.put('/:id', requireAuthAPI, async (req, res) => {
 // DELETE /api/v2/parts/:id - Delete part
 router.delete('/:id', requireAuthAPI, async (req, res) => {
     try {
+        const SparePart = getModel(req, 'SparePart');
         await SparePart.findByIdAndDelete(req.params.id);
         res.json({ success: true });
     } catch (e) {
@@ -276,6 +280,7 @@ router.delete('/:id', requireAuthAPI, async (req, res) => {
 // [[ARABIC_COMMENT]] PATCH /api/v2/parts/:id/toggle-stock - تبديل حالة الظهور (In Stock / Out of Stock)
 router.patch('/:id/toggle-stock', requireAuthAPI, async (req, res) => {
     try {
+        const SparePart = getModel(req, 'SparePart');
         if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ success: false, error: 'Forbidden' });
         }
@@ -307,6 +312,7 @@ router.patch('/:id/toggle-stock', requireAuthAPI, async (req, res) => {
 // [[ARABIC_COMMENT]] المنطق الجديد: زيادة عداد "المباع" (soldCount) دون إنقاص الكمية أو الإخفاء التلقائي
 router.patch('/:id/sold', requireAuthAPI, async (req, res) => {
     try {
+        const SparePart = getModel(req, 'SparePart');
         const { soldQty = 1 } = req.body;
 
         const part = await SparePart.findById(req.params.id);
@@ -330,7 +336,7 @@ router.patch('/:id/sold', requireAuthAPI, async (req, res) => {
 
         // [[ARABIC_COMMENT]] تسجيل في AuditLog للتقارير التلقائية
         try {
-            const AuditLog = require('../../../models/AuditLog');
+            const AuditLog = getModel(req, 'AuditLog');
             await AuditLog.create({
                 action: 'SOLD',
                 targetModel: 'SparePart',
@@ -360,8 +366,6 @@ router.patch('/:id/sold', requireAuthAPI, async (req, res) => {
 
 const axios = require('axios');
 const cheerio = require('cheerio');
-const Brand = require('../../../models/Brand');
-
 // [[ARABIC_COMMENT]] POST /api/v2/parts/scrape - جلب وكالات وقطع غيار من autospare.com.eg (أدمن فقط)
 // ==========================================
 // [[ARABIC_COMMENT]] دالة Scrape و جلب الماركات والصور
@@ -370,6 +374,9 @@ const Brand = require('../../../models/Brand');
 // ==========================================
 router.post('/scrape/brands', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
+        const SparePart = getModel(req, 'SparePart');
+        const SiteSettings = getModel(req, 'SiteSettings');
+        const Brand = getModel(req, 'Brand');
         const BASE_URL = 'https://autospare.com.eg';
         const BRANDS_URL = `${BASE_URL}/brands`;
         const maxBrands = Number(req.body?.maxBrands || 25);
@@ -574,7 +581,8 @@ router.post('/scrape/brands', requireAuthAPI, requireAdmin, async (req, res) => 
 // POST /api/v2/parts/fix-brand-links - ربط القطع بمعرفات وكالات قطع الغيار تلقائياً
 router.post('/fix-brand-links', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
-        const Brand = require('../../../models/Brand');
+        const SparePart = getModel(req, 'SparePart');
+        const Brand = getModel(req, 'Brand');
         
         // جلب كل الوكالات وكل القيم الفريدة لـ carMake
         const allBrands = await Brand.find({ forSpareParts: true }).lean();
