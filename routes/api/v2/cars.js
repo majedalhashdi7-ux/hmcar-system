@@ -6,6 +6,13 @@ const { getModel } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI, requirePermissionAPI } = require('../../../middleware/auth');
 const SmartAlertService = require('../../../services/SmartAlertService');
 const { cacheResponse, invalidateCache } = require('../../../middleware/cache');
+const { 
+  successResponse, 
+  errorResponse, 
+  notFoundResponse, 
+  serverErrorResponse, 
+  sendResponse 
+} = require('../../../utils/apiResponse');
 
 function toFiniteNumber(value) {
     const n = Number(value);
@@ -293,10 +300,7 @@ router.get('/:id', cacheResponse(600), async (req, res, next) => {
             .lean();
 
         if (!car) {
-            return res.status(404).json({
-                success: false,
-                error: 'Car not found'
-            });
+            return sendResponse(res, notFoundResponse('Car'));
         }
 
         res.json({
@@ -357,10 +361,7 @@ router.put('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), invalida
         const SiteSettings = getModel(req, 'SiteSettings');
         const oldCar = await Car.findById(req.params.id);
         if (!oldCar) {
-            return res.status(404).json({
-                success: false,
-                error: 'Car not found'
-            });
+            return sendResponse(res, notFoundResponse('Car'));
         }
 
         const settings = await SiteSettings.getSettings();
@@ -413,10 +414,7 @@ router.delete('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), inval
         const car = await Car.findByIdAndDelete(req.params.id);
 
         if (!car) {
-            return res.status(404).json({
-                success: false,
-                error: 'Car not found'
-            });
+            return sendResponse(res, notFoundResponse('Car'));
         }
 
         res.json({
@@ -449,7 +447,7 @@ router.patch('/:id/sold', requireAuthAPI, requirePermissionAPI('manage_cars'), i
         );
 
         if (!car) {
-            return res.status(404).json({ success: false, error: 'Car not found' });
+            return sendResponse(res, notFoundResponse('Car'));
         }
 
         // [[ARABIC_COMMENT]] تسجيل في AuditLog للتقارير التلقائية

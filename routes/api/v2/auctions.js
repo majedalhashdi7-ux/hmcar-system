@@ -6,6 +6,14 @@ const Auction = require('../../../models/Auction');
 const Car = require('../../../models/Car');
 const SiteSettings = require('../../../models/SiteSettings');
 const { requireAuthAPI } = require('../../../middleware/auth');
+const { 
+  successResponse, 
+  errorResponse, 
+  validationErrorResponse, 
+  notFoundResponse, 
+  serverErrorResponse, 
+  sendResponse 
+} = require('../../../utils/apiResponse');
 
 function normalizeMultiplier(value) {
     const num = Number(value);
@@ -88,7 +96,7 @@ router.get('/', async (req, res) => {
         });
     } catch (error) {
         console.error('API Auctions error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        return sendResponse(res, serverErrorResponse('Internal Server Error', error));
     }
 });
 
@@ -101,7 +109,7 @@ router.get('/:id', async (req, res) => {
             .lean();
 
         if (!auction) {
-            return res.status(404).json({ success: false, error: 'Auction not found' });
+            return sendResponse(res, notFoundResponse('Auction'));
         }
 
         const settings = await SiteSettings.getSettings().catch(() => null);
@@ -138,7 +146,7 @@ router.get('/:id', async (req, res) => {
         });
     } catch (error) {
         console.error('API Get Auction error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        return sendResponse(res, serverErrorResponse('Internal Server Error', error));
     }
 });
 
@@ -148,17 +156,13 @@ router.post('/', requireAuthAPI, async (req, res) => {
         const { carId, startPrice, startsAt, endsAt } = req.body;
 
         if (!carId || !startPrice || !startsAt || !endsAt) {
-            return res.status(400).json({
-                success: false,
-                error: 'Validation Error',
-                message: 'All fields (carId, startPrice, startsAt, endsAt) are required'
-            });
+            return sendResponse(res, validationErrorResponse(null, 'All fields (carId, startPrice, startsAt, endsAt) are required'));
         }
 
         // Verify car exists
         const car = await Car.findById(carId);
         if (!car) {
-            return res.status(404).json({ success: false, error: 'Car not found' });
+            return sendResponse(res, notFoundResponse('Car'));
         }
 
         const settings = await SiteSettings.getSettings().catch(() => null);
@@ -183,7 +187,7 @@ router.post('/', requireAuthAPI, async (req, res) => {
         });
     } catch (error) {
         console.error('API Create Auction error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        return sendResponse(res, serverErrorResponse('Internal Server Error', error));
     }
 });
 
@@ -194,7 +198,7 @@ router.put('/:id', requireAuthAPI, async (req, res) => {
         const auction = await Auction.findById(req.params.id);
 
         if (!auction) {
-            return res.status(404).json({ success: false, error: 'Auction not found' });
+            return sendResponse(res, notFoundResponse('Auction'));
         }
 
         if (status) auction.status = status;
@@ -209,7 +213,7 @@ router.put('/:id', requireAuthAPI, async (req, res) => {
         });
     } catch (error) {
         console.error('API Update Auction error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        return sendResponse(res, serverErrorResponse('Internal Server Error', error));
     }
 });
 
@@ -218,12 +222,12 @@ router.delete('/:id', requireAuthAPI, async (req, res) => {
     try {
         const auction = await Auction.findByIdAndDelete(req.params.id);
         if (!auction) {
-            return res.status(404).json({ success: false, error: 'Auction not found' });
+            return sendResponse(res, notFoundResponse('Auction'));
         }
         res.json({ success: true, message: 'Auction deleted successfully' });
     } catch (error) {
         console.error('API Delete Auction error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        return sendResponse(res, serverErrorResponse('Internal Server Error', error));
     }
 });
 
@@ -234,11 +238,11 @@ router.post('/:id/bid', requireAuthAPI, async (req, res) => {
         const auction = await Auction.findById(req.params.id);
 
         if (!auction) {
-            return res.status(404).json({ success: false, error: 'Auction not found' });
+            return sendResponse(res, notFoundResponse('Auction'));
         }
 
         if (auction.status !== 'running') {
-            return res.status(400).json({ success: false, error: 'Auction is not active' });
+            return sendResponse(res, errorResponse('Auction is not active', 'AUCTION_NOT_ACTIVE', 400));
         }
 
         const settings = await SiteSettings.getSettings().catch(() => null);
@@ -247,11 +251,11 @@ router.post('/:id/bid', requireAuthAPI, async (req, res) => {
         const baseAmount = toBaseAmount(amount, auctionMultiplier);
 
         if (baseAmount <= currentHighest) {
-            return res.status(400).json({
-                success: false,
-                error: 'Bid too low',
-                message: `Bid must be higher than ${applyMultiplier(currentHighest, auctionMultiplier)}`
-            });
+            return sendResponse(res, errorResponse(
+                `Bid must be higher than ${applyMultiplier(currentHighest, auctionMultiplier)}`,
+                'BID_TOO_LOW',
+                400
+            ));
         }
 
         auction.currentPrice = baseAmount;
@@ -274,7 +278,7 @@ router.post('/:id/bid', requireAuthAPI, async (req, res) => {
         });
     } catch (error) {
         console.error('API Bid error:', error);
-        res.status(500).json({ success: false, error: 'Internal Server Error' });
+        return sendResponse(res, serverErrorResponse('Internal Server Error', error));
     }
 });
 

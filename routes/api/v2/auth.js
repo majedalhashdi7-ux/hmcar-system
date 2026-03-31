@@ -8,6 +8,17 @@ const { getModel } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI } = require('../../../middleware/auth');
 const { authRateLimiter, fullSecurityMiddleware } = require('../../../middleware/securityEnhanced');
 const { authLimiter } = require('../../../middleware/rateLimiter');
+const { 
+  successResponse, 
+  errorResponse, 
+  validationErrorResponse, 
+  notFoundResponse, 
+  unauthorizedResponse, 
+  forbiddenResponse, 
+  conflictResponse, 
+  serverErrorResponse, 
+  sendResponse 
+} = require('../../../utils/apiResponse');
 
 // تطبيق ميدلوير الأمان العام على جميع مسارات المصادقة
 router.use(fullSecurityMiddleware);
@@ -19,18 +30,12 @@ router.post('/register', authLimiter, async (req, res) => {
     const User = getModel(req, 'User');
     const AuditLog = getModel(req, 'AuditLog');
     if (!name || !email || !password) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'Name, email, and password are required'
-      });
+      return sendResponse(res, validationErrorResponse(null, 'Name, email, and password are required'));
     }
 
     // Validate Name (at least 2 words)
     if (name.trim().split(/\s+/).length < 2) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'Full name must contain at least two names'
-      });
+      return sendResponse(res, validationErrorResponse(null, 'Full name must contain at least two names'));
     }
 
     // Check if user already exists
@@ -42,10 +47,7 @@ router.post('/register', authLimiter, async (req, res) => {
     });
 
     if (existingUser) {
-      return res.status(409).json({
-        error: 'Conflict',
-        message: 'User with this email or phone already exists'
-      });
+      return sendResponse(res, conflictResponse('User with this email or phone already exists'));
     }
 
     // Create user
@@ -105,10 +107,7 @@ router.post('/register', authLimiter, async (req, res) => {
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'An error occurred during registration'
-    });
+    return sendResponse(res, serverErrorResponse('An error occurred during registration', error));
   }
 });
 
@@ -131,10 +130,7 @@ router.post('/auto-login', authLimiter, async (req, res) => {
     console.log(`[AUTH] Auto-login attempt for: '${name}', IP: ${clientIP}`);
 
     if (!name || !password) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'الاسم وكلمة المرور مطلوبان'
-      });
+      return sendResponse(res, validationErrorResponse(null, 'الاسم وكلمة المرور مطلوبان'));
     }
 
     // -- تطبيق نظام حظر الأجهزة والتحقق من حساب واحد لكل جهاز --
@@ -142,12 +138,7 @@ router.post('/auto-login', authLimiter, async (req, res) => {
 
     if (fingerprint && !fingerprint.exemptFromSecurity) {
       if (fingerprint.banned) {
-        return res.status(403).json({
-          error: 'Banned Device',
-          banned: true,
-          banCode: fingerprint.banCode,
-          message: 'تم حظرك من هذا الجهاز. لمراسلة الإدارة استخدم الرمز بالأسفل.'
-        });
+        return sendResponse(res, forbiddenResponse('تم حظرك من هذا الجهاز. لمراسلة الإدارة استخدم الرمز بالأسفل.'));
       }
 
       // [[ARABIC_COMMENT]] تخفيف حدة الربط بالاسم للسماح بالتبديل بين اللغات (عربي/إنجليزي)
@@ -200,10 +191,7 @@ router.post('/auto-login', authLimiter, async (req, res) => {
       const isMatch = await userToLogin.comparePassword(password);
 
       if (!isMatch) {
-        return res.status(401).json({
-          error: 'Authentication Failed',
-          message: 'كلمة المرور غير صحيحة. هذا الاسم مستخدم بالفعل.'
-        });
+        return sendResponse(res, unauthorizedResponse('كلمة المرور غير صحيحة. هذا الاسم مستخدم بالفعل.'));
       }
 
       // Password matches - login successful
@@ -295,10 +283,7 @@ router.post('/auto-login', authLimiter, async (req, res) => {
 
   } catch (error) {
     console.error('Auto-login error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'حدث خطأ أثناء العملية'
-    });
+    return sendResponse(res, serverErrorResponse('حدث خطأ أثناء العملية', error));
   }
 });
 
@@ -314,7 +299,7 @@ router.post('/login', authLimiter, async (req, res) => {
     console.log(`[AUTH] Login attempt for: '${searchKey}', Role: ${role}`);
 
     if (!searchKey || !password) {
-      return res.status(400).json({ error: 'Validation Error', message: 'Identifier and password are required' });
+      return sendResponse(res, validationErrorResponse(null, 'Identifier and password are required'));
     }
 
     const clientIP = req.headers['x-forwarded-for'] || req.socket?.remoteAddress || req.ip || 'unknown';
@@ -324,7 +309,7 @@ router.post('/login', authLimiter, async (req, res) => {
       fingerprint = await DeviceFingerprint.findOne({ ip: clientIP });
       if (fingerprint && !fingerprint.exemptFromSecurity) {
         if (fingerprint.banned) {
-          return res.status(403).json({ banned: true, banCode: fingerprint.banCode, message: 'تم حظرك من هذا الجهاز. لمراسلة الإدارة استخدم الرمز بالأسفل.' });
+          return sendResponse(res, forbiddenResponse('تم حظرك من هذا الجهاز. لمراسلة الإدارة استخدم الرمز بالأسفل.'));
         }
         
         // [[ARABIC_COMMENT]] السماح بالدخول إذا كان هناك تطابق في الاسم أو جزء منه لضمان عدم الحظر بسبب اللغة
@@ -350,7 +335,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
     if (!user) {
       console.warn(`[AUTH] User not found: ${searchKey}`);
-      return res.status(401).json({ error: 'Authentication Failed', message: `User not found with identifier: ${searchKey}` });
+      return sendResponse(res, unauthorizedResponse(`User not found with identifier: ${searchKey}`));
     }
 
     // التحقق من كلمة المرور
@@ -359,7 +344,7 @@ router.post('/login', authLimiter, async (req, res) => {
       console.warn(`[AUTH] Wrong password for: ${searchKey}`);
       // fire-and-forget — لا ننتظر AuditLog لتفادي timeout
       AuditLog.logUserAction(user, 'LOGIN', 'User', 'Failed login - wrong password', { ipAddress: req.ip, result: 'FAILURE' }).catch(() => { });
-      return res.status(401).json({ error: 'Authentication Failed', message: `Incorrect password for user ${user.email || user.username}` });
+      return sendResponse(res, unauthorizedResponse(`Incorrect password for user ${user.email || user.username}`));
     }
 
     // [[ARABIC_COMMENT]] التحقق من الدور إذا كان المستخدم يحاول الدخول كمدير
@@ -369,16 +354,13 @@ router.post('/login', authLimiter, async (req, res) => {
       
       if (!allowedAdminRoles.includes(currentRole)) {
         console.warn(`[AUTH] Admin access denied for role: '${currentRole}'`);
-        return res.status(403).json({ 
-          error: 'Access Denied', 
-          message: 'ليس لديك صلاحية الوصول إلى لوحة التحكم بصفتك عميل. تأكد من الدخول بالحساب الصحيح.' 
-        });
+        return sendResponse(res, forbiddenResponse('ليس لديك صلاحية الوصول إلى لوحة التحكم بصفتك عميل. تأكد من الدخول بالحساب الصحيح.'));
       }
     }
 
     // التحقق من حالة الحساب
     if (user.status !== 'active') {
-      return res.status(403).json({ error: 'Account Suspended', message: 'Your account has been suspended' });
+      return sendResponse(res, forbiddenResponse('Your account has been suspended'));
     }
 
     // توليد التوكن
@@ -425,7 +407,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal Server Error', message: 'An error occurred during login' });
+    return sendResponse(res, serverErrorResponse('An error occurred during login', error));
   }
 });
 
@@ -463,10 +445,7 @@ router.post('/logout', requireAuthAPI, async (req, res) => {
     });
   } catch (error) {
     console.error('Logout error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'An error occurred during logout'
-    });
+    return sendResponse(res, serverErrorResponse('An error occurred during logout', error));
   }
 });
 
@@ -477,10 +456,7 @@ router.post('/refresh', requireAuthAPI, async (req, res) => {
     const user = await User.findById(req.user.userId);
 
     if (!user || user.status !== 'active') {
-      return res.status(401).json({
-        error: 'Authentication Failed',
-        message: 'User not found or inactive'
-      });
+      return sendResponse(res, unauthorizedResponse('User not found or inactive'));
     }
 
     // Generate new token
@@ -506,10 +482,7 @@ router.post('/refresh', requireAuthAPI, async (req, res) => {
     });
   } catch (error) {
     console.error('Token refresh error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'An error occurred during token refresh'
-    });
+    return sendResponse(res, serverErrorResponse('An error occurred during token refresh', error));
   }
 });
 
@@ -520,10 +493,7 @@ router.get('/verify', requireAuthAPI, async (req, res) => {
     const user = await User.findById(req.user.userId).select('-password');
 
     if (!user) {
-      return res.status(401).json({
-        error: 'Authentication Failed',
-        message: 'User not found'
-      });
+      return sendResponse(res, unauthorizedResponse('User not found'));
     }
 
     res.json({
@@ -541,10 +511,7 @@ router.get('/verify', requireAuthAPI, async (req, res) => {
     });
   } catch (error) {
     console.error('Token verification error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'An error occurred during token verification'
-    });
+    return sendResponse(res, serverErrorResponse('An error occurred during token verification', error));
   }
 });
 
@@ -556,28 +523,19 @@ router.post('/change-password', requireAuthAPI, async (req, res) => {
     const AuditLog = getModel(req, 'AuditLog');
 
     if (!currentPassword || !newPassword) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'Current password and new password are required'
-      });
+      return sendResponse(res, validationErrorResponse(null, 'Current password and new password are required'));
     }
 
     const user = await User.findById(req.user.userId);
 
     if (!user) {
-      return res.status(404).json({
-        error: 'User Not Found',
-        message: 'User not found'
-      });
+      return sendResponse(res, notFoundResponse('User'));
     }
 
     // Verify current password
     const isCurrentPasswordValid = await user.comparePassword(currentPassword);
     if (!isCurrentPasswordValid) {
-      return res.status(401).json({
-        error: 'Authentication Failed',
-        message: 'Current password is incorrect'
-      });
+      return sendResponse(res, unauthorizedResponse('Current password is incorrect'));
     }
 
     // Update password
@@ -617,10 +575,7 @@ router.post('/change-password', requireAuthAPI, async (req, res) => {
     });
   } catch (error) {
     console.error('Change password error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'An error occurred while changing password'
-    });
+    return sendResponse(res, serverErrorResponse('An error occurred while changing password', error));
   }
 });
 
@@ -676,10 +631,7 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'An error occurred while processing password reset'
-    });
+    return sendResponse(res, serverErrorResponse('An error occurred while processing password reset', error));
   }
 });
 
@@ -691,29 +643,20 @@ router.post('/reset-password', async (req, res) => {
     const AuditLog = getModel(req, 'AuditLog');
 
     if (!token || !newPassword) {
-      return res.status(400).json({
-        error: 'Validation Error',
-        message: 'Reset token and new password are required'
-      });
+      return sendResponse(res, validationErrorResponse(null, 'Reset token and new password are required'));
     }
 
     // Verify reset token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     if (decoded.type !== 'password-reset') {
-      return res.status(400).json({
-        error: 'Invalid Token',
-        message: 'Invalid or expired reset token'
-      });
+      return sendResponse(res, validationErrorResponse(null, 'Invalid or expired reset token'));
     }
 
     const user = await User.findById(decoded.userId);
 
     if (!user) {
-      return res.status(404).json({
-        error: 'User Not Found',
-        message: 'User not found'
-      });
+      return sendResponse(res, notFoundResponse('User'));
     }
 
     // Update password
@@ -742,16 +685,10 @@ router.post('/reset-password', async (req, res) => {
     console.error('Reset password error:', error);
 
     if (error.name === 'JsonWebTokenError') {
-      return res.status(400).json({
-        error: 'Invalid Token',
-        message: 'Invalid or expired reset token'
-      });
+      return sendResponse(res, validationErrorResponse(null, 'Invalid or expired reset token'));
     }
 
-    res.status(500).json({
-      error: 'Internal Server Error',
-      message: 'An error occurred while resetting password'
-    });
+    return sendResponse(res, serverErrorResponse('An error occurred while resetting password', error));
   }
 });
 
@@ -764,14 +701,14 @@ router.post('/otp/send', async (req, res) => {
 
     const { phone } = req.body;
     if (!phone) {
-      return res.status(400).json({ error: 'Validation Error', message: 'Phone number is required' });
+      return sendResponse(res, validationErrorResponse(null, 'Phone number is required'));
     }
     // In a real app, integrate via Twilio/Unifonic or other SMS gateway.
     console.log(`[AUTH] Mock OTP send requested for phone: ${phone}`);
     return res.json({ success: true, message: 'OTP sent successfully (mocked)' });
   } catch (error) {
     console.error('OTP Send error:', error);
-    res.status(500).json({ error: 'Internal Server Error', message: 'An error occurred while sending OTP' });
+    return sendResponse(res, serverErrorResponse('An error occurred while sending OTP', error));
   }
 });
 
@@ -783,7 +720,7 @@ router.post('/otp/verify', async (req, res) => {
 
     const { phone, code } = req.body;
     if (!phone || !code) {
-      return res.status(400).json({ error: 'Validation Error', message: 'Phone and code are required' });
+      return sendResponse(res, validationErrorResponse(null, 'Phone and code are required'));
     }
     console.log(`[AUTH] Mock OTP verify requested for phone: ${phone}, code: ${code}`);
     // In a real app, verify against stored code in cache/DB.
@@ -791,11 +728,11 @@ router.post('/otp/verify', async (req, res) => {
     if (code.length >= 4) {
       return res.json({ success: true, message: 'OTP verified successfully' });
     } else {
-      return res.status(400).json({ error: 'Validation Error', message: 'Invalid OTP code' });
+      return sendResponse(res, validationErrorResponse(null, 'Invalid OTP code'));
     }
   } catch (error) {
     console.error('OTP Verify error:', error);
-    res.status(500).json({ error: 'Internal Server Error', message: 'An error occurred while verifying OTP' });
+    return sendResponse(res, serverErrorResponse('An error occurred while verifying OTP', error));
   }
 });
 

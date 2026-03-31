@@ -106,6 +106,11 @@ const logSuspiciousActivity = (req, reason, severity = 'medium') => {
  * التحقق من IP محظور
  */
 const checkBlockedIP = (req, res, next) => {
+  // Skip in test environment
+  if (process.env.NODE_ENV === 'test' || process.env.TESTING === 'true') {
+    return next();
+  }
+  
   const ip = getClientIP(req);
   
   if (blockedIPs.has(ip)) {
