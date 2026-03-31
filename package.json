@@ -29,6 +29,8 @@
     "test:unit:models": "mocha --timeout 10000 test/unit/models/**/*.test.js --exit",
     "test:unit:services": "mocha --timeout 10000 test/unit/services/**/*.test.js --exit",
     "test:unit:middleware": "mocha --timeout 10000 test/unit/middleware/**/*.test.js --exit",
+    "test:unit:utils": "mocha --timeout 10000 test/unit/utils/**/*.test.js --exit",
+    "test:unit:middleware": "mocha --timeout 10000 test/unit/middleware/**/*.test.js --exit",
     "test:integration": "mocha --timeout 15000 test/integration/**/*.test.js --exit",
     "test:integration:api": "mocha --timeout 15000 test/integration/api/**/*.test.js --exit",
     "test:e2e": "mocha --timeout 30000 test/e2e/**/*.test.js --exit",
