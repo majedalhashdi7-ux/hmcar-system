@@ -77,3 +77,27 @@ test-results/
 
 # Railway
 .env.railway
+
+# Large archives - should not be in git
+*.zip
+hmcar-project.zip
+
+# Deployment logs
+deployment*.log
+
+# Large archives - should not be in git
+*.zip
+hmcar-project.zip
+
+# Deployment logs
+deployment*.log
+
+# Archive folder
+docs/archive/
+
+# Large archives - prevent large files in git
+*.zip
+hmcar-project.zip
+
+# Deployment logs
+deployment*.log

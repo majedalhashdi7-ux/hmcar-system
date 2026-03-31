@@ -13,6 +13,7 @@
     "cap:ios": "npm run build:mobile && npx cap sync ios && npx cap open ios"
   },
   "dependencies": {
+    "client-only": "^0.0.1",
     "@capacitor/android": "^8.2.0",
     "@capacitor/app": "^8.0.1",
     "@capacitor/cli": "^8.2.0",

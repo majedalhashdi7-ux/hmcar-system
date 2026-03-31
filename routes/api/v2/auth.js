@@ -663,13 +663,12 @@ router.post('/forgot-password', authLimiter, async (req, res) => {
         ipAddress: req.ip,
         userAgent: req.get('User-Agent'),
         sessionId: req.sessionID || 'none',
-        result: 'SUCCESS',
-        metadata: { resetToken }
+        result: 'SUCCESS'
       }
     ).catch(() => { });
 
-    // In a real application, you would send an email/SMS with the reset link
-    console.log(`Password reset token for ${user.email}: ${resetToken}`);
+    // In a real application, send reset token via email/SMS provider only.
+    // Never log or persist raw reset tokens.
 
     res.json({
       success: true,
@@ -759,6 +758,10 @@ router.post('/reset-password', async (req, res) => {
 // Mock OTP endpoints for phone login
 router.post('/otp/send', async (req, res) => {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ error: 'Not Found' });
+    }
+
     const { phone } = req.body;
     if (!phone) {
       return res.status(400).json({ error: 'Validation Error', message: 'Phone number is required' });
@@ -774,6 +777,10 @@ router.post('/otp/send', async (req, res) => {
 
 router.post('/otp/verify', async (req, res) => {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(404).json({ error: 'Not Found' });
+    }
+
     const { phone, code } = req.body;
     if (!phone || !code) {
       return res.status(400).json({ error: 'Validation Error', message: 'Phone and code are required' });

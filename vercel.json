@@ -17,7 +17,9 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "methods": ["OPTIONS"],
+      "methods": [
+        "OPTIONS"
+      ],
       "headers": {
         "Access-Control-Allow-Origin": "https://daood.okigo.net",
         "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",

@@ -149,9 +149,14 @@ class ServerConfig {
   getSessionConfig() {
     const mongoUri = this.database.uri;
     const useMongoSessionStore = this.isProduction || parseBool(process.env.USE_MONGO_SESSION_STORE, false);
+    const sessionSecret = process.env.SESSION_SECRET;
+
+    if ((this.isProduction || this.isVercel) && !sessionSecret) {
+      throw new Error('SESSION_SECRET is required in production/serverless environments');
+    }
     
     return {
-      secret: process.env.SESSION_SECRET || 'hm_car_auction_luxury_secret_2024',
+      secret: sessionSecret || 'dev-session-secret-only',
       resave: false,
       saveUninitialized: false,
       proxy: this.isVercel,
