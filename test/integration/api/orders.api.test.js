@@ -23,10 +23,8 @@ describe('Orders API Integration Tests', () => {
 
     beforeEach(async () => {
         const userData = createUserData();
-        user = await User.create({
-            ...userData,
-            password: await hashPassword(userData.password),
-        });
+        // User.create() will automatically hash the password
+        user = await User.create(userData);
         userToken = generateToken(user._id.toString());
 
         part = await SparePart.create(createPartData());
@@ -112,11 +110,9 @@ describe('Orders API Integration Tests', () => {
         });
 
         it('should fail for other user order', async () => {
-            const otherUserData = createUserData({ email: 'other@example.com' });
-            const otherUser = await User.create({
-                ...otherUserData,
-                password: await hashPassword(otherUserData.password),
-            });
+            const otherUserData = createUserData({ email: 'other@example.com', phone: '+9876543210' });
+            // User.create() will automatically hash the password
+            const otherUser = await User.create(otherUserData);
 
             const items = [{ part: part._id, quantity: 2, price: part.price }];
             const order = await Order.create(createOrderData(otherUser._id, items));

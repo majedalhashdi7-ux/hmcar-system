@@ -39,15 +39,13 @@ describe('Auth API Integration Tests', () => {
 
         it('should fail with duplicate email', async () => {
             const userData = createUserData();
-            await User.create({
-                ...userData,
-                password: await hashPassword(userData.password),
-            });
+            // User.create() will automatically hash the password
+            await User.create(userData);
 
             const res = await request(app)
                 .post('/api/v2/auth/register')
                 .send(userData)
-                .expect(400);
+                .expect(409); // Changed from 400 to 409 for duplicate
 
             expect(res.body).to.have.property('success', false);
         });
@@ -67,10 +65,8 @@ describe('Auth API Integration Tests', () => {
     describe('POST /api/v2/auth/login', () => {
         it('should login with valid credentials', async () => {
             const userData = createUserData();
-            await User.create({
-                ...userData,
-                password: await hashPassword(userData.password),
-            });
+            // User.create() will automatically hash the password
+            await User.create(userData);
 
             const res = await request(app)
                 .post('/api/v2/auth/login')
@@ -86,10 +82,8 @@ describe('Auth API Integration Tests', () => {
 
         it('should fail with wrong password', async () => {
             const userData = createUserData();
-            await User.create({
-                ...userData,
-                password: await hashPassword(userData.password),
-            });
+            // User.create() will automatically hash the password
+            await User.create(userData);
 
             const res = await request(app)
                 .post('/api/v2/auth/login')

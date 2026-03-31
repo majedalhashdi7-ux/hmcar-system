@@ -23,17 +23,13 @@ describe('Permissions Integration Tests', () => {
 
     beforeEach(async () => {
         const adminData = createAdminData();
-        adminUser = await User.create({
-            ...adminData,
-            password: await hashPassword(adminData.password),
-        });
+        // User.create() will automatically hash the password
+        adminUser = await User.create(adminData);
         adminToken = generateAdminToken(adminUser._id.toString());
 
-        const userData = createUserData();
-        normalUser = await User.create({
-            ...userData,
-            password: await hashPassword(userData.password),
-        });
+        const userData = createUserData({ phone: '+9876543210' }); // Different phone to avoid duplicate
+        // User.create() will automatically hash the password
+        normalUser = await User.create(userData);
         userToken = generateToken(normalUser._id.toString());
     });
 

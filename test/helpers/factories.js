@@ -82,9 +82,23 @@ function createPartData(overrides = {}) {
  * Create test order data
  */
 function createOrderData(userId, items, overrides = {}) {
+    const mongoose = require('mongoose');
+    
+    // If items are provided but don't have required fields, add them
+    const processedItems = items && items.length > 0 
+        ? items.map(item => ({
+            titleSnapshot: item.titleSnapshot || 'Test Item',
+            refId: item.refId || item.part || item.car || new mongoose.Types.ObjectId(),
+            itemType: item.itemType || (item.part ? 'part' : 'car'),
+            price: item.price || 100,
+            quantity: item.quantity || 1,
+            ...item
+        }))
+        : [];
+    
     return {
         buyer: userId,
-        items: items || [],
+        items: processedItems,
         orderNumber: `HM-2026-${Math.floor(Math.random() * 1000000).toString().padStart(6, '0')}`,
         status: 'pending',
         ...overrides,
@@ -98,6 +112,48 @@ async function hashPassword(password) {
     return await bcrypt.hash(password, 10);
 }
 
+/**
+ * Create user with hashed password (for database insertion)
+ */
+async function createUserWithHashedPassword(overrides = {}) {
+    const userData = createUserData(overrides);
+    const hashedPassword = await hashPassword(userData.password);
+    
+    return {
+        ...userData,
+        password: hashedPassword,
+    };
+}
+
+/**
+ * Create admin with hashed password (for database insertion)
+ */
+async function createAdminWithHashedPassword(overrides = {}) {
+    const adminData = createAdminData(overrides);
+    const hashedPassword = await hashPassword(adminData.password);
+    
+    return {
+        ...adminData,
+        password: hashedPassword,
+    };
+}
+
+/**
+ * Create order item data
+ */
+function createOrderItemData(overrides = {}) {
+    const mongoose = require('mongoose');
+    
+    return {
+        titleSnapshot: 'Test Car',
+        refId: new mongoose.Types.ObjectId(),
+        itemType: 'car',
+        price: 25000,
+        quantity: 1,
+        ...overrides,
+    };
+}
+
 module.exports = {
     createUserData,
     createAdminData,
@@ -105,5 +161,8 @@ module.exports = {
     createAuctionData,
     createPartData,
     createOrderData,
+    createOrderItemData,
     hashPassword,
+    createUserWithHashedPassword,
+    createAdminWithHashedPassword,
 };

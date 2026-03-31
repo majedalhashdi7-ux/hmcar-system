@@ -22,20 +22,14 @@ describe('Cars API Integration Tests', () => {
     });
 
     beforeEach(async () => {
-        // Create admin user
+        // Create admin user - User.create() will automatically hash the password
         const adminData = createAdminData();
-        adminUser = await User.create({
-            ...adminData,
-            password: await hashPassword(adminData.password),
-        });
+        adminUser = await User.create(adminData);
         adminToken = generateAdminToken(adminUser._id.toString());
 
-        // Create normal user
+        // Create normal user - User.create() will automatically hash the password
         const userData = createUserData();
-        normalUser = await User.create({
-            ...userData,
-            password: await hashPassword(userData.password),
-        });
+        normalUser = await User.create(userData);
         userToken = generateToken(normalUser._id.toString());
     });
 

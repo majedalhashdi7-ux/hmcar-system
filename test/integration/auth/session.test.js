@@ -26,10 +26,8 @@ describe('Session Integration Tests', () => {
     describe('Login Session', () => {
         it('should create session on login', async () => {
             const userData = createUserData();
-            await User.create({
-                ...userData,
-                password: await hashPassword(userData.password),
-            });
+            // User.create() will automatically hash the password via pre('save') hook
+            await User.create(userData);
 
             const res = await request(app)
                 .post('/api/v2/auth/login')
@@ -45,10 +43,8 @@ describe('Session Integration Tests', () => {
 
         it('should maintain session across requests', async () => {
             const userData = createUserData();
-            await User.create({
-                ...userData,
-                password: await hashPassword(userData.password),
-            });
+            // User.create() will automatically hash the password via pre('save') hook
+            await User.create(userData);
 
             const loginRes = await request(app)
                 .post('/api/v2/auth/login')
@@ -80,10 +76,8 @@ describe('Session Integration Tests', () => {
     describe('Logout Session', () => {
         it('should invalidate session on logout', async () => {
             const userData = createUserData();
-            await User.create({
-                ...userData,
-                password: await hashPassword(userData.password),
-            });
+            // User.create() will automatically hash the password via pre('save') hook
+            await User.create(userData);
 
             const loginRes = await request(app)
                 .post('/api/v2/auth/login')
@@ -107,10 +101,8 @@ describe('Session Integration Tests', () => {
     describe('Concurrent Sessions', () => {
         it('should allow multiple sessions for same user', async () => {
             const userData = createUserData();
-            await User.create({
-                ...userData,
-                password: await hashPassword(userData.password),
-            });
+            // User.create() will automatically hash the password via pre('save') hook
+            await User.create(userData);
 
             // Login twice
             const login1 = await request(app)
