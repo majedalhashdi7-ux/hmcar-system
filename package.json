@@ -33,6 +33,8 @@
     "test:unit:middleware": "mocha --timeout 10000 test/unit/middleware/**/*.test.js --exit",
     "test:integration": "mocha --timeout 15000 test/integration/**/*.test.js --exit",
     "test:integration:api": "mocha --timeout 15000 test/integration/api/**/*.test.js --exit",
+    "test:integration:database": "mocha --timeout 15000 test/integration/database/**/*.test.js --exit",
+    "test:integration:auth": "mocha --timeout 15000 test/integration/auth/**/*.test.js --exit",
     "test:e2e": "mocha --timeout 30000 test/e2e/**/*.test.js --exit",
     "test:all": "npm run test:unit && npm run test:integration && npm run test:e2e",
     "test:coverage": "nyc --reporter=html --reporter=text mocha --timeout 10000 --recursive test --exit",
