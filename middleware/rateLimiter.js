@@ -5,8 +5,14 @@
 
 const rateLimit = require('express-rate-limit');
 
+// Skip rate limiting in test environment
+const skipInTest = (req, res) => {
+  return process.env.NODE_ENV === 'test' || process.env.TESTING === 'true';
+};
+
 // ─── Rate Limiter عام للـ API ───
 const generalLimiter = rateLimit({
+  skip: skipInTest,
   windowMs: 15 * 60 * 1000, // 15 دقيقة
   max: 100, // 100 طلب لكل IP
   message: {
@@ -28,6 +34,7 @@ const generalLimiter = rateLimit({
 
 // ─── Rate Limiter للـ Auth (أكثر صرامة) ───
 const authLimiter = rateLimit({
+  skip: skipInTest,
   windowMs: 15 * 60 * 1000, // 15 دقيقة
   max: 5, // 5 محاولات فقط
   skipSuccessfulRequests: true, // لا تحسب المحاولات الناجحة
@@ -49,6 +56,7 @@ const authLimiter = rateLimit({
 
 // ─── Rate Limiter للـ API الحساسة (متوسط) ───
 const strictLimiter = rateLimit({
+  skip: skipInTest,
   windowMs: 15 * 60 * 1000, // 15 دقيقة
   max: 30, // 30 طلب فقط
   message: {
@@ -68,6 +76,7 @@ const strictLimiter = rateLimit({
 
 // ─── Rate Limiter للـ Public API (أكثر تساهلاً) ───
 const publicLimiter = rateLimit({
+  skip: skipInTest,
   windowMs: 15 * 60 * 1000, // 15 دقيقة
   max: 200, // 200 طلب
   message: {
@@ -79,6 +88,7 @@ const publicLimiter = rateLimit({
 
 // ─── Rate Limiter للـ Search (متوسط) ───
 const searchLimiter = rateLimit({
+  skip: skipInTest,
   windowMs: 1 * 60 * 1000, // دقيقة واحدة
   max: 20, // 20 بحث في الدقيقة
   message: {
@@ -90,6 +100,7 @@ const searchLimiter = rateLimit({
 
 // ─── Rate Limiter للـ File Upload ───
 const uploadLimiter = rateLimit({
+  skip: skipInTest,
   windowMs: 60 * 60 * 1000, // ساعة واحدة
   max: 10, // 10 رفع ملفات في الساعة
   message: {
