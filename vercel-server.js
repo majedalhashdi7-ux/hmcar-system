@@ -39,6 +39,8 @@ const ALLOWED_ORIGINS = [
   'https://www.hmcar.okigo.net',
   'https://car-auction-sand.vercel.app',
   'https://client-app-iota-eight.vercel.app',
+  'https://hmcar-client-app.vercel.app', // Client App المنفصل
+  'https://carx-system.vercel.app', // CarX System
   ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean) : []),
 ];
 
@@ -53,6 +55,8 @@ function isOriginAllowed(origin) {
   // Vercel domains - فقط للمشروع الحالي
   if (origin.includes('car-auction') && origin.endsWith('.vercel.app')) return true;
   if (origin.includes('client-app') && origin.endsWith('.vercel.app')) return true;
+  if (origin.includes('hmcar-client-app') && origin.endsWith('.vercel.app')) return true;
+  if (origin.includes('carx-system') && origin.endsWith('.vercel.app')) return true;
   
   return false;
 }
