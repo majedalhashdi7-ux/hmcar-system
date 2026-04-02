@@ -37,10 +37,10 @@ export default function CarXSettingsPage() {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        // جلب الإعدادات من الباكند
-        api.settings.getAll().then((res) => {
-            if (res?.success && res.data?.carxSettings) {
-                setSettings({ ...DEFAULT, ...res.data.carxSettings });
+        // جلب الإعدادات من الباكند باستخدام API الجديد
+        api.settings.getCarXSettings().then((res) => {
+            if (res?.success && res.data) {
+                setSettings({ ...DEFAULT, ...res.data });
             }
         }).catch(() => {});
     }, []);
@@ -50,7 +50,7 @@ export default function CarXSettingsPage() {
         setError('');
         setSaved(false);
         try {
-            const res = await api.settings.updateHomeContent({ homeContent: { carxSettings: settings } as any });
+            const res = await api.settings.updateCarXSettings({ carxSettings: settings });
             if (res?.success) {
                 setSaved(true);
                 setTimeout(() => setSaved(false), 3000);

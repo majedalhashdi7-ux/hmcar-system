@@ -69,6 +69,15 @@ const siteSettingsSchema = new mongoose.Schema({
         showTestimonials: { type: Boolean, default: true },
         showAppConversion: { type: Boolean, default: true },
         showFAQ: { type: Boolean, default: true },
+        
+        // ── إعدادات CAR X الخاصة ──
+        carxSettings: {
+            salesWhatsapp: { type: String, default: '+967781007805' },
+            auctionWhatsapp: { type: String, default: '+967781007805' },
+            supportWhatsapp: { type: String, default: '+967781007805' },
+            heroVideoUrl: { type: String, default: '/videos/CAR_X.mp4' },
+            deviceLockEnabled: { type: Boolean, default: true },
+        },
     },
 
     // إعدادات المعرض الكوري

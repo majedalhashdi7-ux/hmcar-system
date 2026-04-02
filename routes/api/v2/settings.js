@@ -267,5 +267,68 @@ router.put('/advertising', requireAuthAPI, requireAdmin, invalidateCache('/api/v
     }
 });
 
+// ── إعدادات CAR X: جلب (للأدمن) ──
+router.get('/carx', requireAuthAPI, requireAdmin, async (req, res) => {
+    try {
+        const SiteSettings = getModel(req, 'SiteSettings');
+        const settings = await SiteSettings.getSettings();
+        
+        res.json({
+            success: true,
+            data: settings.homeContent?.carxSettings || {
+                salesWhatsapp: '+967781007805',
+                auctionWhatsapp: '+967781007805',
+                supportWhatsapp: '+967781007805',
+                heroVideoUrl: '/videos/CAR_X.mp4',
+                deviceLockEnabled: true,
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching CAR X settings:', error);
+        res.status(500).json({
+            success: false,
+            message: 'فشل في جلب إعدادات CAR X'
+        });
+    }
+});
+
+// ── إعدادات CAR X: تحديث (للأدمن) ──
+router.put('/carx', requireAuthAPI, requireAdmin, invalidateCache('/api/v2/settings*'), async (req, res) => {
+    try {
+        const { carxSettings } = req.body;
+        const SiteSettings = getModel(req, 'SiteSettings');
+        
+        // جلب الإعدادات الحالية
+        const current = await SiteSettings.getSettings();
+        
+        // دمج carxSettings مع homeContent الموجود (merge بدل replace)
+        const updatedHomeContent = {
+            ...current.homeContent,
+            carxSettings: {
+                ...(current.homeContent?.carxSettings || {}),
+                ...carxSettings
+            }
+        };
+        
+        // حفظ
+        const settings = await SiteSettings.updateSettings(
+            { homeContent: updatedHomeContent },
+            req.user._id
+        );
+        
+        res.json({
+            success: true,
+            message: 'تم تحديث إعدادات CAR X بنجاح',
+            data: settings.homeContent.carxSettings
+        });
+    } catch (error) {
+        console.error('Error updating CAR X settings:', error);
+        res.status(500).json({
+            success: false,
+            message: 'فشل في تحديث إعدادات CAR X'
+        });
+    }
+});
+
 module.exports = router;
 

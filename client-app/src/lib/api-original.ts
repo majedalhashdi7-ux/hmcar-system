@@ -545,6 +545,14 @@ export const api = {
                 method: 'PUT',
                 body: JSON.stringify(data),
             }),
+        // ── إعدادات CAR X: جلب (للأدمن) ──
+        getCarXSettings: () => fetchAPI('/api/v2/settings/carx'),
+        // ── إعدادات CAR X: تحديث (للأدمن) ──
+        updateCarXSettings: (data: { carxSettings: Record<string, unknown> }) =>
+            fetchAPI('/api/v2/settings/carx', {
+                method: 'PUT',
+                body: JSON.stringify(data),
+            }),
     },
     // ── الطلبات الخاصة (Concierge) ──
     concierge: {
