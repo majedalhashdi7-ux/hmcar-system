@@ -46,7 +46,8 @@
       "domains": [
         "localhost:3001",
         "carx.localhost",
-        "carx-system.vercel.app"
+        "carx-system.vercel.app",
+        "carx-system-psi.vercel.app"
       ],
       "mongoUri": "ENV:MONGO_URI_CARX",
       "logo": "/uploads/tenants/carx/logo.png",
