@@ -8,6 +8,10 @@
         "maxDuration": 30,
         "memory": 1024
       }
+    },
+    {
+      "src": "client-app/package.json",
+      "use": "@vercel/next"
     }
   ],
   "routes": [
@@ -35,8 +39,11 @@
       "dest": "vercel-server.js"
     },
     {
+      "handle": "filesystem"
+    },
+    {
       "src": "/(.*)",
-      "dest": "vercel-server.js"
+      "dest": "client-app/$1"
     }
   ]
 }
