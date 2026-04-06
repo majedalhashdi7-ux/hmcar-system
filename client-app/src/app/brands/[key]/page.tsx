@@ -18,13 +18,13 @@ export default function BrandDetail({ params }: { params: { key: string } }) {
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
-  const resolveCarImage = (car: any) => {
-    const src = car?.images?.[0] || car?.imageUrl || car?.image || '';
+  const resolveCarImage = (car: Record<string, unknown>) => {
+    const src = (car?.images as string[] | undefined)?.[0] || car?.imageUrl || car?.image || '';
     return typeof src === 'string' && src.trim() ? src.trim() : '';
   };
 
-  const resolvePartImage = (part: any) => {
-    const src = part?.img || part?.image || part?.images?.[0] || '';
+  const resolvePartImage = (part: Record<string, unknown>) => {
+    const src = part?.img || part?.image || (part?.images as string[] | undefined)?.[0] || '';
     return typeof src === 'string' && src.trim() ? src.trim() : '';
   };
 
@@ -33,13 +33,13 @@ export default function BrandDetail({ params }: { params: { key: string } }) {
       try {
         const res = await api.brands.list();
         const all = res?.brands || [];
-        const b = all.find((x: any) => (x.key || '').toLowerCase() === params.key.toLowerCase()) || all.find((x: any) => (x.name || '').toLowerCase() === params.key.toLowerCase());
+        const b = all.find((x: Record<string, unknown>) => (String(x.key || '')).toLowerCase() === params.key.toLowerCase()) || all.find((x: Record<string, unknown>) => (String(x.name || '')).toLowerCase() === params.key.toLowerCase());
         setBrand(b || null);
         const carsRes = await api.cars.list({ limit: 50 });
         const partsRes = await api.parts.list({ limit: 50 });
         const brandName = b?.name || params.key;
-        setCars((carsRes?.cars || []).filter((c: any) => String(c.make || c.title || '').toLowerCase().includes(String(brandName).toLowerCase())));
-        setParts((partsRes?.parts || []).filter((p: any) => String(p.brand || '').toLowerCase().includes(String(brandName).toLowerCase())));
+        setCars((carsRes?.cars || []).filter((c: Record<string, unknown>) => String(c.make || c.title || '').toLowerCase().includes(String(brandName).toLowerCase())));
+        setParts((partsRes?.parts || []).filter((p: Record<string, unknown>) => String(p.brand || '').toLowerCase().includes(String(brandName).toLowerCase())));
       } catch {
       } finally {
         setLoading(false);
@@ -54,6 +54,7 @@ export default function BrandDetail({ params }: { params: { key: string } }) {
         <header className="mb-12 flex items-center gap-4">
           {brand?.logoUrl && (
             <div className="w-12 h-12 rounded-xl border border-white/10 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={brand.logoUrl} alt={brand.name} className="w-full h-full object-cover" />
             </div>
           )}
@@ -93,12 +94,15 @@ export default function BrandDetail({ params }: { params: { key: string } }) {
                                   <Car className="w-10 h-10 text-white/20" />
                                 </div>
                               ) : (
+                                <>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={imageSrc}
                                   alt={car.title}
                                   className="w-full h-full object-cover grayscale-[30%] group-hover:grayscale-0 transition-all duration-700"
                                   onError={() => setImageErrors(prev => ({ ...prev, [imageKey]: true }))}
                                 />
+                                </>
                               );
                             })()}
                             <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -143,12 +147,15 @@ export default function BrandDetail({ params }: { params: { key: string } }) {
                                   <Package className="w-10 h-10 text-white/20" />
                                 </div>
                               ) : (
+                                <>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                   src={imageSrc}
                                   alt={part.name}
                                   className="w-full h-full object-contain p-6 grayscale-[40%] opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
                                   onError={() => setImageErrors(prev => ({ ...prev, [imageKey]: true }))}
                                 />
+                                </>
                               );
                             })()}
                           </div>

@@ -8,7 +8,7 @@
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, useMotionValue, useTransform } from 'framer-motion';
-import { Heart, ShoppingCart, Check, Wrench, Package, DollarSign, Coins, FileText, ArrowRight } from 'lucide-react';
+import { Heart, ShoppingCart, Check, Wrench, Package, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -32,7 +32,7 @@ function dispatchCartUpdate() {
 export default function PartCard({ part, index = 0, onClick, onLoginRequired }: PartCardProps) {
     const { isRTL } = useLanguage();
     const { isLoggedIn } = useAuth();
-    const { formatPrice, displayCurrency, setDisplayCurrency } = useSettings() as any;
+    const { formatPrice } = useSettings() as any;
 
     const cardKey = String(part.id || part._id || `part-${index}`);
     const imageSrc = part.img || part.images?.[0] || '';
@@ -74,14 +74,6 @@ export default function PartCard({ part, index = 0, onClick, onLoginRequired }: 
         setCartAdded(true);
         setTimeout(() => setCartAdded(false), 2000);
     }, [part, cardKey, inCart, stock, isLoggedIn, onLoginRequired]);
-
-    const toggleCurrency = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        const currencies = ['SAR', 'KRW', 'USD'];
-        const currentIndex = currencies.indexOf(displayCurrency || 'SAR');
-        const nextCurrency = currencies[(currentIndex + 1) % currencies.length];
-        setDisplayCurrency?.(nextCurrency);
-    }, [displayCurrency, setDisplayCurrency]);
 
     const price = Number(part.price || part.priceSar || 0);
     const displayPrice = formatPrice ? formatPrice(price) : `${price.toLocaleString()} SAR`;

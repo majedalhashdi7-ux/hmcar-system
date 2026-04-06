@@ -15,6 +15,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const { tenantMiddleware } = require('../middleware/tenantMiddleware');
+const { generalLimiter, authLimiter, uploadLimiter } = require('../middleware/rateLimiter');
 
 // آمن من crash في Monitoring
 let monitoring = null;
@@ -85,6 +86,9 @@ class App {
     this.app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
     this.app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
+    // Rate Limiting
+    this.app.use('/api', generalLimiter);
+
     // Multi-Tenant Middleware
     this.app.use(tenantMiddleware({ required: false, connectDb: true }));
 
@@ -127,6 +131,11 @@ class App {
   setupApiRoutes() {
     try {
       const apiV2Router = require('../routes/api/v2/index');
+      // Auth rate limiting (أكثر صرامة)
+      this.app.use(['/api/v2/auth/login', '/api/auth/login', '/v2/auth/login'], authLimiter);
+      this.app.use(['/api/v2/auth/register', '/api/auth/register', '/v2/auth/register'], authLimiter);
+      // Upload rate limiting
+      this.app.use(['/api/v2/upload', '/api/upload', '/v2/upload'], uploadLimiter);
       // المسار الرئيسي v2
       this.app.use('/api/v2', apiV2Router);
       // مسار مختصر للتطوير المحلي

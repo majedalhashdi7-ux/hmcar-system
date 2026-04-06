@@ -16,6 +16,19 @@ interface CurrencyRates {
     usdToKrw?: number;
 }
 
+interface OrderLike {
+    pricing?: {
+        exchangeSnapshot?: { usdToSar?: number; usdToKrw?: number; activeCurrency?: string };
+        grandTotalSar?: number;
+    };
+    totalAmount?: number;
+}
+
+interface OrderItemLike {
+    unitPriceSar?: number;
+    unitPriceUsd?: number;
+}
+
 const toFiniteNumber = (value: unknown): number => {
     const num = Number(value);
     return Number.isFinite(num) ? num : 0;
@@ -37,7 +50,7 @@ const getSymbol = (currency: CurrencyCode) => {
  * تحليل لقطة أسعار الصرف من بيانات الطلب
  * تستخرج أسعار الدولار مقابل الريال والوون التي كانت معتمدة وقت الطلب.
  */
-export const resolveOrderSnapshot = (order: any, fallbackRates?: CurrencyRates): Required<ExchangeSnapshot> => {
+export const resolveOrderSnapshot = (order: OrderLike, fallbackRates?: CurrencyRates): Required<ExchangeSnapshot> => {
     const snapshot = order?.pricing?.exchangeSnapshot || {};
 
     const usdToSar = toFiniteNumber(snapshot.usdToSar) || toFiniteNumber(fallbackRates?.usdToSar) || 3.75;
@@ -55,7 +68,7 @@ export const resolveOrderSnapshot = (order: any, fallbackRates?: CurrencyRates):
 export const formatAmountWithSnapshot = (
     amountSar: number,
     targetCurrency: CurrencyCode,
-    order: any,
+    order: OrderLike,
     fallbackRates?: CurrencyRates
 ): string => {
     const snapshot = resolveOrderSnapshot(order, fallbackRates);
@@ -77,13 +90,13 @@ export const formatAmountWithSnapshot = (
     return `${getSymbol(targetCurrency)} ${formatter.format(amount)}`;
 };
 
-export const getOrderGrandTotalSar = (order: any): number => {
+export const getOrderGrandTotalSar = (order: OrderLike): number => {
     const pricingGrandTotal = toFiniteNumber(order?.pricing?.grandTotalSar);
     if (pricingGrandTotal > 0) return pricingGrandTotal;
     return toFiniteNumber(order?.totalAmount);
 };
 
-export const getOrderItemUnitSar = (item: any, order: any, fallbackRates?: CurrencyRates): number => {
+export const getOrderItemUnitSar = (item: OrderItemLike, order: OrderLike, fallbackRates?: CurrencyRates): number => {
     const unitSar = toFiniteNumber(item?.unitPriceSar);
     if (unitSar > 0) return unitSar;
 

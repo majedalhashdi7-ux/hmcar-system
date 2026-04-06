@@ -85,64 +85,40 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-    // محلياً نقوم بجلب التخزين السابق لتجنب تأخير ظهور البيانات (الكاش)
-    const getInitialCache = () => {
-        if (typeof window !== 'undefined') {
-            try {
-                const stored = localStorage.getItem('hm_settings_cache');
-                if (stored) return JSON.parse(stored);
-            } catch (e) {
-                // Ignore parse errors
-            }
-        }
-        return null;
-    };
-    const [currency, setCurrency] = useState<CurrencySettings>({ 
-        usdToSar: 3.75, 
-        usdToKrw: 1350, 
-        activeCurrency: 'SAR',
-        partsMultiplier: 1.0,
-        auctionMultiplier: 1.0
+    const [currency, setCurrency] = useState<CurrencySettings>(() => {
+        if (typeof window === 'undefined') return { usdToSar: 3.75, usdToKrw: 1350, activeCurrency: 'SAR', partsMultiplier: 1.0, auctionMultiplier: 1.0 };
+        try { const c = JSON.parse(localStorage.getItem('hm_settings_cache') || 'null'); return c?.currencySettings || { usdToSar: 3.75, usdToKrw: 1350, activeCurrency: 'SAR', partsMultiplier: 1.0, auctionMultiplier: 1.0 }; } catch { return { usdToSar: 3.75, usdToKrw: 1350, activeCurrency: 'SAR', partsMultiplier: 1.0, auctionMultiplier: 1.0 }; }
     });
-    const [siteInfo, setSiteInfo] = useState<SiteInfo>({ siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' });
-    const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
-    const [homeContent, setHomeContent] = useState<HomeContent>({
-        showLiveMarket: true,
-        showAdvertising: true,
-        showTrustHub: true,
-        showTestimonials: true,
-        showBrandCatalog: true
+    const [siteInfo, setSiteInfo] = useState<SiteInfo>(() => {
+        if (typeof window === 'undefined') return { siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' };
+        try { const c = JSON.parse(localStorage.getItem('hm_settings_cache') || 'null'); return c?.siteInfo || { siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' }; } catch { return { siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' }; }
     });
-    const [features, setFeatures] = useState<Feature[]>([]);
-    const [marketingPixels, setMarketingPixels] = useState<MarketingPixels>({ googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' });
-    const [loading, setLoading] = useState(true);
-    const [displayCurrency, setDisplayCurrency] = useState<'SAR' | 'USD' | 'KRW'>('SAR');
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            // تحميل الكاش بصمت بعد التحميل المبدئي لتجنب خطأ Hydration Mismatch
-            try {
-                const storedCache = window.localStorage.getItem('hm_settings_cache');
-                if (storedCache) {
-                    const cache = JSON.parse(storedCache);
-                    if (cache.currencySettings) setCurrency(cache.currencySettings);
-                    if (cache.siteInfo) setSiteInfo(cache.siteInfo);
-                    if (cache.socialLinks) setSocialLinks(cache.socialLinks);
-                    if (cache.homeContent) setHomeContent(cache.homeContent);
-                    if (cache.features) setFeatures(cache.features);
-                    if (cache.marketingPixels) setMarketingPixels(cache.marketingPixels);
-                    setLoading(false);
-                }
-            } catch (e) {
-                // Ignore
-            }
-
-            const storedCurrency = localStorage.getItem('displayCurrency');
-            if (storedCurrency === 'USD' || storedCurrency === 'SAR' || storedCurrency === 'KRW') {
-                setDisplayCurrency(storedCurrency as 'SAR' | 'USD' | 'KRW');
-            }
-        }
-    }, []);
+    const [socialLinks, setSocialLinks] = useState<SocialLinks>(() => {
+        if (typeof window === 'undefined') return {};
+        try { const c = JSON.parse(localStorage.getItem('hm_settings_cache') || 'null'); return c?.socialLinks || {}; } catch { return {}; }
+    });
+    const [homeContent, setHomeContent] = useState<HomeContent>(() => {
+        const defaults: HomeContent = { showLiveMarket: true, showAdvertising: true, showTrustHub: true, showTestimonials: true, showBrandCatalog: true };
+        if (typeof window === 'undefined') return defaults;
+        try { const c = JSON.parse(localStorage.getItem('hm_settings_cache') || 'null'); return c?.homeContent || defaults; } catch { return defaults; }
+    });
+    const [features, setFeatures] = useState<Feature[]>(() => {
+        if (typeof window === 'undefined') return [];
+        try { const c = JSON.parse(localStorage.getItem('hm_settings_cache') || 'null'); return c?.features || []; } catch { return []; }
+    });
+    const [marketingPixels, setMarketingPixels] = useState<MarketingPixels>(() => {
+        const defaults: MarketingPixels = { googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' };
+        if (typeof window === 'undefined') return defaults;
+        try { const c = JSON.parse(localStorage.getItem('hm_settings_cache') || 'null'); return c?.marketingPixels || defaults; } catch { return defaults; }
+    });
+    const [loading, setLoading] = useState(() => {
+        if (typeof window === 'undefined') return true;
+        try { return !localStorage.getItem('hm_settings_cache'); } catch { return true; }
+    });
+    const [displayCurrency, setDisplayCurrency] = useState<'SAR' | 'USD' | 'KRW'>(() => {
+        if (typeof window === 'undefined') return 'SAR';
+        try { const s = localStorage.getItem('displayCurrency'); return (s === 'USD' || s === 'SAR' || s === 'KRW') ? s : 'SAR'; } catch { return 'SAR'; }
+    });
 
     /**
      * تحديث الإعدادات من الخادم بصمت في الخلفية لدعم التغييرات المباشرة

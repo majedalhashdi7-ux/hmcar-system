@@ -5,7 +5,7 @@
  */
 
 import dynamic from 'next/dynamic';
-import { GridSkeleton, DetailPageSkeleton, TableSkeleton } from './LoadingSkeleton';
+import { GridSkeleton, TableSkeleton } from './LoadingSkeleton';
 
 // ─── Helper للتعامل مع المكونات غير الموجودة ───
 const createFallback = (name: string) => {

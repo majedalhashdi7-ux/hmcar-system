@@ -28,11 +28,9 @@ interface CircularBrandCardProps {
     onClick?: () => void;
 }
 
-export default function CircularBrandCard({ brand, index, onClick }: CircularBrandCardProps) {
+export default function CircularBrandCard({ brand, index, onClick: _onClick }: CircularBrandCardProps) {
     const { isRTL } = useLanguage();
     const [imageError, setImageError] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
-
     // Motion values للتأثيرات ثلاثية الأبعاد
     const x = useMotionValue(0);
     const y = useMotionValue(0);
@@ -50,11 +48,9 @@ export default function CircularBrandCard({ brand, index, onClick }: CircularBra
     const handleMouseLeave = () => {
         x.set(0);
         y.set(0);
-        setIsHovered(false);
     };
 
     const handleMouseEnter = () => {
-        setIsHovered(true);
     };
 
     const displayName = isRTL ? (brand.nameAr || brand.name) : brand.name;
@@ -128,11 +124,9 @@ export default function CircularBrandCard({ brand, index, onClick }: CircularBra
                                 {/* الحلقة الأولى */}
                                 <div className="absolute inset-0 rounded-full border-2 border-amber-500/0 group-hover:border-amber-500/30 transition-all duration-700 scale-110 animate-pulse" />
                                 {/* الحلقة الثانية */}
-                                <div className="absolute inset-0 rounded-full border border-amber-500/0 group-hover:border-amber-500/20 transition-all duration-1000 scale-125 animate-pulse" 
-                                     style={{ animationDelay: '0.5s' }} />
+                                <div className="absolute inset-0 rounded-full border border-amber-500/0 group-hover:border-amber-500/20 transition-all duration-1000 scale-125 animate-pulse delay-500" />
                                 {/* الحلقة الثالثة */}
-                                <div className="absolute inset-0 rounded-full border border-amber-500/0 group-hover:border-amber-500/10 transition-all duration-1200 scale-140 animate-pulse" 
-                                     style={{ animationDelay: '1s' }} />
+                                <div className="absolute inset-0 rounded-full border border-amber-500/0 group-hover:border-amber-500/10 transition-all duration-1200 scale-140 animate-pulse delay-1000" />
                             </div>
 
                             {/* التوهج الخلفي */}
@@ -294,13 +288,7 @@ export default function CircularBrandCard({ brand, index, onClick }: CircularBra
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500/0 to-transparent group-hover:via-amber-500/60 transition-all duration-700" />
                     
                     {/* Holographic Border */}
-                    <div className="absolute inset-0 rounded-3xl border border-transparent bg-gradient-to-r from-amber-500/0 via-amber-500/50 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" 
-                         style={{ 
-                             background: 'linear-gradient(45deg, transparent, rgba(245,158,11,0.3), transparent)',
-                             mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                             maskComposite: 'xor'
-                         }} 
-                    />
+                    <div className="absolute inset-0 rounded-3xl border border-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none bg-[linear-gradient(45deg,transparent,rgba(245,158,11,0.3),transparent)] mask-[linear-gradient(#fff_0_0)_content-box,linear-gradient(#fff_0_0)] mask-composite-[xor]" />
                 </div>
             </Link>
         </motion.div>

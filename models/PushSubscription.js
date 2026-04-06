@@ -7,11 +7,18 @@ const mongoose = require('mongoose');
  * تخزين اشتراكات Push API لكل مستخدم وأجهزته
  */
 const pushSubscriptionSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   user: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
     required: true,
-    index: true 
+    index: true
   },
   subscription: {
     endpoint: { type: String, required: true },

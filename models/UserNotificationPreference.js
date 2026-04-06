@@ -8,6 +8,13 @@ const Schema = mongoose.Schema;
  * Defines how users can customize the notifications they receive.
  */
 const UserNotificationPreferenceSchema = new Schema({
+    // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+    tenantId: {
+        type: String,
+        required: true,
+        default: 'default',
+        index: true
+    },
     user: {
         type: Schema.Types.ObjectId,
         ref: 'User',

@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const conciergeRequestSchema = new mongoose.Schema({
+    // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+    tenantId: {
+        type: String,
+        required: true,
+        default: 'default',
+        index: true
+    },
     // نوع الطلب: car = طلب سيارة, parts = طلب قطعة غيار
     type: {
         type: String,

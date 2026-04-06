@@ -4,6 +4,13 @@
 const mongoose = require('mongoose');
 
 const vehicleCategorySchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // اسم الفئة (فريد) مثل: سيدان / SUV ...
   name: { type: String, required: true, unique: true, trim: true },
   // وصف اختياري للفئة

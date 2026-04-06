@@ -5,15 +5,13 @@
  * تصميم ثوري مع تأثيرات ثلاثية الأبعاد وحركات متقدمة
  */
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef } from "react";
 import { motion, useMotionValue, useTransform, useSpring, AnimatePresence } from "framer-motion";
 import { 
-    Heart, Share2, Eye, Calendar, Gauge, Fuel, Settings, Star, ArrowRight, 
-    Home, Zap, Shield, Award, Camera, Play, Pause, Volume2, VolumeX,
-    Sparkles, Crown, Diamond, Flame, Bolt, Target, Gem
+    Heart, Share2, Eye, Calendar, Gauge, Fuel, Camera,
+    Home, ArrowRight, Sparkles, Crown
 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
-import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -66,7 +64,6 @@ export default function UltraModernCarCard({
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
     const [imageError, setImageError] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
     const [showImageGallery, setShowImageGallery] = useState(false);
 
     const handleBackToHome = () => {
@@ -132,12 +129,10 @@ export default function UltraModernCarCard({
         x.set(0);
         y.set(0);
         scale.set(1);
-        setIsHovered(false);
     };
 
     const handleMouseEnter = () => {
         scale.set(1.02);
-        setIsHovered(true);
     };
 
     return (
@@ -231,17 +226,24 @@ export default function UltraModernCarCard({
                         )}
                     </div>
 
+                    {/* شبكة نيون متحركة */}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700">
+                        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,0,0,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,0,0,0.1)_1px,transparent_1px)] bg-[size:30px_30px] animate-pulse" />
+                    </div>
+
                     {/* Image Navigation */}
                     {car.images && car.images.length > 1 && (
                         <>
                             <button
                                 onClick={prevImage}
+                                aria-label="Previous image"
                                 className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'right-3' : 'left-3'} w-10 h-10 rounded-2xl bg-black/70 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-black/90 transition-all opacity-0 group-hover:opacity-100 border border-white/20`}
                             >
                                 <ArrowRight className={`w-5 h-5 ${isRTL ? '' : 'rotate-180'}`} />
                             </button>
                             <button
                                 onClick={nextImage}
+                                aria-label="Next image"
                                 className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-3' : 'right-3'} w-10 h-10 rounded-2xl bg-black/70 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-black/90 transition-all opacity-0 group-hover:opacity-100 border border-white/20`}
                             >
                                 <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
@@ -256,9 +258,10 @@ export default function UltraModernCarCard({
                                 <button
                                     key={idx}
                                     onClick={() => setCurrentImageIndex(idx)}
+                                    aria-label={`Image ${idx + 1}`}
                                     className={`w-2 h-2 rounded-full transition-all ${
-                                        idx === currentImageIndex 
-                                            ? 'bg-red-500 shadow-[0_0_10px_rgba(255,0,0,0.8)]' 
+                                        idx === currentImageIndex
+                                            ? 'bg-red-500 shadow-[0_0_10px_rgba(255,0,0,0.8)]'
                                             : 'bg-white/30 hover:bg-white/50'
                                     }`}
                                 />
@@ -283,6 +286,7 @@ export default function UltraModernCarCard({
                     <div className="absolute top-20 end-4 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
                         <motion.button
                             onClick={() => setIsLiked(!isLiked)}
+                            aria-label={isLiked ? 'Unlike' : 'Like'}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             className={`w-12 h-12 rounded-2xl backdrop-blur-md flex items-center justify-center transition-all duration-300 shadow-lg ${
@@ -295,6 +299,7 @@ export default function UltraModernCarCard({
                         </motion.button>
                         
                         <motion.button
+                            aria-label="Share"
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             className="w-12 h-12 rounded-2xl bg-black/70 backdrop-blur-md border border-white/20 hover:border-blue-400/50 flex items-center justify-center text-white/80 hover:text-blue-400 hover:bg-blue-500/20 transition-all duration-300 shadow-lg"
@@ -304,6 +309,7 @@ export default function UltraModernCarCard({
 
                         <motion.button
                             onClick={() => setShowImageGallery(true)}
+                            aria-label="View gallery"
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             className="w-12 h-12 rounded-2xl bg-black/70 backdrop-blur-md border border-white/20 hover:border-purple-400/50 flex items-center justify-center text-white/80 hover:text-purple-400 hover:bg-purple-500/20 transition-all duration-300 shadow-lg"
@@ -397,13 +403,7 @@ export default function UltraModernCarCard({
                 <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-red-500/0 via-red-500/0 to-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                 
                 {/* Holographic Border */}
-                <div className="absolute inset-0 rounded-3xl border border-transparent bg-gradient-to-r from-red-500/0 via-red-500/50 to-red-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" 
-                     style={{ 
-                         background: 'linear-gradient(45deg, transparent, rgba(255,0,0,0.3), transparent)',
-                         mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                         maskComposite: 'xor'
-                     }} 
-                />
+                <div className="absolute inset-0 rounded-3xl border border-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none [background:linear-gradient(45deg,transparent,rgba(255,0,0,0.3),transparent)] [mask:linear-gradient(#fff_0_0)_content-box,linear-gradient(#fff_0_0)] [mask-composite:xor]" />
             </div>
 
             {/* Image Gallery Modal */}
@@ -432,6 +432,7 @@ export default function UltraModernCarCard({
                             
                             <button
                                 onClick={() => setShowImageGallery(false)}
+                                aria-label="Close gallery"
                                 className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-all"
                             >
                                 ×

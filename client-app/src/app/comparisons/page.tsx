@@ -51,6 +51,7 @@ function ComparisonsPage() {
 
     useEffect(() => {
         fetchComparisons();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchComparisons = async () => {
@@ -196,6 +197,7 @@ function ComparisonsPage() {
                                                 {/* Remove Button */}
                                                 <button
                                                     onClick={() => removeCar(car._id)}
+                                                    aria-label="Remove car"
                                                     className="absolute top-3 right-3 z-10 w-8 h-8 bg-red-500/80 backdrop-blur-xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                                 >
                                                     <X className="w-4 h-4" />
@@ -204,7 +206,8 @@ function ComparisonsPage() {
                                                 {/* Image */}
                                                 <div className="aspect-video">
                                                     {car.images && car.images.length > 0 ? (
-                                                        <img src={car.images[0]} alt={car.title} className="w-full h-full object-cover" />
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={car.images[0]} alt={car.title} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <div className="w-full h-full flex items-center justify-center bg-white/5">
                                                             <Car className="w-16 h-16 text-white/20" />

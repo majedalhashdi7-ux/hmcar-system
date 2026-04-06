@@ -199,11 +199,14 @@ export default function SocialLinks({
                 >
                     {/* استخدام الصور المخصصة إذا كانت موجودة، وإلا العودة للأيقونة الافتراضية */}
                     {customIcons[link.key] ? (
+                        <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={customIcons[link.key]}
                             alt={link.label}
                             className="w-full h-full object-cover"
                         />
+                        </>
                     ) : (
                         <link.icon className={iconSizes[size]} />
                     )}
@@ -239,6 +242,7 @@ export function WhatsAppFAB() {
             whileTap={{ scale: 0.95 }}
             className="fixed bottom-6 right-6 z-50 w-16 h-16 rounded-full overflow-hidden shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] transition-shadow border-2 border-white/20"
         >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/images/icons/whatsapp.jpg" alt="WhatsApp" className="w-full h-full object-cover" />
         </motion.a>
     );

@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const authSettingsSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // نظام المصادقة الرئيسي
   authenticationEnabled: {
     type: Boolean,

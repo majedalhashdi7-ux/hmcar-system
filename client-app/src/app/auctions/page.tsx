@@ -17,7 +17,6 @@ import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 import { api } from "@/lib/api-original";
 import { useSettings } from "@/lib/SettingsContext";
-import Link from "next/link";
 import { useAuth } from "@/lib/AuthContext";
 import { useRouter } from "next/navigation";
 import ClientPageHeader from "@/components/ClientPageHeader";
@@ -75,8 +74,7 @@ export default function Auctions() {
             <div className="relative h-[85vh] md:h-[60vh] overflow-hidden mt-8 mx-6 rounded-3xl border border-white/5">
                 <video
                     autoPlay loop muted playsInline
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{ filter: 'brightness(0.45) contrast(1.25) saturate(1.1)' }}
+                    className="absolute inset-0 w-full h-full object-cover brightness-[0.45] contrast-[1.25] saturate-[1.1]"
                 >
                     <source src="/videos/video_2026-02-07_22-24-50.mp4" type="video/mp4" />
                 </video>
@@ -165,12 +163,15 @@ export default function Auctions() {
                                                         </div>
                                                     </div>
                                                 ) : (
+                                                    <>
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                                     <img
                                                         src={imageSrc}
                                                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                                                         alt=""
                                                         onError={() => setImageErrors(prev => ({ ...prev, [imageKey]: true }))}
                                                     />
+                                                    </>
                                                 );
                                             })()}
                                             {item.status === 'live' && (
@@ -225,12 +226,15 @@ export default function Auctions() {
                                                         </div>
                                                     </div>
                                                 ) : (
+                                                    <>
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                                     <img
                                                         src={imageSrc}
                                                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                                                         alt=""
                                                         onError={() => setImageErrors(prev => ({ ...prev, [imageKey]: true }))}
                                                     />
+                                                    </>
                                                 );
                                             })()}
                                             {item.status === 'running' && (

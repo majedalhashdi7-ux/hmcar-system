@@ -6,6 +6,7 @@ const Bid = require('../../../models/Bid');
 const Auction = require('../../../models/Auction');
 const SiteSettings = require('../../../models/SiteSettings');
 const { requireAuthAPI } = require('../../../middleware/auth');
+const { addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 
 function normalizeMultiplier(value) {
     const num = Number(value);
@@ -30,7 +31,7 @@ router.get('/my', requireAuthAPI, async (req, res) => {
         const settings = await SiteSettings.getSettings().catch(() => null);
         const auctionMultiplier = normalizeMultiplier(settings?.currencySettings?.auctionMultiplier || 1);
 
-        const bids = await Bid.find({ bidder: userId })
+        const bids = await Bid.find(addTenantFilter(req, { bidder: userId }))
             .populate({
                 path: 'auction',
                 populate: { path: 'car', select: 'title make model year images' }
@@ -62,7 +63,7 @@ router.get('/auction/:auctionId', async (req, res) => {
         const settings = await SiteSettings.getSettings().catch(() => null);
         const auctionMultiplier = normalizeMultiplier(settings?.currencySettings?.auctionMultiplier || 1);
 
-        const bids = await Bid.find({ auction: auctionId })
+        const bids = await Bid.find(addTenantFilter(req, { auction: auctionId }))
             .populate('bidder', 'name')
             .sort({ amount: -1 })
             .limit(limit);
@@ -96,7 +97,7 @@ router.post('/', requireAuthAPI, async (req, res) => {
         }
 
         // التحقق من وجود المزاد
-        const auction = await Auction.findById(auctionId);
+        const auction = await Auction.findOne(addTenantFilter(req, { _id: auctionId }));
         if (!auction) {
             return res.status(404).json({ success: false, error: 'المزاد غير موجود' });
         }
@@ -128,7 +129,8 @@ router.post('/', requireAuthAPI, async (req, res) => {
         const bid = await Bid.create({
             auction: auctionId,
             bidder: userId,
-            amount: baseAmount
+            amount: baseAmount,
+            tenantId: getTenantId(req)
         });
 
         // تحديث سعر المزاد الحالي
@@ -159,7 +161,7 @@ router.get('/highest/:auctionId', async (req, res) => {
         const settings = await SiteSettings.getSettings().catch(() => null);
         const auctionMultiplier = normalizeMultiplier(settings?.currencySettings?.auctionMultiplier || 1);
 
-        const highestBid = await Bid.findOne({ auction: auctionId })
+        const highestBid = await Bid.findOne(addTenantFilter(req, { auction: auctionId }))
             .sort({ amount: -1 })
             .populate('bidder', 'name');
 

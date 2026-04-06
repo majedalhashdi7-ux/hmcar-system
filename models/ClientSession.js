@@ -4,6 +4,13 @@ const mongoose = require('mongoose');
 
 // نموذج جلسات العملاء لتتبع الجلسات النشطة
 const clientSessionSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

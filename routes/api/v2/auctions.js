@@ -6,6 +6,7 @@ const Auction = require('../../../models/Auction');
 const Car = require('../../../models/Car');
 const SiteSettings = require('../../../models/SiteSettings');
 const { requireAuthAPI } = require('../../../middleware/auth');
+const { addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { 
   successResponse, 
   errorResponse, 
@@ -63,7 +64,7 @@ router.get('/', async (req, res) => {
             { $set: { status: 'running' } }
         ).catch(() => {});
 
-        const auctions = await Auction.find(query)
+        const auctions = await Auction.find(addTenantFilter(req, query))
             .populate('car')
             .populate('highestBidder', 'name email')
             .sort({ endsAt: 1 })
@@ -103,7 +104,7 @@ router.get('/', async (req, res) => {
 // GET /api/v2/auctions/:id - جلب مزاد محدد
 router.get('/:id', async (req, res) => {
     try {
-        const auction = await Auction.findById(req.params.id)
+        const auction = await Auction.findOne(addTenantFilter(req, { _id: req.params.id }))
             .populate('car')
             .populate('highestBidder', 'name')
             .lean();
@@ -160,7 +161,7 @@ router.post('/', requireAuthAPI, async (req, res) => {
         }
 
         // Verify car exists
-        const car = await Car.findById(carId);
+        const car = await Car.findOne(addTenantFilter(req, { _id: carId }));
         if (!car) {
             return sendResponse(res, notFoundResponse('Car'));
         }
@@ -175,7 +176,8 @@ router.post('/', requireAuthAPI, async (req, res) => {
             currentPrice: baseStartPrice,
             startsAt,
             endsAt,
-            status: 'scheduled'
+            status: 'scheduled',
+            tenantId: getTenantId(req)
         });
 
         await auction.save();
@@ -195,7 +197,7 @@ router.post('/', requireAuthAPI, async (req, res) => {
 router.put('/:id', requireAuthAPI, async (req, res) => {
     try {
         const { status, endsAt } = req.body;
-        const auction = await Auction.findById(req.params.id);
+        const auction = await Auction.findOne(addTenantFilter(req, { _id: req.params.id }));
 
         if (!auction) {
             return sendResponse(res, notFoundResponse('Auction'));
@@ -220,7 +222,7 @@ router.put('/:id', requireAuthAPI, async (req, res) => {
 // DELETE /api/v2/auctions/:id - حذف مزاد (Auth required)
 router.delete('/:id', requireAuthAPI, async (req, res) => {
     try {
-        const auction = await Auction.findByIdAndDelete(req.params.id);
+        const auction = await Auction.findOneAndDelete(addTenantFilter(req, { _id: req.params.id }));
         if (!auction) {
             return sendResponse(res, notFoundResponse('Auction'));
         }
@@ -235,7 +237,7 @@ router.delete('/:id', requireAuthAPI, async (req, res) => {
 router.post('/:id/bid', requireAuthAPI, async (req, res) => {
     try {
         const { amount } = req.body;
-        const auction = await Auction.findById(req.params.id);
+        const auction = await Auction.findOne(addTenantFilter(req, { _id: req.params.id }));
 
         if (!auction) {
             return sendResponse(res, notFoundResponse('Auction'));

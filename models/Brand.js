@@ -4,6 +4,13 @@
 const mongoose = require('mongoose');
 
 const brandSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // اسم الشركة/الماركة المعروض للمستخدم
   name: { type: String, required: true, trim: true },
   // الاسم بالإنجليزية (اختياري - يُستخدم عند تغيير اللغة)
@@ -28,6 +35,11 @@ const brandSchema = new mongoose.Schema({
   createdByFirebaseUid: { type: String, required: false, default: '' },
   updatedByFirebaseUid: { type: String, required: false, default: '' }
 }, { timestamps: true });
+
+// [[ARABIC_COMMENT]] إضافة فهارس (Indexes) لتحسين سرعة الاستعلامات
+// Composite indexes for multi-tenant queries
+brandSchema.index({ tenantId: 1, key: 1 });
+brandSchema.index({ tenantId: 1, isActive: 1 });
 
 brandSchema.pre('validate', function (next) {
   // تجهيز key تلقائياً من name إن لم يُرسل

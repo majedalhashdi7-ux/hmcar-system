@@ -1,8 +1,9 @@
 // Modular API structure
 export { fetchAPI, type ApiResponse } from './api/index';
-export { auth } from './api/auth';
-export { cars } from './api/cars';
-export { parts } from './api/parts';
+import { auth } from './api/auth';
+import { cars } from './api/cars';
+import { parts } from './api/parts';
+export { auth, cars, parts };
 
 import { api as originalApi } from './api-original';
 

@@ -9,11 +9,11 @@ export const WhatsAppService = {
     /**
      * توليد رابط واتساب لسيارة محددة من المعرض الكوري أو المحلي
      */
-    generateCarLink: (car: any, phoneNumber: string, isRTL: boolean, formatPrice?: (p: number) => string) => {
+    generateCarLink: (car: Record<string, unknown>, phoneNumber: string, isRTL: boolean, formatPrice?: (p: number) => string) => {
         if (!car) return '';
         
         const carTitle = car.title || car.model || 'سيارة من المعرض';
-        const carMake = typeof car.make === 'object' ? car.make?.name : car.make;
+        const carMake = typeof car.make === 'object' ? (car.make as Record<string, unknown>)?.name : car.make;
         const price = formatPrice ? formatPrice(Number(car.price || 0)) : `${Number(car.price || 0).toLocaleString()} SAR`;
         const carLink = car.externalUrl || car.encarUrl || '';
 
@@ -28,10 +28,11 @@ export const WhatsAppService = {
     /**
      * توليد رابط واتساب لمزاد محدد
      */
-    generateAuctionLink: (auction: any, phoneNumber: string, isRTL: boolean, formatPrice?: (p: number) => string) => {
+    generateAuctionLink: (auction: Record<string, unknown>, phoneNumber: string, isRTL: boolean, formatPrice?: (p: number) => string) => {
         if (!auction) return '';
         
-        const title = auction.title || (auction.car ? `${auction.car.make} ${auction.car.model}` : 'مزاد سيارة');
+        const auctionCar = auction.car as Record<string, unknown> | undefined;
+        const title = auction.title || (auctionCar ? `${auctionCar.make} ${auctionCar.model}` : 'مزاد سيارة');
         const price = formatPrice ? formatPrice(Number(auction.currentPrice || auction.startingPrice || 0)) : `${Number(auction.currentPrice || 0).toLocaleString()} SAR`;
 
         const msg = isRTL

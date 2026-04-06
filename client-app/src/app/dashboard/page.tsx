@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 
 export default function DashboardRouter() {
     const router = useRouter();
-    const { user, isLoggedIn, isLoading, isAdmin } = useAuth();
+    const { isLoading, isAdmin } = useAuth();
 
     useEffect(() => {
         if (isLoading) return; // Wait for auth to be ready

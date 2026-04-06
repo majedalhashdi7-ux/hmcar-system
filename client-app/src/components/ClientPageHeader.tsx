@@ -12,7 +12,6 @@ import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, LucideIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/LanguageContext';
-import { cn } from '@/lib/utils';
 
 interface ClientPageHeaderProps {
     title: string | React.ReactNode;

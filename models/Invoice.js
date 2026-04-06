@@ -11,6 +11,13 @@ const invoiceItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const invoiceSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   invoiceNumber: { type: String, required: true, unique: true },
   buyerName: { type: String, required: true },
   buyerPhone: { type: String },

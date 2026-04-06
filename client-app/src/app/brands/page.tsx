@@ -9,8 +9,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Car, Search, ArrowLeft, Building2 } from 'lucide-react';
-import Link from 'next/link';
-import Image from 'next/image';
 import Navbar from '@/components/Navbar';
 import CircularBrandCard from '@/components/CircularBrandCard';
 import { useLanguage } from '@/lib/LanguageContext';

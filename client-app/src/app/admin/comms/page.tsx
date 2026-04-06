@@ -8,7 +8,6 @@ import {
     User, X, Send,
     CheckCheck, Circle, ArrowLeft,
     Bell, AlertCircle, CheckCircle2, Clock, Shield,
-    Trash2, RefreshCcw, Terminal,
     ShoppingCart, Users, Gavel
 } from "lucide-react";
 
@@ -61,7 +60,7 @@ interface Notification {
     isRead: boolean;
 }
 
-const NOTIF_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
+const NOTIF_CONFIG: Record<string, { icon: React.ElementType; color: string; bg: string }> = {
     CRITICAL: { icon: Shield, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
     TRANSACTION: { icon: CheckCircle2, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
     SYSTEM: { icon: Clock, color: 'text-white/40', bg: 'bg-white/5 border-white/10' },
@@ -150,11 +149,11 @@ function CommsHubContent() {
         try {
             const res = await api.messages.conversations();
             if (res.success && Array.isArray(res.data)) {
-                setConversations(res.data.map((item: any) => ({
-                    userId: item.user?._id || item.id,
-                    userName: item.user?.name || 'Unknown',
-                    lastMessage: item.lastMessage?.content || '',
-                    lastMessageAt: item.lastMessage?.createdAt || new Date().toISOString(),
+                setConversations(res.data.map((item: Record<string, unknown>) => ({
+                    userId: (item.user as Record<string, unknown>)?._id || item.id,
+                    userName: (item.user as Record<string, unknown>)?.name || 'Unknown',
+                    lastMessage: (item.lastMessage as Record<string, unknown>)?.content || '',
+                    lastMessageAt: (item.lastMessage as Record<string, unknown>)?.createdAt || new Date().toISOString(),
                     unreadCount: item.unreadCount || 0
                 })));
             }
@@ -173,13 +172,11 @@ function CommsHubContent() {
                 // Background refresh without loading spinner
                 api.messages.conversations().then(res => {
                     if (res.success && Array.isArray(res.data)) {
-                        setConversations(res.data.map((item: any) => ({
-                            userId: item.user?._id || item.id,
-                            userName: item.user?.name || 'Unknown',
-                            lastMessage: item.lastMessage?.content || '',
-                            lastMessageAt: item.lastMessage?.createdAt || new Date().toISOString(),
-                            unreadCount: item.unreadCount || 0
-                        })));
+                        setConversations(res.data.map((item: Record<string, unknown>) => {
+                            const u = item.user as Record<string, unknown> | undefined;
+                            const lm = item.lastMessage as Record<string, unknown> | undefined;
+                            return { userId: u?._id || item.id, userName: u?.name || 'Unknown', lastMessage: lm?.content || '', lastMessageAt: lm?.createdAt || new Date().toISOString(), unreadCount: item.unreadCount || 0 };
+                        }));
                     }
                 }).catch(() => {});
                 
@@ -430,7 +427,7 @@ function CommsHubContent() {
                                 <div className="ck-empty py-24"><div className="ck-empty-icon"><Bell className="w-8 h-8" /></div><p className="cockpit-mono">{isRTL ? 'لا توجد إشعارات' : 'NO ALERTS FOUND'}</p></div>
                             ) : (
                                 <AnimatePresence mode="popLayout">
-                                    {notifications.filter(n => notifFilter === 'ALL' || n.type === notifFilter).map((notif, i) => {
+                                    {notifications.filter(n => notifFilter === 'ALL' || n.type === notifFilter).map((notif) => {
                                         const cfg = NOTIF_CONFIG[notif.type] ?? NOTIF_CONFIG['SYSTEM'];
                                         const Icon = cfg.icon;
                                         return (
@@ -464,7 +461,7 @@ function CommsHubContent() {
                 {showBroadcastModal && (
                     <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
                         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-zinc-950 border border-white/10 p-8 rounded-3xl w-full max-w-lg relative">
-                            <button onClick={() => setShowBroadcastModal(false)} className="absolute top-6 right-6 text-white/40 hover:text-white transition-all"><X className="w-6 h-6" /></button>
+                            <button onClick={() => setShowBroadcastModal(false)} aria-label="Close" className="absolute top-6 right-6 text-white/40 hover:text-white transition-all"><X className="w-6 h-6" /></button>
                             <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3 text-cinematic-neon-blue"><Send className="w-6 h-6" />{isRTL ? 'إرسال للكل' : 'BROADCAST'}</h2>
                             <form onSubmit={handleBroadcast} className="space-y-6">
                                 <div>

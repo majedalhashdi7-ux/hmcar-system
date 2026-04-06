@@ -24,7 +24,6 @@ const NOTIFICATION_TYPES = {
     alert: { icon: AlertTriangle, color: 'from-red-500 to-rose-600', bg: 'bg-red-500/10', border: 'border-red-500/20', label: 'تنبيهات', labelEn: 'Alerts' },
 };
 
-const MOCK_NOTIFICATIONS: any[] = [];
 
 // ─── Main Page ──────────────────────────────────────────────────────────────────
 export default function NotificationsPage() {
@@ -182,8 +181,7 @@ export default function NotificationsPage() {
                             <button
                                 onClick={markAllRead}
                                 disabled={unreadCount === 0}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-[11px] font-black uppercase tracking-wider text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
-                                style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-[11px] font-black uppercase tracking-wider text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}
                             >
                                 <CheckCheck className="w-4 h-4 shrink-0" />
                                 <span>{isRTL ? 'قراءة الكل' : 'Mark All Read'}</span>
@@ -193,8 +191,7 @@ export default function NotificationsPage() {
                             <button
                                 onClick={clearAll}
                                 disabled={notifications.length === 0}
-                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-cinematic-neon-red/10 border border-cinematic-neon-red/20 text-cinematic-neon-red hover:bg-cinematic-neon-red/20 transition-all text-[11px] font-black uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed"
-                                style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}
+                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-cinematic-neon-red/10 border border-cinematic-neon-red/20 text-cinematic-neon-red hover:bg-cinematic-neon-red/20 transition-all text-[11px] font-black uppercase tracking-wider disabled:opacity-30 disabled:cursor-not-allowed ${isRTL ? 'flex-row-reverse' : 'flex-row'}`}
                             >
                                 <Trash2 className="w-4 h-4 shrink-0" />
                                 <span>{isRTL ? 'مسح الكل' : 'Clear All'}</span>
@@ -401,11 +398,13 @@ function NotifCard({ n, idx, isRTL, onRead, onDelete, onSelect }: any) {
             )}>
                 {!n.read && (
                     <button onClick={e => { e.stopPropagation(); onRead(); }}
+                        aria-label="Mark as read"
                         className="p-1.5 rounded-lg bg-white/5 hover:bg-cinematic-neon-blue/20 text-white/30 hover:text-cinematic-neon-blue transition-all">
                         <Check className="w-3.5 h-3.5" />
                     </button>
                 )}
                 <button onClick={e => { e.stopPropagation(); onDelete(); }}
+                    aria-label="Delete notification"
                     className="p-1.5 rounded-lg bg-white/5 hover:bg-cinematic-neon-red/20 text-white/30 hover:text-cinematic-neon-red transition-all">
                     <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -426,7 +425,7 @@ function DetailPanel({ n, isRTL, onClose, onDelete }: any) {
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/30">
                     {isRTL ? 'تفاصيل الإشعار' : 'Notification Detail'}
                 </span>
-                <button onClick={onClose} className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white">
+                <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-all text-white/40 hover:text-white">
                     <X className="w-4 h-4" />
                 </button>
             </div>

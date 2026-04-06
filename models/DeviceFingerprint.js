@@ -171,7 +171,12 @@ const deviceFingerprintSchema = new mongoose.Schema({
   adminNotes: { type: String, default: '' },
   
   // رابط المعرض (Multi-Tenant)
-  tenantId: { type: String, default: '' },
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
 
 }, { timestamps: true });
 
@@ -182,7 +187,6 @@ deviceFingerprintSchema.index({ ip: 1, deviceId: 1 });
 deviceFingerprintSchema.index({ linkedUsername: 1 });
 deviceFingerprintSchema.index({ banned: 1 });
 deviceFingerprintSchema.index({ trustLevel: 1 });
-deviceFingerprintSchema.index({ tenantId: 1 });
 deviceFingerprintSchema.index({ 'trustFactors.failedAttempts': 1 });
 
 // ══════════════════════════════════════

@@ -5,7 +5,6 @@ import {
   MessageCircle,
   Mail,
   Phone,
-  Headphones,
   ArrowRight,
   ChevronLeft,
   Clock,
@@ -18,7 +17,7 @@ import Navbar from "@/components/Navbar";
 import { cn } from "@/lib/utils";
 
 export default function SupportPage() {
-  const { t, isRTL } = useLanguage();
+  const { isRTL } = useLanguage();
   const { isLoggedIn } = useAuth();
 
   const supportOptions = [

@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
     LayoutGrid,
     ShoppingBag,
@@ -337,8 +337,6 @@ function ClientTopBar() {
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
     const { isRTL } = useLanguage();
-    const pathname = usePathname();
-
     return (
         <div className={cn('min-h-screen bg-[#080809] text-white flex', isRTL ? 'rtl' : 'ltr')}>
             {/* الشريط الجانبي - شاشات الكمبيوتر */}

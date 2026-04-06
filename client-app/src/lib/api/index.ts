@@ -1,10 +1,9 @@
 // Core API utilities and exports
 import { apiCache } from '../api-cache';
+import { getTenantApiUrl } from '../tenant-config';
 
 // API Base URL configuration
-const API_BASE_URL = (typeof window !== 'undefined' && window.location.hostname !== 'localhost')
-    ? ''  // Relative path - vercel.json handles routing
-    : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001');
+const API_BASE_URL = getTenantApiUrl();
 
 export interface ApiResponse<T = any> {
     success: boolean;
@@ -71,7 +70,7 @@ export async function fetchAPI(
                 message = 'لقد قمت بعدد كبير من المحاولات. يرجى الانتظار قليلاً قبل المحاولة مرة أخرى.';
             }
 
-            const customError: any = new Error(message);
+            const customError = new Error(message) as Error & { status: number };
             customError.status = response.status;
             throw customError;
         }
@@ -82,17 +81,18 @@ export async function fetchAPI(
         }
 
         return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
         clearTimeout(timeoutId);
         
         // Retry on network failure or timeout
-        if (retries > 0 && (error.name === 'AbortError' || error.message.includes('fetch'))) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        if (retries > 0 && (err.name === 'AbortError' || err.message.includes('fetch'))) {
             console.warn(`[API Retry] Retrying ${url}... Attempts left: ${retries}`);
             return fetchAPI(endpoint, options, retries - 1);
         }
 
-        console.error(`[API Error] ${url}:`, error);
-        throw error;
+        console.error(`[API Error] ${url}:`, err);
+        throw err;
     }
 }
 

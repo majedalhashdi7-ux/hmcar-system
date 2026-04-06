@@ -30,6 +30,13 @@ const orderStatusHistorySchema = new mongoose.Schema({
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // رقم الطلب (فريد) بصيغة HM-YYYY-XXXXXX
   orderNumber: { type: String, required: true, unique: true, index: true },
   // المشتري صاحب الطلب
@@ -77,6 +84,10 @@ const orderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // [[ARABIC_COMMENT]] إضافة فهارس (Indexes) لتحسين سرعة الاستعلامات
+// Composite indexes for multi-tenant queries
+orderSchema.index({ tenantId: 1, status: 1 });
+orderSchema.index({ tenantId: 1, buyer: 1 });
+orderSchema.index({ tenantId: 1, createdAt: -1 });
 orderSchema.index({ buyer: 1, status: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ 'meta.pendingSaleToken': 1 });

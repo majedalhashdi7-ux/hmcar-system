@@ -50,7 +50,7 @@ export default function CarXSettingsPage() {
         setError('');
         setSaved(false);
         try {
-            const res = await api.settings.updateCarXSettings({ carxSettings: settings });
+            const res = await api.settings.updateCarXSettings({ carxSettings: settings as unknown as Record<string, unknown> });
             if (res?.success) {
                 setSaved(true);
                 setTimeout(() => setSaved(false), 3000);

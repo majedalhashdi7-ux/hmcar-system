@@ -2,16 +2,16 @@
 
 const express = require('express');
 const router = express.Router();
-const Comparison = require('../../../models/Comparison');
-const Car = require('../../../models/Car');
+const { getModel, addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI } = require('../../../middleware/auth');
 
 // الحصول على مقارنات المستخدم
 router.get('/', requireAuthAPI, async (req, res) => {
     try {
+        const Comparison = getModel(req, 'Comparison');
         const userId = req.user.userId || req.user._id || req.user.id;
 
-        const comparison = await Comparison.findOne({ user: userId })
+        const comparison = await Comparison.findOne(addTenantFilter(req, { user: userId }))
             .populate({
                 path: 'cars',
                 select: 'title make model year price mileage fuelType transmission images'
@@ -30,6 +30,8 @@ router.get('/', requireAuthAPI, async (req, res) => {
 // إضافة سيارة للمقارنة
 router.post('/add', requireAuthAPI, async (req, res) => {
     try {
+        const Comparison = getModel(req, 'Comparison');
+        const Car = getModel(req, 'Car');
         const userId = req.user.userId || req.user._id || req.user.id;
         const { carId } = req.body;
 
@@ -38,17 +40,18 @@ router.post('/add', requireAuthAPI, async (req, res) => {
         }
 
         // التحقق من وجود السيارة
-        const car = await Car.findById(carId);
+        const car = await Car.findOne(addTenantFilter(req, { _id: carId }));
         if (!car) {
             return res.status(404).json({ success: false, error: 'السيارة غير موجودة' });
         }
 
-        let comparison = await Comparison.findOne({ user: userId });
+        let comparison = await Comparison.findOne(addTenantFilter(req, { user: userId }));
 
         if (!comparison) {
             comparison = await Comparison.create({
                 user: userId,
-                cars: [carId]
+                cars: [carId],
+                tenantId: getTenantId(req)
             });
         } else {
             // التحقق من الحد الأقصى (4 سيارات)
@@ -85,10 +88,11 @@ router.post('/add', requireAuthAPI, async (req, res) => {
 // إزالة سيارة من المقارنة
 router.delete('/remove/:carId', requireAuthAPI, async (req, res) => {
     try {
+        const Comparison = getModel(req, 'Comparison');
         const userId = req.user.userId || req.user._id || req.user.id;
         const { carId } = req.params;
 
-        const comparison = await Comparison.findOne({ user: userId });
+        const comparison = await Comparison.findOne(addTenantFilter(req, { user: userId }));
 
         if (!comparison) {
             return res.status(404).json({ success: false, error: 'لا توجد مقارنات' });
@@ -111,9 +115,10 @@ router.delete('/remove/:carId', requireAuthAPI, async (req, res) => {
 // مسح جميع المقارنات
 router.delete('/clear', requireAuthAPI, async (req, res) => {
     try {
+        const Comparison = getModel(req, 'Comparison');
         const userId = req.user.userId || req.user._id || req.user.id;
 
-        await Comparison.findOneAndDelete({ user: userId });
+        await Comparison.findOneAndDelete(addTenantFilter(req, { user: userId }));
 
         res.json({
             success: true,
@@ -128,6 +133,7 @@ router.delete('/clear', requireAuthAPI, async (req, res) => {
 // مقارنة سيارات بدون تسجيل (بالـ IDs)
 router.post('/compare', async (req, res) => {
     try {
+        const Car = getModel(req, 'Car');
         const { carIds } = req.body;
 
         if (!carIds || !Array.isArray(carIds) || carIds.length < 2) {
@@ -144,7 +150,7 @@ router.post('/compare', async (req, res) => {
             });
         }
 
-        const cars = await Car.find({ _id: { $in: carIds } })
+        const cars = await Car.find(addTenantFilter(req, { _id: { $in: carIds } }))
             .select('title make model year price mileage fuelType transmission color description images');
 
         res.json({

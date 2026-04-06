@@ -6,22 +6,23 @@ const ConciergeRequest = require('../../../models/ConciergeRequest');
 const UserNotification = require('../../../models/UserNotification');
 const User = require('../../../models/User');
 const { requireAuthAPI, requireAdmin } = require('../../../middleware/auth');
+const { addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 
 // ── GET /api/v2/concierge/stats ── إحصائيات الطلبات (الأدمن)
 router.get('/stats', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
         const [total, newCount, inProgress, completed, cancelled, byCar, byParts] = await Promise.all([
-            ConciergeRequest.countDocuments(),
-            ConciergeRequest.countDocuments({ status: 'new' }),
-            ConciergeRequest.countDocuments({ status: 'in_progress' }),
-            ConciergeRequest.countDocuments({ status: 'completed' }),
-            ConciergeRequest.countDocuments({ status: 'cancelled' }),
-            ConciergeRequest.countDocuments({ type: 'car' }),
-            ConciergeRequest.countDocuments({ type: 'parts' }),
+            ConciergeRequest.countDocuments(addTenantFilter(req, {})),
+            ConciergeRequest.countDocuments(addTenantFilter(req, { status: 'new' })),
+            ConciergeRequest.countDocuments(addTenantFilter(req, { status: 'in_progress' })),
+            ConciergeRequest.countDocuments(addTenantFilter(req, { status: 'completed' })),
+            ConciergeRequest.countDocuments(addTenantFilter(req, { status: 'cancelled' })),
+            ConciergeRequest.countDocuments(addTenantFilter(req, { type: 'car' })),
+            ConciergeRequest.countDocuments(addTenantFilter(req, { type: 'parts' })),
         ]);
 
         // أحدث 5 طلبات
-        const recent = await ConciergeRequest.find()
+        const recent = await ConciergeRequest.find(addTenantFilter(req, {}))
             .sort({ createdAt: -1 })
             .limit(5)
             .lean();
@@ -70,13 +71,14 @@ router.post('/', async (req, res) => {
             source: source || 'general',
             externalUrl,
             contactPreference: contactPreference || 'whatsapp',
-            status: 'new'
+            status: 'new',
+            tenantId: getTenantId(req)
         });
 
         // ── إشعار الأدمن ──
         // جلب جميع المستخدمين الأدمن
         try {
-            const admins = await User.find({ role: { $in: ['admin', 'super_admin', 'superadmin'] } }).select('_id').lean();
+            const admins = await User.find(addTenantFilter(req, { role: { $in: ['admin', 'super_admin', 'superadmin'] } })).select('_id').lean();
             if (admins.length > 0) {
                 const typeLabel = type === 'car' ? 'طلب سيارة' : 'طلب قطعة غيار';
                 const notifTitle = `🔔 ${typeLabel} جديد من ${name}`;
@@ -137,12 +139,12 @@ router.get('/', requireAuthAPI, requireAdmin, async (req, res) => {
         const skip = (Number(page) - 1) * Number(limit);
 
         const [requests, total] = await Promise.all([
-            ConciergeRequest.find(filter)
+            ConciergeRequest.find(addTenantFilter(req, filter))
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(Number(limit))
                 .lean(),
-            ConciergeRequest.countDocuments(filter)
+            ConciergeRequest.countDocuments(addTenantFilter(req, filter))
         ]);
 
         res.json({
@@ -163,7 +165,7 @@ router.get('/', requireAuthAPI, requireAdmin, async (req, res) => {
 // ── GET /api/v2/concierge/:id ── جلب طلب واحد
 router.get('/:id', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
-        const request = await ConciergeRequest.findById(req.params.id).lean();
+        const request = await ConciergeRequest.findOne(addTenantFilter(req, { _id: req.params.id })).lean();
         if (!request) {
             return res.status(404).json({ success: false, message: 'الطلب غير موجود' });
         }
@@ -183,8 +185,8 @@ router.patch('/:id/status', requireAuthAPI, requireAdmin, async (req, res) => {
             return res.status(400).json({ success: false, message: 'حالة غير صالحة' });
         }
 
-        const request = await ConciergeRequest.findByIdAndUpdate(
-            req.params.id,
+        const request = await ConciergeRequest.findOneAndUpdate(
+            addTenantFilter(req, { _id: req.params.id }),
             { 
                 status, 
                 ...(adminNotes && { adminNotes }),
@@ -223,7 +225,7 @@ router.patch('/:id/status', requireAuthAPI, requireAdmin, async (req, res) => {
 // ── DELETE /api/v2/concierge/:id ── حذف طلب (الأدمن)
 router.delete('/:id', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
-        await ConciergeRequest.findByIdAndDelete(req.params.id);
+        await ConciergeRequest.findOneAndDelete(addTenantFilter(req, { _id: req.params.id }));
         res.json({ success: true, message: 'تم حذف الطلب' });
     } catch (error) {
         res.status(500).json({ success: false, message: 'فشل في الحذف' });

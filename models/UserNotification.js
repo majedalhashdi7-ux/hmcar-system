@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const userNotificationSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -63,6 +70,9 @@ const userNotificationSchema = new mongoose.Schema({
 });
 
 // Indexes for better performance
+// Composite indexes for multi-tenant queries
+userNotificationSchema.index({ tenantId: 1, user: 1 });
+userNotificationSchema.index({ tenantId: 1, createdAt: -1 });
 userNotificationSchema.index({ user: 1, read: 1, createdAt: -1 });
 userNotificationSchema.index({ user: 1, type: 1, read: false });
 userNotificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });

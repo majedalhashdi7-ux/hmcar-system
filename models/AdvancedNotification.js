@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const advancedNotificationSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // المستخدم المستهدف (null للإشعارات العامة)
   user: {
     type: mongoose.Schema.Types.ObjectId,

@@ -2,12 +2,14 @@
 
 const express = require('express');
 const router = express.Router();
-const Contact = require('../../../models/Contact');
+const { getModel, addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI, requireAdmin } = require('../../../middleware/auth');
 
 // إرسال رسالة اتصال
 router.post('/', async (req, res) => {
     try {
+        const Contact = getModel(req, 'Contact');
+        const AuditLog = getModel(req, 'AuditLog');
         const { name, email, phone, subject, message } = req.body;
 
         if (!name || !email || !message) {
@@ -32,18 +34,19 @@ router.post('/', async (req, res) => {
             phone: phone ? phone.trim() : '',
             subject: subject ? subject.trim() : 'استفسار عام',
             message: message.trim(),
-            status: 'new'
+            status: 'new',
+            tenantId: getTenantId(req)
         });
 
         // إضافة إلى سجل الأنشطة ليظهر للأدمن
         try {
-            const AuditLog = require('../../../models/AuditLog');
             await AuditLog.create({
                 action: 'CREATE',
                 target: 'Contact',
                 targetId: contact._id,
                 description: `رسالة تواصل جديدة من ${name.trim()}: ${subject || 'استفسار عام'}`,
-                metadata: { email: email.trim() }
+                metadata: { email: email.trim() },
+                tenantId: getTenantId(req)
             });
         } catch (auditErr) { console.error('Failed to log contact activity', auditErr); }
 
@@ -61,19 +64,21 @@ router.post('/', async (req, res) => {
 // الحصول على جميع رسائل الاتصال (للأدمن)
 router.get('/', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
+        const Contact = getModel(req, 'Contact');
         const status = req.query.status || 'all';
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
         const skip = (page - 1) * limit;
 
         const query = status !== 'all' ? { status } : {};
+        const filteredQuery = addTenantFilter(req, query);
 
         const [contacts, total] = await Promise.all([
-            Contact.find(query)
+            Contact.find(filteredQuery)
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
-            Contact.countDocuments(query)
+            Contact.countDocuments(filteredQuery)
         ]);
 
         res.json({
@@ -95,6 +100,7 @@ router.get('/', requireAuthAPI, requireAdmin, async (req, res) => {
 // تحديث حالة رسالة (للأدمن)
 router.patch('/:id/status', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
+        const Contact = getModel(req, 'Contact');
         const { id } = req.params;
         const { status } = req.body;
 
@@ -102,8 +108,8 @@ router.patch('/:id/status', requireAuthAPI, requireAdmin, async (req, res) => {
             return res.status(400).json({ success: false, error: 'حالة غير صالحة' });
         }
 
-        const contact = await Contact.findByIdAndUpdate(
-            id,
+        const contact = await Contact.findOneAndUpdate(
+            addTenantFilter(req, { _id: id }),
             { status },
             { new: true }
         );
@@ -126,9 +132,10 @@ router.patch('/:id/status', requireAuthAPI, requireAdmin, async (req, res) => {
 // حذف رسالة (للأدمن)
 router.delete('/:id', requireAuthAPI, requireAdmin, async (req, res) => {
     try {
+        const Contact = getModel(req, 'Contact');
         const { id } = req.params;
 
-        const contact = await Contact.findByIdAndDelete(id);
+        const contact = await Contact.findOneAndDelete(addTenantFilter(req, { _id: id }));
 
         if (!contact) {
             return res.status(404).json({ success: false, error: 'الرسالة غير موجودة' });

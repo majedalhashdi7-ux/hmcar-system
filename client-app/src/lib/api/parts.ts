@@ -1,17 +1,17 @@
 import { fetchAPI } from './index';
 
 export const parts = {
-    list: (params: any = {}) => {
-        const query = new URLSearchParams(params).toString();
+    list: (params: Record<string, string | number | boolean> = {}) => {
+        const query = new URLSearchParams(params as Record<string, string>).toString();
         return fetchAPI(`/api/v2/parts?${query}`);
     },
     
-    create: (data: any) => fetchAPI('/api/v2/parts', {
+    create: (data: Record<string, unknown>) => fetchAPI('/api/v2/parts', {
         method: 'POST',
         body: JSON.stringify(data),
     }),
     
-    update: (id: string, data: any) => fetchAPI(`/api/v2/parts/${id}`, {
+    update: (id: string, data: Record<string, unknown>) => fetchAPI(`/api/v2/parts/${id}`, {
         method: 'PUT',
         body: JSON.stringify(data),
     }),

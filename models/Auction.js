@@ -4,6 +4,13 @@
 const mongoose = require('mongoose');
 
 const auctionSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // السيارة المرتبطة بالمزاد
   car: { type: mongoose.Schema.Types.ObjectId,ref: 'Car', required: true },
   // السعر الابتدائي
@@ -22,6 +29,9 @@ const auctionSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // [[ARABIC_COMMENT]] إضافة فهارس (Indexes) لتحسين سرعة الاستعلامات
+// Composite indexes for multi-tenant queries
+auctionSchema.index({ tenantId: 1, status: 1 });
+auctionSchema.index({ tenantId: 1, endsAt: 1 });
 auctionSchema.index({ status: 1, startsAt: 1, endsAt: 1 });
 auctionSchema.index({ car: 1 });
 auctionSchema.index({ endsAt: 1 });

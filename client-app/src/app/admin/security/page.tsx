@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Shield, ShieldAlert, ShieldCheck, ShieldOff, Lock, Unlock,
     Smartphone, Search, RefreshCw, History, Activity,
-    AlertTriangle, Server, X, Laptop, Monitor, Eye,
+    AlertTriangle, X, Laptop, Monitor,
     TrendingUp, TrendingDown, RotateCcw, MessageSquare,
-    Trash2, ChevronDown, Users, Wifi, Clock, Zap,
-    BarChart3, FileText, CheckCircle2, XCircle
+    Users, Wifi, Clock,
+    BarChart3, CheckCircle2, XCircle
 } from 'lucide-react';
 import { api } from '@/lib/api-original';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -82,8 +82,8 @@ interface DashboardData {
         activeSessions: number;
         threatLevel: string;
     };
-    recentEvents: any[];
-    topThreats: any[];
+    recentEvents: Record<string, unknown>[];
+    topThreats: Record<string, unknown>[];
 }
 
 // ── دوال مساعدة ──
@@ -236,7 +236,7 @@ export default function AdminSecurity() {
                     if (detail.success) setSelectedDevice(detail.data.device);
                 }
             }
-        } catch (e: any) { showToast(e.message || 'فشل', 'error'); }
+        } catch (e: unknown) { showToast(e instanceof Error ? e.message : 'فشل', 'error'); }
     };
 
     const handleToggleExempt = async (device: SecurityDevice) => {
@@ -247,7 +247,7 @@ export default function AdminSecurity() {
                 loadDevices();
                 loadDashboard();
             }
-        } catch (e: any) { showToast(e.message || 'فشل', 'error'); }
+        } catch (e: unknown) { showToast(e instanceof Error ? e.message : 'فشل', 'error'); }
     };
 
     const handleTrustAction = async (device: SecurityDevice, action: 'boost' | 'reduce' | 'reset') => {
@@ -261,7 +261,7 @@ export default function AdminSecurity() {
                     if (detail.success) setSelectedDevice(detail.data.device);
                 }
             }
-        } catch (e: any) { showToast(e.message || 'فشل', 'error'); }
+        } catch (e: unknown) { showToast(e instanceof Error ? e.message : 'فشل', 'error'); }
     };
 
     const handleSaveNote = async (device: SecurityDevice) => {
@@ -281,7 +281,7 @@ export default function AdminSecurity() {
                 loadDevices();
                 loadDashboard();
             }
-        } catch (e: any) { showToast(e.message || 'فشل', 'error'); }
+        } catch (e: unknown) { showToast(e instanceof Error ? e.message : 'فشل', 'error'); }
     };
 
     const handleTerminateSession = async (sessionId: string) => {
@@ -427,7 +427,7 @@ export default function AdminSecurity() {
                                 <div className="flex-1" />
                                 <button onClick={() => handleBulkAction('ban')} className="px-3 py-1.5 rounded-xl text-[10px] font-black bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all">{isRTL ? 'حظر الكل' : 'BAN ALL'}</button>
                                 <button onClick={() => handleBulkAction('unban')} className="px-3 py-1.5 rounded-xl text-[10px] font-black bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-black transition-all">{isRTL ? 'فك حظر الكل' : 'UNBAN ALL'}</button>
-                                <button onClick={() => setSelectedIds([])} className="px-3 py-1.5 rounded-xl text-[10px] font-black bg-white/10 text-white/40 hover:bg-white/20 transition-all"><X className="w-3 h-3" /></button>
+                                <button onClick={() => setSelectedIds([])} aria-label="Clear selection" className="px-3 py-1.5 rounded-xl text-[10px] font-black bg-white/10 text-white/40 hover:bg-white/20 transition-all"><X className="w-3 h-3" /></button>
                             </motion.div>
                         )}
 
@@ -449,7 +449,7 @@ export default function AdminSecurity() {
                                 >
                                     <div className="flex items-center gap-4">
                                         {/* Checkbox */}
-                                        <input type="checkbox" checked={selectedIds.includes(device._id)}
+                                        <input type="checkbox" aria-label="Select device" checked={selectedIds.includes(device._id)}
                                             onChange={e => { e.stopPropagation(); setSelectedIds(p => p.includes(device._id) ? p.filter(x => x !== device._id) : [...p, device._id]); }}
                                             onClick={e => e.stopPropagation()}
                                             className="w-4 h-4 rounded border-white/20 bg-white/5 accent-violet-500 shrink-0" />
@@ -560,7 +560,7 @@ export default function AdminSecurity() {
                                         </div>
                                     </div>
                                 </div>
-                                <button onClick={() => setSelectedDevice(null)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all">
+                                <button onClick={() => setSelectedDevice(null)} aria-label="Close" className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/10 transition-all">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
@@ -619,7 +619,7 @@ export default function AdminSecurity() {
                                 <div className="flex gap-2">
                                     <input type="text" value={deviceNote} onChange={e => setDeviceNote(e.target.value)} placeholder={isRTL ? 'أضف ملاحظة...' : 'Add note...'}
                                         className="flex-1 h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-xs focus:border-violet-500/40 focus:outline-none" />
-                                    <button onClick={() => handleSaveNote(selectedDevice)} className="px-4 h-10 rounded-xl bg-violet-500/20 text-violet-300 text-[10px] font-bold hover:bg-violet-500/30 transition-all">
+                                    <button onClick={() => handleSaveNote(selectedDevice)} aria-label="Save note" className="px-4 h-10 rounded-xl bg-violet-500/20 text-violet-300 text-[10px] font-bold hover:bg-violet-500/30 transition-all">
                                         <MessageSquare className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -666,6 +666,7 @@ export default function AdminSecurity() {
                                     placeholder={isRTL ? 'سبب الحظر (اختياري)...' : 'Ban reason (optional)...'}
                                     className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-sm focus:border-red-500/40 focus:outline-none" />
                                 <select value={banDuration} onChange={e => setBanDuration(e.target.value)}
+                                    aria-label="Ban duration"
                                     className="w-full h-10 bg-white/5 border border-white/10 rounded-xl px-3 text-sm appearance-none focus:border-red-500/40 focus:outline-none">
                                     <option value="permanent">{isRTL ? 'حظر دائم' : 'Permanent'}</option>
                                     <option value="1">{isRTL ? 'ساعة واحدة' : '1 Hour'}</option>

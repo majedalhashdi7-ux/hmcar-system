@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const reviewSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -80,6 +87,10 @@ const reviewSchema = new mongoose.Schema({
 });
 
 // Indexes for better performance
+// Composite indexes for multi-tenant queries
+reviewSchema.index({ tenantId: 1, car: 1 });
+reviewSchema.index({ tenantId: 1, user: 1 });
+reviewSchema.index({ tenantId: 1, status: 1 });
 reviewSchema.index({ car: 1, status: 1 });
 reviewSchema.index({ user: 1 });
 reviewSchema.index({ rating: 1 });

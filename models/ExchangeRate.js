@@ -4,6 +4,13 @@
 const mongoose = require('mongoose');
 
 const exchangeRateSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // سعر صرف الدولار مقابل الريال السعودي
   usdToSar: { 
     type: Number, 

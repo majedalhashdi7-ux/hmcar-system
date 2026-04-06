@@ -10,16 +10,20 @@ const crypto = require('crypto');
 
 /**
  * إنشاء مفتاح cache بناءً على الطلب
+ * يتضمن معرف المعرض (tenantId) لضمان عزل البيانات بين المعارض
  */
 function generateCacheKey(req) {
   const { method, originalUrl, query, body } = req;
   const userId = req.session?.user?._id || 'anonymous';
+  // إضافة معرف المعرض لضمان عزل الكاش بين المعارض المختلفة
+  const tenantId = req.tenant?.id || 'default';
   
   const keyData = {
     method,
     url: originalUrl,
     query,
-    userId
+    userId,
+    tenantId
   };
   
   // Include body for POST requests (be careful with sensitive data)
@@ -32,7 +36,7 @@ function generateCacheKey(req) {
   const keyString = JSON.stringify(keyData);
   const hash = crypto.createHash('md5').update(keyString).digest('hex');
   
-  return `api:cache:${hash}`;
+  return `api:cache:${tenantId}:${hash}`;
 }
 
 /**
@@ -154,11 +158,14 @@ function autoCacheMiddleware(options = {}) {
 /**
  * Cache invalidation middleware
  * Invalidates cache on data modification
+ * يدعم عزل المعرض (tenant-scoped) لضمان عدم حذف كاش المعارض الأخرى
  */
 function cacheInvalidationMiddleware(patterns) {
   return async (req, res, next) => {
     const originalJson = res.json.bind(res);
     const originalSend = res.send.bind(res);
+    // الحصول على معرف المعرض لضمان حذف الكاش الخاص به فقط
+    const tenantId = req.tenant?.id || 'default';
 
     const invalidateCache = async () => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -166,12 +173,13 @@ function cacheInvalidationMiddleware(patterns) {
         
         for (const pattern of patterns) {
           try {
+            // إضافة معرف المعرض للـ tag لضمان عزل التحذيف بين المعارض
             if (typeof pattern === 'string') {
-              await invalidateByTag(pattern);
+              await invalidateByTag(`${tenantId}:${pattern}`);
             } else if (typeof pattern === 'function') {
               const tags = await pattern(req);
               for (const tag of tags) {
-                await invalidateByTag(tag);
+                await invalidateByTag(`${tenantId}:${tag}`);
               }
             }
           } catch (error) {

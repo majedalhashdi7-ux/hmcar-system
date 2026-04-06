@@ -41,7 +41,7 @@ interface Part {
     carModelEn?: string; // الموديل بالإنجليزية
 }
 
-function resolvePartImage(part: Part): string {
+function _resolvePartImage(part: Part): string {
     const candidate = part.img || part.image || part.images?.[0] || '';
     const normalized = typeof candidate === 'string' ? candidate.trim() : '';
     return normalized || '/images/placeholder.jpg';
@@ -61,7 +61,7 @@ export default function PartsPage() {
     const router = useRouter();
     const { isRTL } = useLanguage();
     const { formatPrice: formatGlobalPrice, socialLinks } = useSettings();
-    const formatPrice = (price: number) => formatGlobalPrice(Number(price || 0), undefined, 'part');
+    const _formatPrice = (price: number) => formatGlobalPrice(Number(price || 0), undefined, 'part');
     const { isLoggedIn } = useAuth();
     // رقم الواتساب - يستخدم رقم الأدمن من الإعدادات أو الرقم الافتراضي
     const WHATSAPP_NUMBER = (socialLinks?.whatsapp || '+821080880014').replace(/\D/g, '');
@@ -226,7 +226,7 @@ export default function PartsPage() {
         (!isRTL && agency.nameEn) ? agency.nameEn : agency.name;
 
     // اسم القطعة حسب اللغة
-    const getPartDisplayName = (part: any) => {
+    const _getPartDisplayName = (part: any) => {
         if (!isRTL) {
             return part.nameEn || part.name;
         }

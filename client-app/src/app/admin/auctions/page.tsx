@@ -143,6 +143,7 @@ export default function AdminAuctionsControl() {
                                 className="glass-card p-8 bg-white/[0.01] border-white/5 flex flex-col md:flex-row items-center gap-10 group relative overflow-hidden"
                             >
                                 <div className="relative w-full md:w-64 h-40 rounded-2xl overflow-hidden border border-white/10 shrink-0">
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
                                     <img
                                         src={auc.car?.images?.[0] || 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1000&auto=format&fit=crop'}
                                         className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
@@ -217,6 +218,7 @@ export default function AdminAuctionsControl() {
                             >
                                 <button
                                     onClick={() => setIsCreateModalOpen(false)}
+                                    aria-label="Close"
                                     className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors"
                                 >
                                     <X className="w-6 h-6" />
@@ -232,6 +234,7 @@ export default function AdminAuctionsControl() {
                                         <div className="space-y-2">
                                             <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Select Vehicle</label>
                                             <select
+                                                aria-label="Select Vehicle"
                                                 value={formData.carId}
                                                 onChange={(e) => setFormData({ ...formData, carId: e.target.value })}
                                                 className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm font-bold text-white focus:outline-none focus:border-red-500 transition-all"
@@ -266,6 +269,7 @@ export default function AdminAuctionsControl() {
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/40">Start Time</label>
                                                 <input
                                                     type="datetime-local"
+                                                    aria-label="Start Time"
                                                     value={formData.startsAt}
                                                     onChange={(e) => setFormData({ ...formData, startsAt: e.target.value })}
                                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm font-bold text-white focus:outline-none focus:border-red-500 transition-all [color-scheme:dark]"
@@ -275,6 +279,7 @@ export default function AdminAuctionsControl() {
                                                 <label className="text-[10px] font-black uppercase tracking-widest text-white/40">End Time</label>
                                                 <input
                                                     type="datetime-local"
+                                                    aria-label="End Time"
                                                     value={formData.endsAt}
                                                     onChange={(e) => setFormData({ ...formData, endsAt: e.target.value })}
                                                     className="w-full bg-white/5 border border-white/10 rounded-xl p-4 text-sm font-bold text-white focus:outline-none focus:border-red-500 transition-all [color-scheme:dark]"

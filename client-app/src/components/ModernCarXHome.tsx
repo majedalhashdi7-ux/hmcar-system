@@ -6,14 +6,21 @@ import Link from "next/link";
 import { useLanguage } from "@/lib/LanguageContext";
 import { 
   Car, Gavel, Wrench, User, LogIn, UserPlus, Globe, 
-  MessageCircle, Phone, Instagram, Facebook, Youtube, 
-  Settings, HelpCircle, Menu, X, Play, Pause, Volume2, VolumeX,
-  ArrowRight, Star, Zap, Shield, Award
+  MessageCircle, Instagram, Facebook, Youtube, 
+  HelpCircle, Menu, X, Play, Pause, Volume2, VolumeX,
+  ArrowRight, Shield, Zap, Award
 } from "lucide-react";
 import { useAuth } from "@/lib/AuthContext";
 import { useTenant } from "@/lib/TenantContext";
 import { api } from "@/lib/api-original";
 import AuthModals from "./AuthModals";
+
+const PARTICLES = Array.from({ length: 15 }, () => ({
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    duration: 3 + Math.random() * 2,
+    delay: Math.random() * 2,
+}));
 
 export default function ModernCarXHome() {
     const { isRTL, toggleLanguage } = useLanguage();
@@ -270,24 +277,13 @@ export default function ModernCarXHome() {
 
                 {/* جسيمات متحركة */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                    {[...Array(15)].map((_, i) => (
+                    {PARTICLES.map((p, i) => (
                         <motion.div
                             key={i}
                             className="absolute w-1 h-1 bg-red-400 rounded-full opacity-60"
-                            style={{
-                                left: `${Math.random() * 100}%`,
-                                top: `${Math.random() * 100}%`,
-                            }}
-                            animate={{
-                                y: [-20, -100],
-                                opacity: [0, 1, 0],
-                                scale: [0, 1, 0],
-                            }}
-                            transition={{
-                                duration: 3 + Math.random() * 2,
-                                repeat: Infinity,
-                                delay: Math.random() * 2,
-                            }}
+                            style={{ left: `${p.left}%`, top: `${p.top}%` }}
+                            animate={{ y: [-20, -100], opacity: [0, 1, 0], scale: [0, 1, 0] }}
+                            transition={{ duration: p.duration, repeat: Infinity, delay: p.delay }}
                         />
                     ))}
                 </div>
@@ -297,13 +293,7 @@ export default function ModernCarXHome() {
                     <button
                         onClick={() => {
                             const video = document.querySelector('video');
-                            if (video) {
-                                if (videoPlaying) {
-                                    video.pause();
-                                } else {
-                                    video.play();
-                                }
-                            }
+                            if (video) { if (videoPlaying) { video.pause(); } else { video.play(); } }
                         }}
                         className="w-12 h-12 rounded-2xl bg-black/60 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/10 transition-all"
                     >

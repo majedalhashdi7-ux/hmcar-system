@@ -70,3 +70,12 @@ backups/
 tmp/
 temp/
 *.tmp
+
+# Lint / ESLint output reports
+lint-results.json
+lint_results.json
+lint_errors.txt
+lint_output.txt
+smart_alerts_eslint.json
+eslint_report.json
+*.report.json

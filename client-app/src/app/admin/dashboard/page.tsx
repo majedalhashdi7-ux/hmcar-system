@@ -87,15 +87,14 @@ export default function AdminDashboard() {
                 if (a.success) setRecentActivities(a.activities);
             } catch (e) { 
                 console.error('Failed to load admin data:', e);
-                // Set default values to prevent UI from breaking
                 setStats({
-                    totalCars: 656,
+                    totalCars: 0,
                     totalUsers: 0,
                     totalParts: 0,
                     totalOrders: 0,
                     totalRevenue: 0,
                     pendingOrders: 0,
-                    totalBrands: 32
+                    totalBrands: 0
                 });
                 setRecentActivities([]);
             } finally { setLoading(false); }

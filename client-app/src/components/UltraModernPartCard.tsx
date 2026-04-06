@@ -9,9 +9,8 @@ import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { 
-    Heart, ShoppingCart, Check, Wrench, Package, DollarSign, Coins, FileText, 
-    ArrowRight, Home, Zap, Shield, Award, Star, Crown, Gem, Sparkles, 
-    Settings, Cog, Bolt, Target, Diamond, Flame
+    Heart, ShoppingCart, Check, Wrench, Package, Coins, FileText, 
+    Home, Star, Crown, Settings, Cog, Diamond, Flame
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -67,7 +66,7 @@ export default function UltraModernPartCard({
 }: UltraModernPartCardProps) {
     const { isRTL } = useLanguage();
     const { isLoggedIn } = useAuth();
-    const { formatPrice, displayCurrency, setDisplayCurrency } = useSettings() as any;
+    const { formatPrice } = useSettings() as any;
     const router = useRouter();
 
     const cardKey = String(part.id || part._id || `part-${index}`);
@@ -86,7 +85,6 @@ export default function UltraModernPartCard({
     const [isFav, setIsFav] = useState(() => getFavorites().includes(cardKey));
     const [inCart, setInCart] = useState(() => getCart().some((i: any) => i.id === cardKey));
     const [cartAdded, setCartAdded] = useState(false);
-    const [isHovered, setIsHovered] = useState(false);
 
     const handleBackToHome = () => {
         router.push('/');
@@ -117,14 +115,6 @@ export default function UltraModernPartCard({
         setTimeout(() => setCartAdded(false), 2000);
     }, [part, cardKey, inCart, stock, isLoggedIn, onLoginRequired]);
 
-    const toggleCurrency = useCallback((e: React.MouseEvent) => {
-        e.stopPropagation();
-        const currencies = ['SAR', 'KRW', 'USD'];
-        const currentIndex = currencies.indexOf(displayCurrency || 'SAR');
-        const nextCurrency = currencies[(currentIndex + 1) % currencies.length];
-        setDisplayCurrency?.(nextCurrency);
-    }, [displayCurrency, setDisplayCurrency]);
-
     const price = Number(part.price || part.priceSar || 0);
     const displayPrice = formatPrice ? formatPrice(price) : `${price.toLocaleString()} SAR`;
 
@@ -149,12 +139,10 @@ export default function UltraModernPartCard({
         x.set(0);
         y.set(0);
         scale.set(1);
-        setIsHovered(false);
     };
 
     const handleMouseEnter = () => {
         scale.set(1.02);
-        setIsHovered(true);
     };
 
     return (

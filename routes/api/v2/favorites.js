@@ -2,16 +2,16 @@
 
 const express = require('express');
 const router = express.Router();
-const Favorite = require('../../../models/Favorite');
-const Car = require('../../../models/Car');
+const { getModel, addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI } = require('../../../middleware/auth');
 
 // الحصول على جميع المفضلات للمستخدم الحالي
 router.get('/', requireAuthAPI, async (req, res) => {
     try {
+        const Favorite = getModel(req, 'Favorite');
         const userId = req.user.userId || req.user._id || req.user.id;
 
-        const favorites = await Favorite.find({ user: userId })
+        const favorites = await Favorite.find(addTenantFilter(req, { user: userId }))
             .populate({
                 path: 'car',
                 select: 'title make model year price images listingType'
@@ -35,10 +35,11 @@ router.get('/', requireAuthAPI, async (req, res) => {
 // التحقق من وجود سيارة في المفضلة
 router.get('/check/:carId', requireAuthAPI, async (req, res) => {
     try {
+        const Favorite = getModel(req, 'Favorite');
         const userId = req.user.userId || req.user._id || req.user.id;
         const { carId } = req.params;
 
-        const favorite = await Favorite.findOne({ user: userId, car: carId });
+        const favorite = await Favorite.findOne(addTenantFilter(req, { user: userId, car: carId }));
 
         res.json({
             success: true,
@@ -54,6 +55,8 @@ router.get('/check/:carId', requireAuthAPI, async (req, res) => {
 // إضافة سيارة إلى المفضلة
 router.post('/', requireAuthAPI, async (req, res) => {
     try {
+        const Favorite = getModel(req, 'Favorite');
+        const Car = getModel(req, 'Car');
         const userId = req.user.userId || req.user._id || req.user.id;
         const { carId } = req.body;
 
@@ -62,20 +65,21 @@ router.post('/', requireAuthAPI, async (req, res) => {
         }
 
         // التحقق من وجود السيارة
-        const car = await Car.findById(carId);
+        const car = await Car.findOne(addTenantFilter(req, { _id: carId }));
         if (!car) {
             return res.status(404).json({ success: false, error: 'السيارة غير موجودة' });
         }
 
         // التحقق من عدم وجودها مسبقاً
-        const existing = await Favorite.findOne({ user: userId, car: carId });
+        const existing = await Favorite.findOne(addTenantFilter(req, { user: userId, car: carId }));
         if (existing) {
             return res.status(400).json({ success: false, error: 'السيارة موجودة في المفضلة مسبقاً' });
         }
 
         const favorite = await Favorite.create({
             user: userId,
-            car: carId
+            car: carId,
+            tenantId: getTenantId(req)
         });
 
         res.status(201).json({
@@ -92,10 +96,11 @@ router.post('/', requireAuthAPI, async (req, res) => {
 // حذف سيارة من المفضلة
 router.delete('/:carId', requireAuthAPI, async (req, res) => {
     try {
+        const Favorite = getModel(req, 'Favorite');
         const userId = req.user.userId || req.user._id || req.user.id;
         const { carId } = req.params;
 
-        const result = await Favorite.findOneAndDelete({ user: userId, car: carId });
+        const result = await Favorite.findOneAndDelete(addTenantFilter(req, { user: userId, car: carId }));
 
         if (!result) {
             return res.status(404).json({ success: false, error: 'غير موجود في المفضلة' });
@@ -114,9 +119,10 @@ router.delete('/:carId', requireAuthAPI, async (req, res) => {
 // حذف جميع المفضلات
 router.delete('/', requireAuthAPI, async (req, res) => {
     try {
+        const Favorite = getModel(req, 'Favorite');
         const userId = req.user.userId || req.user._id || req.user.id;
 
-        await Favorite.deleteMany({ user: userId });
+        await Favorite.deleteMany(addTenantFilter(req, { user: userId }));
 
         res.json({
             success: true,

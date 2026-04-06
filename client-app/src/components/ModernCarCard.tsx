@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Heart, Share2, Eye, Calendar, Gauge, Fuel, Settings, Star, ArrowRight, Home } from "lucide-react";
+import { Heart, Share2, Eye, Calendar, Gauge, Fuel, Star, ArrowRight, Home } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import Link from "next/link";
 import Image from "next/image";
@@ -105,12 +105,14 @@ export default function ModernCarCard({ car, index, formatPrice }: CarCardProps)
                     <>
                         <button
                             onClick={prevImage}
+                            aria-label={isRTL ? 'الصوره السابقه' : 'Previous image'}
                             className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'right-2' : 'left-2'} w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100`}
                         >
                             <ArrowRight className={`w-4 h-4 ${isRTL ? '' : 'rotate-180'}`} />
                         </button>
                         <button
                             onClick={nextImage}
+                            aria-label={isRTL ? 'الصوره التاليه' : 'Next image'}
                             className={`absolute top-1/2 -translate-y-1/2 ${isRTL ? 'left-2' : 'right-2'} w-8 h-8 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-all opacity-0 group-hover:opacity-100`}
                         >
                             <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
@@ -125,6 +127,7 @@ export default function ModernCarCard({ car, index, formatPrice }: CarCardProps)
                             <button
                                 key={idx}
                                 onClick={() => setCurrentImageIndex(idx)}
+                                aria-label={`Image ${idx + 1}`}
                                 className={`w-2 h-2 rounded-full transition-all ${
                                     idx === currentImageIndex ? 'bg-red-500' : 'bg-white/30'
                                 }`}
@@ -137,6 +140,7 @@ export default function ModernCarCard({ car, index, formatPrice }: CarCardProps)
                 <div className="absolute top-4 end-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
                     <button
                         onClick={() => setIsLiked(!isLiked)}
+                        aria-label={isLiked ? (isRTL ? 'الغاء الاعجاب' : 'Unlike') : (isRTL ? 'اعجاب' : 'Like')}
                         className={`w-10 h-10 rounded-2xl backdrop-blur-md flex items-center justify-center transition-all ${
                             isLiked 
                                 ? 'bg-red-500 text-white' 
@@ -145,7 +149,7 @@ export default function ModernCarCard({ car, index, formatPrice }: CarCardProps)
                     >
                         <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
                     </button>
-                    <button className="w-10 h-10 rounded-2xl bg-black/60 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-all">
+                    <button aria-label={isRTL ? 'مشاركه' : 'Share'} className="w-10 h-10 rounded-2xl bg-black/60 backdrop-blur-md flex items-center justify-center text-white/80 hover:text-white hover:bg-black/80 transition-all">
                         <Share2 className="w-5 h-5" />
                     </button>
                 </div>

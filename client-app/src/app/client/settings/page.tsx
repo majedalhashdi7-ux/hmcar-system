@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import {
-    Settings, Bell, Palette, Globe,
+    Bell, Palette, Globe,
     Save, Lock, Eye, EyeOff, Smartphone, Mail, Volume2, Moon, Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";

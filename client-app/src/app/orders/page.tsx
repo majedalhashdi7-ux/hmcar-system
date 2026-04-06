@@ -50,12 +50,13 @@ export default function OrdersPage() {
 
     useEffect(() => {
         loadOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filter]);
 
     const loadOrders = async () => {
         try {
             setLoading(true);
-            const params = filter !== 'all' ? { status: filter } : {};
+            const params = filter !== 'all' ? { status: filter } : undefined;
             const response = await api.orders.list(params);
 
             if (response.success) {
@@ -162,7 +163,7 @@ export default function OrdersPage() {
                         { label: isRTL ? 'مؤكد' : 'CONFIRMED', value: stats.confirmed, key: 'confirmed', color: 'text-cinematic-neon-blue' },
                         { label: isRTL ? 'مكتمل' : 'COMPLETED', value: stats.completed, key: 'completed', color: 'text-green-400' },
                         { label: isRTL ? 'ملغي' : 'CANCELLED', value: stats.cancelled, key: 'cancelled', color: 'text-cinematic-neon-red' },
-                    ].map((stat, i) => (
+                    ].map((stat) => (
                         <motion.button
                             key={stat.key}
                             onClick={() => setFilter(stat.key)}
@@ -225,12 +226,15 @@ export default function OrdersPage() {
                                                             </div>
                                                         </div>
                                                     ) : (
+                                                        <>
+                                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                                         <img
                                                             src={imageSrc}
                                                             alt={order.car?.title || 'Order car'}
                                                             className="w-full h-full object-cover grayscale-[30%] hover:grayscale-0 transition-all duration-700"
                                                             onError={() => setImageErrors(prev => ({ ...prev, [orderId]: true }))}
                                                         />
+                                                        </>
                                                     )}
                                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                                                 </div>

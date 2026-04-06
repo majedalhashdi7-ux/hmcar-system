@@ -15,6 +15,13 @@ const liveAuctionCarSchema = new mongoose.Schema({
 
 // [[ARABIC_COMMENT]] نموذج جلسة المزاد الكاملة
 const liveAuctionSchema = new mongoose.Schema({
+    // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+    tenantId: {
+        type: String,
+        required: true,
+        default: 'default',
+        index: true
+    },
     title: { type: String, required: true },        // عنوان الجلسة
     externalUrl: { type: String, default: '' },     // رابط المزاد الخارجي (iframe أو رابط مباشر)
     status: {

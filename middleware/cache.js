@@ -16,7 +16,9 @@ const generateCacheKey = (req) => {
         .sort()
         .map(key => `${key}=${req.query[key]}`)
         .join('&');
-    return `route:${req.method}:${url}${query ? '?' + query : ''}`;
+    // إضافة معرف المعرض (tenantId) للمفتاح لضمان عزل البيانات بين المعارض
+    const tenantId = req.tenant?.id || 'default';
+    return `route:${tenantId}:${req.method}:${url}${query ? '?' + query : ''}`;
 };
 
 /**
@@ -66,9 +68,11 @@ const invalidateCache = (patterns) => {
         res.on('finish', () => {
             if (res.statusCode >= 200 && res.statusCode < 300) {
                 const patternsToClear = Array.isArray(patterns) ? patterns : [patterns];
+                // إضافة معرف المعرض للـ pattern لضمان حذف الكاش الخاص بهذا المعرض فقط
+                const tenantId = req.tenant?.id || 'default';
                 patternsToClear.forEach(pattern => {
-                    // Construct a pattern that matches the route cache format
-                    const searchPattern = `route:GET:${pattern}`;
+                    // Construct a pattern that matches the route cache format with tenant scope
+                    const searchPattern = `route:${tenantId}:GET:${pattern}`;
                     cacheService.delWithPattern(searchPattern).catch(err => {
                         console.error(`Cache invalidation error for pattern [${searchPattern}]:`, err);
                     });

@@ -34,17 +34,38 @@ import { useToast } from "@/lib/ToastContext";
 
 // Removed CATEGORIES and CAT_LABELS_AR as per user request to simplify the UI
 
+interface Part {
+    _id: string;
+    id?: string;
+    name: string;
+    nameEn?: string;
+    brand: string | { _id: string; name: string; logoUrl?: string };
+    carModel?: string;
+    model?: string;
+    year?: number;
+    price: number;
+    category?: string;
+    partType?: string;
+    condition?: string;
+    inStock: boolean;
+    isSold?: boolean;
+    soldCount?: number;
+    images?: string[];
+    img?: string;
+    count?: number;
+}
+
 export default function AdminPartsPage() {
     const { isRTL } = useLanguage();
     const { showToast } = useToast();
     const router = useRouter();
-    const [parts, setParts] = useState<any[]>([]);
+    const [parts, setParts] = useState<Part[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped'); // [[ARABIC_COMMENT]] وضع العرض: مجموع بالوكالات أو عرض مسطح
     const [expandedBrands, setExpandedBrands] = useState<Record<string, boolean>>({});
     const [showModal, setShowModal] = useState(false);
-    const [editingPart, setEditingPart] = useState<any>(null);
+    const [editingPart, setEditingPart] = useState<Part | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [scraping, setScraping] = useState(false);
     const [totalPartsCount, setTotalPartsCount] = useState(0); // [[ARABIC_COMMENT]] عداد إجمالي القطع المستوردة
@@ -133,7 +154,7 @@ export default function AdminPartsPage() {
         setSubmitting(true);
         try {
             if (editingPart) {
-                await api.parts.update(editingPart.id, formData);
+                await api.parts.update(editingPart._id, formData);
             } else {
                 await api.parts.create(formData);
             }
@@ -358,21 +379,21 @@ export default function AdminPartsPage() {
                                             <label className="text-[9px] font-black text-white/40 uppercase tracking-widest ml-1">{isRTL ? 'الدولار إلى الريال' : 'USD TO SAR'}</label>
                                             <div className="relative">
                                                 <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                                                <input type="number" step="0.01" value={currencySettings.usdToSar} onChange={(e) => setCurrencySettings({ ...currencySettings, usdToSar: parseFloat(e.target.value) })} className="ck-input pl-10" />
+                                                <input type="number" step="0.01" aria-label="USD to SAR" value={currencySettings.usdToSar} onChange={(e) => setCurrencySettings({ ...currencySettings, usdToSar: parseFloat(e.target.value) })} className="ck-input pl-10" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-black text-white/40 uppercase tracking-widest ml-1">{isRTL ? 'الدولار إلى الون' : 'USD TO KRW'}</label>
                                             <div className="relative">
                                                 <TrendingUp className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
-                                                <input type="number" step="1" value={currencySettings.usdToKrw} onChange={(e) => setCurrencySettings({ ...currencySettings, usdToKrw: parseInt(e.target.value) })} className="ck-input pl-10" />
+                                                <input type="number" step="1" aria-label="USD to KRW" value={currencySettings.usdToKrw} onChange={(e) => setCurrencySettings({ ...currencySettings, usdToKrw: parseInt(e.target.value) })} className="ck-input pl-10" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <label className="text-[9px] font-black text-white/40 uppercase tracking-widest ml-1">{isRTL ? 'مُعامل ربح القطع (x)' : 'PARTS MULTIPLIER (x)'}</label>
                                             <div className="relative">
                                                 <Settings className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-orange-400/50" />
-                                                <input type="number" step="0.01" value={currencySettings.partsMultiplier} onChange={(e) => setCurrencySettings({ ...currencySettings, partsMultiplier: parseFloat(e.target.value) })} className="ck-input pl-10 border-orange-500/30 focus:border-orange-400 bg-orange-500/10" />
+                                                <input type="number" step="0.01" aria-label="Parts multiplier" value={currencySettings.partsMultiplier} onChange={(e) => setCurrencySettings({ ...currencySettings, partsMultiplier: parseFloat(e.target.value) })} className="ck-input pl-10 border-orange-500/30 focus:border-orange-400 bg-orange-500/10" />
                                             </div>
                                         </div>
                                     </div>
@@ -532,7 +553,7 @@ export default function AdminPartsPage() {
                                         {editingPart ? (isRTL ? '✏️ تعديل قطعة' : 'EDIT PART') : (isRTL ? '+ إضافة قطعة' : 'NEW PART')}
                                     </h2>
                                 </div>
-                                <button onClick={() => setShowModal(false)} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 text-white/40 transition-all flex items-center justify-center">
+                                <button onClick={() => setShowModal(false)} aria-label="Close" className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 text-white/40 transition-all flex items-center justify-center">
                                     <X className="w-4 h-4" />
                                 </button>
                             </div>
@@ -559,36 +580,36 @@ export default function AdminPartsPage() {
 
                                     <div className="col-span-2">
                                         <label className="block cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.15em] mb-2">{isRTL ? 'اسم القطعة' : 'PART NAME'}</label>
-                                        <input type="text" required value={formData.name}
+                                        <input type="text" required aria-label="Part name" value={formData.name}
                                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                             className="ck-input" />
                                     </div>
 
                                     <div>
                                         <label className="block cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.15em] mb-2">{isRTL ? 'الوكالة' : 'BRAND'}</label>
-                                        <select value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} className="ck-select">
+                                        <select aria-label="Brand" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} className="ck-select">
                                             {['TOYOTA', 'KIA', 'HYUNDAI', 'FORD', 'NISSAN', 'MERCEDES', 'BMW', 'LEXUS'].map(b => <option key={b} value={b}>{b}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="block cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.15em] mb-2">{isRTL ? 'موديل السيارة' : 'CAR MODEL'}</label>
-                                        <input type="text" required placeholder={isRTL ? 'كامري' : 'Camry'} value={formData.model}
+                                        <input type="text" required aria-label="Car model" placeholder={isRTL ? 'كامري' : 'Camry'} value={formData.model}
                                             onChange={(e) => setFormData({ ...formData, model: e.target.value.toUpperCase() })} className="ck-input" />
                                     </div>
                                     <div>
                                         <label className="block cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.15em] mb-2">{isRTL ? 'السعر (ر.س)' : 'PRICE (SAR)'}</label>
-                                        <input type="number" required value={formData.price}
+                                        <input type="number" required aria-label="Price (SAR)" value={formData.price}
                                             onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })} className="ck-input" />
                                     </div>
                                     <div>
                                         <label className="block cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.15em] mb-2">{isRTL ? 'الفئة' : 'CATEGORY'}</label>
-                                        <select value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="ck-select">
+                                        <select aria-label="Category" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="ck-select">
                                             {['Engine', 'Brakes', 'Suspension', 'Filters', 'Electrical', 'Body', 'Accessories'].map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
                                     </div>
                                     <div>
                                         <label className="block cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.15em] mb-2">{isRTL ? 'الحالة' : 'CONDITION'}</label>
-                                        <select value={formData.condition} onChange={(e) => setFormData({ ...formData, condition: e.target.value })} className="ck-select">
+                                        <select aria-label="Condition" value={formData.condition} onChange={(e) => setFormData({ ...formData, condition: e.target.value })} className="ck-select">
                                             <option value="New">{isRTL ? 'جديد' : 'New'}</option>
                                             <option value="Used">{isRTL ? 'مستعمل' : 'Used'}</option>
                                             <option value="Refurbished">{isRTL ? 'مجدد' : 'Refurbished'}</option>
@@ -596,7 +617,7 @@ export default function AdminPartsPage() {
                                     </div>
                                     <div>
                                         <label className="block cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.15em] mb-2">{isRTL ? 'الكمية' : 'QTY IN STOCK'}</label>
-                                        <input type="number" required min="1" value={formData.stockQty}
+                                        <input type="number" required min="1" aria-label="Quantity in stock" value={formData.stockQty}
                                             onChange={(e) => setFormData({ ...formData, stockQty: parseInt(e.target.value) })} className="ck-input" />
                                     </div>
                                 </div>
@@ -633,10 +654,10 @@ const getBrandLogo = (brand: string) => {
 
 // [[ARABIC_COMMENT]] مكون بطاقة القطعة المنفصل لإعادة الاستخدام
 function PartCard({ part, i, isRTL, onEdit, onDelete, onToggle, onMarkSold }: {
-    part: any;
+    part: Part;
     i: number;
     isRTL: boolean;
-    onEdit: (p: any) => void;
+    onEdit: (p: Part) => void;
     onDelete: (id: string) => void;
     onToggle: (id: string) => void;
     onMarkSold: (id: string, name: string, count: number) => void;
@@ -677,7 +698,7 @@ function PartCard({ part, i, isRTL, onEdit, onDelete, onToggle, onMarkSold }: {
 
             <div className="p-4 space-y-3">
                 <div>
-                    <p className="cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.2em] mb-0.5">{part.brand} · {part.model}</p>
+                    <p className="cockpit-mono text-[9px] text-orange-400/60 uppercase tracking-[0.2em] mb-0.5">{typeof part.brand === 'object' ? part.brand.name : part.brand} · {part.model}</p>
                     <h3 className="text-sm font-bold text-white truncate">{part.name}</h3>
                     <p className="cockpit-mono text-[9px] text-white/30 uppercase mt-0.5">{part.category || part.partType || '—'}</p>
                 </div>
@@ -692,7 +713,7 @@ function PartCard({ part, i, isRTL, onEdit, onDelete, onToggle, onMarkSold }: {
                             className="w-8 h-8 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500 hover:text-white transition-all flex items-center justify-center">
                             <Edit className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => onToggle(part.id)} title={part.inStock ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'إظهار' : 'Show')}
+                        <button onClick={() => onToggle(part.id || '')} title={part.inStock ? (isRTL ? 'إخفاء' : 'Hide') : (isRTL ? 'إظهار' : 'Show')}
                             className={cn("w-8 h-8 rounded-xl border flex items-center justify-center transition-all",
                                 part.inStock
                                     ? "bg-orange-500/10 border-orange-500/20 text-orange-400 hover:bg-orange-500 hover:text-white"
@@ -700,11 +721,11 @@ function PartCard({ part, i, isRTL, onEdit, onDelete, onToggle, onMarkSold }: {
                             )}>
                             {part.inStock ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
                         </button>
-                        <button onClick={() => onMarkSold(part.id, part.name, part.soldCount || 0)} title={isRTL ? 'تسجيل بيع' : 'Mark Sold'}
+                        <button onClick={() => onMarkSold(part.id || '', part.name || '', part.soldCount || 0)} title={isRTL ? 'تسجيل بيع' : 'Mark Sold'}
                             className="w-8 h-8 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500 hover:text-white transition-all flex items-center justify-center">
                             <CheckCircle2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => onDelete(part.id)} title={isRTL ? 'حذف' : 'Delete'}
+                        <button onClick={() => onDelete(part.id || '')} title={isRTL ? 'حذف' : 'Delete'}
                             className="w-8 h-8 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center">
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>

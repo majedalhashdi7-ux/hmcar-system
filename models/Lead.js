@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const leadSchema = new mongoose.Schema({
+    // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+    tenantId: {
+        type: String,
+        required: true,
+        default: 'default',
+        index: true
+    },
     name: { type: String, trim: true },
     phone: { type: String, trim: true },
     company: { type: String, trim: true },

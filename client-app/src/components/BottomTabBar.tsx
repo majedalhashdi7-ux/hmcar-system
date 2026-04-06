@@ -8,14 +8,12 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Home, Car, Bell, Wrench, User, Heart } from 'lucide-react';
+import { Home, Car, Bell, Wrench, User } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api-original';
 
-const FAVORITES_KEY = 'hm_favorites';
-const CART_KEY = 'hm_cart';
 
 const TABS = [
     {
@@ -67,26 +65,10 @@ export default function BottomTabBar() {
     const { user, isLoggedIn } = useAuth();
     const [unreadNotifs, setUnreadNotifs] = useState(0);
     const [activeOrders, setActiveOrders] = useState(0);
-    const [favCount, setFavCount] = useState(0);
-    const [cartCount, setCartCount] = useState(0);
-
-    // جلب عدد المفضلة والسلة من localStorage
-    const refreshLocalCounts = () => {
-        try {
-            const favs = JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]');
-            setFavCount(Array.isArray(favs) ? favs.length : 0);
-            const cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
-            setCartCount(Array.isArray(cart) ? cart.length : 0);
-        } catch { /* silent */ }
-    };
 
     useEffect(() => {
-        refreshLocalCounts();
-        window.addEventListener('favorites_updated', refreshLocalCounts);
-        window.addEventListener('cart_updated', refreshLocalCounts);
+        // placeholder for local count refresh
         return () => {
-            window.removeEventListener('favorites_updated', refreshLocalCounts);
-            window.removeEventListener('cart_updated', refreshLocalCounts);
         };
     }, []);
 

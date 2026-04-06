@@ -209,7 +209,7 @@ export default function AdminLiveAuctions() {
                             initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
                             className="bg-zinc-950 border border-white/10 rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative"
                         >
-                            <button onClick={() => setIsModalOpen(false)} className="absolute top-6 right-6 text-white/40 hover:text-white z-10"><X className="w-6 h-6" /></button>
+                            <button onClick={() => setIsModalOpen(false)} aria-label="Close" className="absolute top-6 right-6 text-white/40 hover:text-white z-10"><X className="w-6 h-6" /></button>
 
                             <div className="p-8 border-b border-white/5">
                                 <h2 className="text-3xl font-black uppercase italic tracking-tighter">{editingId ? "تعديل الجلسة" : "جلسة جديدة"}</h2>
@@ -251,7 +251,7 @@ export default function AdminLiveAuctions() {
                                     <div className="space-y-6">
                                         {formData.cars.map((car, idx) => (
                                             <div key={idx} className="bg-white/5 p-6 rounded-2xl border border-white/10 relative space-y-4">
-                                                <button onClick={() => removeCar(idx)} className="absolute top-4 right-4 text-red-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
+                                                <button onClick={() => removeCar(idx)} aria-label="Remove car" className="absolute top-4 right-4 text-red-500 hover:text-red-400"><Trash2 className="w-4 h-4" /></button>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <input value={car.title} onChange={e => updateCar(idx, 'title', e.target.value)} className="bg-black/40 border border-white/10 p-3 rounded-lg text-sm" placeholder="Car Name (e.g. Ford Mustang 2021)" />
@@ -269,7 +269,8 @@ export default function AdminLiveAuctions() {
 
                                                 <div className="flex gap-2 overflow-x-auto pb-2">
                                                     {car.images?.map((img: string, i: number) => (
-                                                        <img key={i} src={img} alt={`${car.title || 'Car'} image ${i + 1}`} className="w-16 h-16 object-cover rounded-lg border border-white/10" />
+                                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img key={i} src={img} alt={`${car.title || 'Car'} image ${i + 1}`} className="w-16 h-16 object-cover rounded-lg border border-white/10" />
                                                     ))}
                                                 </div>
                                             </div>

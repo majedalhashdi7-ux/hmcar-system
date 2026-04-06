@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from "framer-motion";
-import { Search, Car, Banknote, ShieldCheck } from "lucide-react";
+import { Search, Car, Banknote } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/lib/LanguageContext";
 

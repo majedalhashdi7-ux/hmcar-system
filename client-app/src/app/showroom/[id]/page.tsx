@@ -92,7 +92,7 @@ export default function ShowroomCarDetail() {
                     try {
                         const u = JSON.parse(userJson);
                         buyerId = u?._id || u?.id;
-                    } catch(e) {}
+                    } catch {}
                 }
             }
 

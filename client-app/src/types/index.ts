@@ -251,7 +251,7 @@ export interface Notification {
   messageAr?: string;
   read: boolean;
   link?: string;
-  data?: any;
+  data?: unknown;
   createdAt: Date | string;
 }
 
@@ -469,7 +469,7 @@ export interface AppError {
   message: string;
   code?: string;
   status?: number;
-  details?: any;
+  details?: unknown;
 }
 
 export interface ValidationError {

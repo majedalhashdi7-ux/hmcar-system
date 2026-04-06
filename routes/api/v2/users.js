@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { getModel } = require('../../../tenants/tenant-model-helper');
+const { getModel, addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI, requirePermissionAPI } = require('../../../middleware/auth');
 
 // Get all users (admin only)
@@ -41,13 +41,13 @@ router.get('/', requireAuthAPI, requirePermissionAPI('manage_users'), async (req
     const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
     const [usersFromDb, total] = await Promise.all([
-      User.find(filter)
+      User.find(addTenantFilter(req, filter))
         .select(selectFields)
         .sort(sort)
         .limit(limit * 1)
         .skip(skip)
         .lean(),
-      User.countDocuments(filter)
+      User.countDocuments(addTenantFilter(req, filter))
     ]);
 
     // Calculate dynamic online status
@@ -95,7 +95,7 @@ router.post('/heartbeat', requireAuthAPI, async (req, res) => {
     if (userId && User) {
       // Use updateOne with error suppression - don't block the response
       User.updateOne(
-        { _id: userId }, 
+        addTenantFilter(req, { _id: userId }), 
         { $set: { lastActiveAt: new Date(), isOnline: true } }
       ).catch(() => {}); // silent fail - DB update is best-effort
     }
@@ -111,7 +111,7 @@ router.post('/heartbeat', requireAuthAPI, async (req, res) => {
 router.get('/profile', requireAuthAPI, async (req, res) => {
   try {
     const User = getModel(req, 'User');
-    const user = await User.findById(req.user.userId).select('-password');
+    const user = await User.findOne(addTenantFilter(req, { _id: req.user.userId })).select('-password');
 
     if (!user) {
       return res.status(404).json({
@@ -148,7 +148,7 @@ router.put('/profile', requireAuthAPI, async (req, res) => {
       }
     });
 
-    const user = await User.findById(req.user.userId);
+    const user = await User.findOne(addTenantFilter(req, { _id: req.user.userId }));
 
     if (!user) {
       return res.status(404).json({
@@ -159,14 +159,14 @@ router.put('/profile', requireAuthAPI, async (req, res) => {
 
     // Check if email/phone/username is already taken by another user
     if (updates.email || updates.phone || updates.username) {
-      const existingUser = await User.findOne({
+      const existingUser = await User.findOne(addTenantFilter(req, {
         _id: { $ne: user._id },
         $or: [
           ...(updates.email ? [{ email: updates.email }] : []),
           ...(updates.phone ? [{ phone: updates.phone }] : []),
           ...(updates.username ? [{ username: updates.username }] : [])
         ]
-      });
+      }));
 
       if (existingUser) {
         return res.status(409).json({
@@ -214,7 +214,7 @@ router.put('/profile', requireAuthAPI, async (req, res) => {
 router.get('/:id', requireAuthAPI, requirePermissionAPI('manage_users'), async (req, res) => {
   try {
     const User = getModel(req, 'User');
-    const user = await User.findById(req.params.id).select('-password');
+    const user = await User.findOne(addTenantFilter(req, { _id: req.params.id })).select('-password');
 
     if (!user) {
       return res.status(404).json({
@@ -297,7 +297,7 @@ router.post('/', requireAuthAPI, requirePermissionAPI('manage_users'), async (re
     if (username && username.trim()) orConditions.push({ username: username.trim() });
 
     if (orConditions.length > 0) {
-      const existingUser = await User.findOne({ $or: orConditions });
+      const existingUser = await User.findOne(addTenantFilter(req, { $or: orConditions }));
       if (existingUser) {
         const field = existingUser.email === email?.toLowerCase() ? 'البريد الإلكتروني'
           : existingUser.phone === phone ? 'رقم الهاتف' : 'اسم المستخدم';
@@ -327,7 +327,10 @@ router.post('/', requireAuthAPI, requirePermissionAPI('manage_users'), async (re
     if (phone && phone.trim()) userData.phone = phone.trim();
     if (username && username.trim()) userData.username = username.trim();
 
-    const user = new User(userData);
+    const user = new User({
+      ...userData,
+      tenantId: getTenantId(req)
+    });
     await user.save();
 
     // ─── تسجيل العملية في سجل التدقيق ───
@@ -388,7 +391,7 @@ router.put('/:id', requireAuthAPI, requirePermissionAPI('manage_users'), async (
   try {
     const User = getModel(req, 'User');
     const AuditLog = getModel(req, 'AuditLog');
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne(addTenantFilter(req, { _id: req.params.id }));
 
     if (!user) {
       return res.status(404).json({
@@ -417,14 +420,14 @@ router.put('/:id', requireAuthAPI, requirePermissionAPI('manage_users'), async (
 
     // Check email/phone/username uniqueness
     if (updates.email || updates.phone || updates.username) {
-      const existingUser = await User.findOne({
+      const existingUser = await User.findOne(addTenantFilter(req, {
         _id: { $ne: user._id },
         $or: [
           ...(updates.email ? [{ email: updates.email }] : []),
           ...(updates.phone ? [{ phone: updates.phone }] : []),
           ...(updates.username ? [{ username: updates.username }] : [])
         ]
-      });
+      }));
 
       if (existingUser) {
         return res.status(409).json({
@@ -472,7 +475,7 @@ router.delete('/:id', requireAuthAPI, requirePermissionAPI('manage_users'), asyn
   try {
     const User = getModel(req, 'User');
     const AuditLog = getModel(req, 'AuditLog');
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne(addTenantFilter(req, { _id: req.params.id }));
 
     if (!user) {
       return res.status(404).json({
@@ -497,7 +500,7 @@ router.delete('/:id', requireAuthAPI, requirePermissionAPI('manage_users'), asyn
       });
     }
 
-    await User.findByIdAndDelete(req.params.id);
+    await User.findOneAndDelete(addTenantFilter(req, { _id: req.params.id }));
 
     // Log user deletion
     await AuditLog.logUserAction(
@@ -539,18 +542,20 @@ router.get('/stats/overview', requireAuthAPI, requirePermissionAPI('view_analyti
       recentUsers,
       usersByMonth
     ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ status: 'active' }),
-      User.countDocuments({ status: { $ne: 'active' } }),
+      User.countDocuments(addTenantFilter(req, {})),
+      User.countDocuments(addTenantFilter(req, { status: 'active' })),
+      User.countDocuments(addTenantFilter(req, { status: { $ne: 'active' } })),
       User.aggregate([
+        { $match: addTenantFilter(req, {}) },
         { $group: { _id: '$role', count: { $sum: 1 } } },
         { $sort: { count: -1 } }
       ]),
-      User.find({ status: 'active' })
+      User.find(addTenantFilter(req, { status: 'active' }))
         .sort({ lastLoginAt: -1 })
         .limit(10)
         .select('name email role lastLoginAt'),
       User.aggregate([
+        { $match: addTenantFilter(req, {}) },
         {
           $group: {
             _id: {
@@ -591,7 +596,7 @@ router.post('/:id/suspend', requireAuthAPI, requirePermissionAPI('manage_users')
     const { reason } = req.body;
     const User = getModel(req, 'User');
     const AuditLog = getModel(req, 'AuditLog');
-    const user = await User.findById(req.params.id);
+    const user = await User.findOne(addTenantFilter(req, { _id: req.params.id }));
 
     if (!user) {
       return res.status(404).json({

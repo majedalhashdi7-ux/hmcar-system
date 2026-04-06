@@ -125,7 +125,7 @@ export default function ConciergePage() {
                         phone: prev.phone || phone,
                     }));
                 }
-            } catch (e) {
+            } catch {
                 // تجاهل أي خطأ parsing
             }
         }

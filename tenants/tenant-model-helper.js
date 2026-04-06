@@ -83,9 +83,33 @@ function getCurrentTenantId(req) {
   return req.tenant ? req.tenant.id : null;
 }
 
+/**
+ * Add tenantId to a query filter for defense-in-depth protection
+ * @param {import('express').Request} req - Express request object
+ * @param {Object} filter - Query filter object
+ * @returns {Object} Filter with tenantId added
+ */
+function addTenantFilter(req, filter = {}) {
+  if (req.tenant?.id) {
+    return { ...filter, tenantId: req.tenant.id };
+  }
+  return filter;
+}
+
+/**
+ * Get tenantId for creating new documents
+ * @param {import('express').Request} req - Express request object
+ * @returns {String} tenantId (defaults to 'default' for backward compatibility)
+ */
+function getTenantId(req) {
+  return req.tenant?.id || 'default';
+}
+
 module.exports = {
   getModel,
   getModels,
   isMultiTenant,
   getCurrentTenantId,
+  addTenantFilter,
+  getTenantId,
 };

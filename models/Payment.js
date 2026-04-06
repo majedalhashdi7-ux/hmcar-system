@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const paymentSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   order: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Order',
@@ -100,6 +107,10 @@ const paymentSchema = new mongoose.Schema({
 });
 
 // Indexes
+// Composite indexes for multi-tenant queries
+paymentSchema.index({ tenantId: 1, status: 1 });
+paymentSchema.index({ tenantId: 1, user: 1 });
+paymentSchema.index({ tenantId: 1, createdAt: -1 });
 paymentSchema.index({ order: 1 });
 paymentSchema.index({ user: 1 });
 paymentSchema.index({ status: 1 });

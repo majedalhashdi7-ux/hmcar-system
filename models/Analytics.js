@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const analyticsSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   type: {
     type: String,
     required: true,
@@ -60,6 +67,10 @@ const analyticsSchema = new mongoose.Schema({
 });
 
 // Indexes for performance
+// Composite indexes for multi-tenant queries
+analyticsSchema.index({ tenantId: 1, type: 1 });
+analyticsSchema.index({ tenantId: 1, timestamp: -1 });
+analyticsSchema.index({ tenantId: 1, userId: 1 });
 analyticsSchema.index({ type: 1, timestamp: -1 });
 analyticsSchema.index({ userId: 1, timestamp: -1 });
 analyticsSchema.index({ sessionId: 1, timestamp: -1 });

@@ -581,7 +581,7 @@ export default function ShowroomPage() {
             console.error('Failed to log showroom concierge request:', err);
         }
 
-        const url = WhatsAppService.generateCarLink(car, socialLinks?.whatsapp || '', isRTL, formatPriceFromUsd);
+        const url = WhatsAppService.generateCarLink(car as unknown as Record<string, unknown>, socialLinks?.whatsapp || '', isRTL, formatPriceFromUsd);
         window.open(url, '_blank');
         setSelectedCar(null);
     };

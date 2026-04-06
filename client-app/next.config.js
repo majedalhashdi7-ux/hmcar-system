@@ -1,12 +1,19 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Multi-Tenant HM CAR Configuration
+  // Multi-Tenant Configuration
+  // Supports HM CAR and CAR X tenants with dynamic domain detection
   
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'localhost' },
+      { protocol: 'http', hostname: 'localhost' },
       { protocol: 'https', hostname: 'daood.okigo.net' },
       { protocol: 'https', hostname: 'hmcar.vercel.app' },
+      { protocol: 'https', hostname: 'www.hmcar.vercel.app' },
+      { protocol: 'https', hostname: 'hmcar.xyz' },
+      { protocol: 'https', hostname: 'www.hmcar.xyz' },
+      { protocol: 'https', hostname: 'carx-system.vercel.app' },
+      { protocol: 'https', hostname: 'www.carx-system.vercel.app' },
+      { protocol: 'https', hostname: 'carx-system-psi.vercel.app' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
       { protocol: 'https', hostname: 'ci.encar.com' },
       { protocol: 'https', hostname: 'img.encar.com' },

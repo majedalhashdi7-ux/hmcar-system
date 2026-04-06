@@ -3,11 +3,11 @@
  * يساعد في جعل التنقل بين الصفحات "لحظياً" عبر تخزين استجابات الـ API.
  */
 
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, { data: unknown; timestamp: number }>();
 const DEFAULT_TTL = 30000; // 30 ثانية كحد أقصى للتخزين المؤقت للبيانات المسبقة
 
 export const apiCache = {
-    set: (key: string, data: any, ttl = DEFAULT_TTL) => {
+    set: (key: string, data: unknown, ttl = DEFAULT_TTL) => {
         cache.set(key, { data, timestamp: Date.now() + ttl });
     },
     get: (key: string) => {

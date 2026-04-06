@@ -59,7 +59,7 @@ function HMCarLogin() {
 
     const { socket, isConnected } = useSocket();
     const { user } = useAuth();
-    const DEV_FAKE = process.env.NEXT_PUBLIC_ENABLE_DEV_ADMIN === '1';
+    const _DEV_FAKE = process.env.NEXT_PUBLIC_ENABLE_DEV_ADMIN === '1';
 
     // عند تحميل الصفحة للمرة الأولى
     useEffect(() => {
@@ -151,8 +151,8 @@ function HMCarLogin() {
                         setOtpRequested(true);
                         setLoading(false);
                         return;
-                    } catch (err: any) {
-                        setError(err.message || (isRTL ? 'فشل إرسال رمز التحقق' : 'Failed to send OTP'));
+                    } catch (err: unknown) {
+                        setError(err instanceof Error ? err.message : (isRTL ? 'فشل إرسال رمز التحقق' : 'Failed to send OTP'));
                         setLoading(false);
                         return;
                     }
@@ -165,8 +165,8 @@ function HMCarLogin() {
                     }
                     try {
                         await api.auth.verifyOtp({ phone: phoneE164, code: otpCode });
-                    } catch (err: any) {
-                        throw new Error(err.message || (isRTL ? 'رمز التحقق غير صحيح، أو انتهت صلاحيته' : 'Invalid or expired verification code'));
+                    } catch (err: unknown) {
+                        throw new Error(err instanceof Error ? err.message : (isRTL ? 'رمز التحقق غير صحيح، أو انتهت صلاحيته' : 'Invalid or expired verification code'));
                     }
                 }
 
@@ -215,17 +215,16 @@ function HMCarLogin() {
                 setError(response.error || (isRTL ? 'فشل تسجيل الدخول' : 'Login failed'));
                 setLoading(false);
             }
-        } catch (err: any) {
-            if (err.banned) {
-                setBanInfo({ banned: true, banCode: err.banCode, message: err.message || (isRTL ? 'تم حظر جهازك' : 'Your device is banned') });
+        } catch (err: unknown) {
+            const e = err as Error & { banned?: boolean; banCode?: string };
+            if (e.banned) {
+                setBanInfo({ banned: true, banCode: e.banCode || '', message: e.message || (isRTL ? 'تم حظر جهازك' : 'Your device is banned') });
                 setLoading(false);
                 return;
             }
 
-            const errMsg = err.message || '';
-            const identifier = formData.email.trim();
             // All other login failures show the error - no local bypass allowed
-            setError(errMsg || (isRTL ? 'فشل تسجيل الدخول. تحقق من البيانات أو تواصل مع الدعم.' : 'Login failed. Check your credentials or contact support.'));
+            setError(e.message || (isRTL ? 'فشل تسجيل الدخول. تحقق من البيانات أو تواصل مع الدعم.' : 'Login failed. Check your credentials or contact support.'));
             setLoading(false);
         }
     };
@@ -619,7 +618,7 @@ function HMCarLogin() {
                                                 try {
                                                     await api.auth.sendOtp({ phone: phoneE164 });
                                                     setSuccessMessage(isRTL ? 'تم إرسال الرمز مرة أخرى' : 'Code resent');
-                                                } catch (err: any) {
+                                                } catch {
                                                     setSuccessMessage(isRTL ? 'فشل إرسال الرمز مرة أخرى' : 'Failed to resend code');
                                                 }
                                             }}

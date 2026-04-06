@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const reportSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   name: {
     type: String,
     required: true,
@@ -77,6 +84,10 @@ const reportSchema = new mongoose.Schema({
 });
 
 // Indexes
+// Composite indexes for multi-tenant queries
+reportSchema.index({ tenantId: 1, type: 1 });
+reportSchema.index({ tenantId: 1, createdAt: -1 });
+reportSchema.index({ tenantId: 1, generatedBy: 1 });
 reportSchema.index({ type: 1, createdAt: -1 });
 reportSchema.index({ generatedBy: 1 });
 reportSchema.index({ scheduledAt: 1 });

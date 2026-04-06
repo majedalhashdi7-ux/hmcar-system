@@ -17,7 +17,7 @@ import { apiCache } from './api-cache';
  */
 export async function fetchAPI(endpoint: string, options: RequestInit & { useCache?: boolean; timeout?: number } = {}, retries = 2) {
     // [[ARABIC_COMMENT]] التحقق من الكاش المحلي أولاً للسرعة القصوى
-    if (options.useCache && options.method === 'GET' || !options.method) {
+    if (options.useCache && (options.method === 'GET' || !options.method)) {
         const cached = apiCache.get(endpoint);
         if (cached) return cached;
     }
@@ -68,7 +68,7 @@ export async function fetchAPI(endpoint: string, options: RequestInit & { useCac
                 message = 'لقد قمت بعدد كبير من المحاولات. يرجى الانتظار قليلاً قبل المحاولة مرة أخرى.';
             }
 
-            const customError: any = new Error(message);
+            const customError = new Error(message) as Error & { status: number };
             customError.status = response.status;
             throw customError;
         }
@@ -79,21 +79,22 @@ export async function fetchAPI(endpoint: string, options: RequestInit & { useCac
         }
 
         return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
         clearTimeout(timeoutId);
         
         // [[ARABIC_COMMENT]] إعادة المحاولة تلقائياً في حالة فشل الشبكة أو المهلة
-        if (retries > 0 && (error.name === 'AbortError' || error.message.includes('fetch'))) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        if (retries > 0 && (err.name === 'AbortError' || err.message.includes('fetch'))) {
             console.warn(`[API Retry] Retrying ${url}... Attempts left: ${retries}`);
             return fetchAPI(endpoint, options, retries - 1);
         }
 
-        console.error(`[API Error] ${url}:`, error);
-        throw error;
+        console.error(`[API Error] ${url}:`, err);
+        throw err;
     }
 }
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
     success: boolean;
     data: T;
     message?: string;
@@ -202,8 +203,8 @@ export const api = {
         }),
     },
     auctions: {
-        list: (params: any = {}) => {
-            const query = new URLSearchParams(params).toString();
+        list: (params: Record<string, string | number | boolean> = {}) => {
+            const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/auctions?${query}`);
         },
         getById: (id: string) => fetchAPI(`/api/v2/auctions/${id}`),
@@ -211,28 +212,28 @@ export const api = {
             method: 'POST',
             body: JSON.stringify({ amount }),
         }),
-        create: (data: any) => fetchAPI('/api/v2/auctions', {
+        create: (data: Record<string, unknown>) => fetchAPI('/api/v2/auctions', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
         delete: (id: string) => fetchAPI(`/api/v2/auctions/${id}`, {
             method: 'DELETE',
         }),
-        update: (id: string, data: any) => fetchAPI(`/api/v2/auctions/${id}`, {
+        update: (id: string, data: Record<string, unknown>) => fetchAPI(`/api/v2/auctions/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         }),
     },
     parts: {
-        list: (params: any = {}) => {
-            const query = new URLSearchParams(params).toString();
+        list: (params: Record<string, string | number | boolean> = {}) => {
+            const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/parts?${query}`);
         },
-        create: (data: any) => fetchAPI('/api/v2/parts', {
+        create: (data: Record<string, unknown>) => fetchAPI('/api/v2/parts', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
-        update: (id: string, data: any) => fetchAPI(`/api/v2/parts/${id}`, {
+        update: (id: string, data: Record<string, unknown>) => fetchAPI(`/api/v2/parts/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         }),
@@ -251,12 +252,12 @@ export const api = {
         getAdminData: () => fetchAPI('/api/v2/dashboard/admin'),
     },
     orders: {
-        list: (params: any = {}) => {
-            const query = new URLSearchParams(params).toString();
+        list: (params: Record<string, string | number | boolean> = {}) => {
+            const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/orders?${query}`);
         },
         getById: (id: string) => fetchAPI(`/api/v2/orders/${id}`),
-        create: (data: any) => fetchAPI('/api/v2/orders', {
+        create: (data: Record<string, unknown>) => fetchAPI('/api/v2/orders', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
@@ -268,13 +269,13 @@ export const api = {
     },
     // --- خدمات الفواتير (Invoices) ---
     invoices: {
-        list: (params: any = {}) => {
-            const query = new URLSearchParams(params).toString();
+        list: (params: Record<string, string | number | boolean> = {}) => {
+            const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/invoices?${query}`);
         },
         getNextNumber: () => fetchAPI('/api/v2/invoices/next-number'),
         getById: (id: string) => fetchAPI(`/api/v2/invoices/${id}`),
-        create: (data: any) => fetchAPI('/api/v2/invoices', {
+        create: (data: Record<string, unknown>) => fetchAPI('/api/v2/invoices', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
@@ -282,7 +283,7 @@ export const api = {
             method: 'PATCH',
             body: JSON.stringify({ status }),
         }),
-        update: (id: string, data: any) => fetchAPI(`/api/v2/invoices/${id}`, {
+        update: (id: string, data: Record<string, unknown>) => fetchAPI(`/api/v2/invoices/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         }),
@@ -337,7 +338,7 @@ export const api = {
                 method: 'POST',
                 body: JSON.stringify(data),
             }),
-        update: (id: string, data: any) =>
+        update: (id: string, data: Record<string, unknown>) =>
             fetchAPI(`/api/v2/brands/${id}`, {
                 method: 'PUT',
                 body: JSON.stringify(data),
@@ -372,8 +373,8 @@ export const api = {
         highest: (auctionId: string) => fetchAPI(`/api/v2/bids/highest/${auctionId}`),
     },
     reviews: {
-        list: (params: any = {}) => {
-            const query = new URLSearchParams(params).toString();
+        list: (params: Record<string, string | number | boolean> = {}) => {
+            const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/reviews?${query}`);
         },
         carReviews: (carId: string) => fetchAPI(`/api/v2/reviews/car/${carId}`),
@@ -426,8 +427,8 @@ export const api = {
                 method: 'POST',
                 body: JSON.stringify(data),
             }),
-        list: (params: any = {}) => {
-            const query = new URLSearchParams(params).toString();
+        list: (params: Record<string, string | number | boolean> = {}) => {
+            const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/contact?${query}`);
         },
         updateStatus: (id: string, status: string) =>
@@ -441,16 +442,16 @@ export const api = {
             }),
     },
     liveAuctions: {
-        list: (params: any = {}) => {
-            const query = new URLSearchParams(params).toString();
+        list: (params: Record<string, string | number | boolean> = {}) => {
+            const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/live-auctions?${query}`);
         },
         getById: (id: string) => fetchAPI(`/api/v2/live-auctions/${id}`),
-        create: (data: any) => fetchAPI('/api/v2/live-auctions', {
+        create: (data: Record<string, unknown>) => fetchAPI('/api/v2/live-auctions', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
-        update: (id: string, data: any) => fetchAPI(`/api/v2/live-auctions/${id}`, {
+        update: (id: string, data: Record<string, unknown>) => fetchAPI(`/api/v2/live-auctions/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         }),
@@ -465,15 +466,15 @@ export const api = {
         }),
     },
     liveAuctionRequests: {
-        list: (params: any = {}) => {
-            const query = new URLSearchParams(params).toString();
+        list: (params: Record<string, string | number | boolean> = {}) => {
+            const query = new URLSearchParams(params as Record<string, string>).toString();
             return fetchAPI(`/api/v2/live-auction-requests?${query}`);
         },
-        create: (data: any) => fetchAPI('/api/v2/live-auction-requests', {
+        create: (data: Record<string, unknown>) => fetchAPI('/api/v2/live-auction-requests', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
-        updateStatus: (id: string, data: any) => fetchAPI(`/api/v2/live-auction-requests/${id}/status`, {
+        updateStatus: (id: string, data: Record<string, unknown>) => fetchAPI(`/api/v2/live-auction-requests/${id}/status`, {
             method: 'PUT',
             body: JSON.stringify(data),
         }),
@@ -481,11 +482,11 @@ export const api = {
     smartAlerts: {
         list: () => fetchAPI('/api/v2/smart-alerts'),
         stats: () => fetchAPI('/api/v2/smart-alerts/stats'),
-        create: (data: any) => fetchAPI('/api/v2/smart-alerts', {
+        create: (data: Record<string, unknown>) => fetchAPI('/api/v2/smart-alerts', {
             method: 'POST',
             body: JSON.stringify(data),
         }),
-        update: (id: string, data: any) => fetchAPI(`/api/v2/smart-alerts/${id}`, {
+        update: (id: string, data: Record<string, unknown>) => fetchAPI(`/api/v2/smart-alerts/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         }),
@@ -569,7 +570,7 @@ export const api = {
         // إحصائيات الطلبات الخاصة
         stats: () => fetchAPI('/api/v2/concierge/stats'),
         // تحديث حالة طلب
-        updateStatus: (id: string, status: string, data: any = {}) => fetchAPI(`/api/v2/concierge/${id}/status`, {
+        updateStatus: (id: string, status: string, data: Record<string, unknown> = {}) => fetchAPI(`/api/v2/concierge/${id}/status`, {
             method: 'PATCH',
             body: JSON.stringify({ status, ...data }),
         }),
@@ -608,7 +609,7 @@ export const api = {
             body: JSON.stringify({ title, message, url }),
         }),
         // [[ARABIC_COMMENT]] تسجيل اشتراك جديد لإشعارات PWA
-        subscribePush: (subscription: any, deviceInfo?: any) => fetchAPI('/api/v2/notifications/push/subscribe', {
+        subscribePush: (subscription: PushSubscription, deviceInfo?: Record<string, unknown>) => fetchAPI('/api/v2/notifications/push/subscribe', {
             method: 'POST',
             body: JSON.stringify({ subscription, deviceInfo }),
         }),

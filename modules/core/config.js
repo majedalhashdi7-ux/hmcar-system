@@ -141,7 +141,8 @@ const security = {
       if (process.env.CLIENT_URL) allowedProd.push(process.env.CLIENT_URL.trim());
       if (process.env.BASE_URL) allowedProd.push(process.env.BASE_URL.trim());
 
-      const isVercel = origin.endsWith('.vercel.app');
+      const ALLOWED_VERCEL_PREFIXES = ['car-auction', 'client-app', 'hmcar-client-app', 'carx-system'];
+      const isVercel = origin.endsWith('.vercel.app') && ALLOWED_VERCEL_PREFIXES.some(p => origin.includes(p));
       const isOkigo = origin.endsWith('.okigo.net');
       const isAllowed = allowedProd.includes(origin) || isVercel || isOkigo;
 

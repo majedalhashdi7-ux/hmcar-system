@@ -4,7 +4,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const { getModel } = require('../../../tenants/tenant-model-helper');
+const { getModel, addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI } = require('../../../middleware/auth');
 const { authRateLimiter, fullSecurityMiddleware } = require('../../../middleware/securityEnhanced');
 const { authLimiter } = require('../../../middleware/rateLimiter');
@@ -39,12 +39,12 @@ router.post('/register', authLimiter, async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({
+    const existingUser = await User.findOne(addTenantFilter(req, {
       $or: [
         { email: email },
         ...(phone ? [{ phone: phone }] : [])
       ]
-    });
+    }));
 
     if (existingUser) {
       return sendResponse(res, conflictResponse('User with this email or phone already exists'));
@@ -57,7 +57,8 @@ router.post('/register', authLimiter, async (req, res) => {
       phone,
       password,
       role: 'buyer',
-      status: 'active'
+      status: 'active',
+      tenantId: getTenantId(req)
     });
 
     await user.save();
@@ -66,6 +67,7 @@ router.post('/register', authLimiter, async (req, res) => {
     const token = jwt.sign(
       {
         userId: user._id,
+        tenantId: req.tenant?.id || 'default',
         email: user.email,
         role: user.role,
         permissions: user.permissions
@@ -134,7 +136,7 @@ router.post('/auto-login', authLimiter, async (req, res) => {
     }
 
     // -- تطبيق نظام حظر الأجهزة والتحقق من حساب واحد لكل جهاز --
-    let fingerprint = await DeviceFingerprint.findOne({ ip: clientIP });
+    let fingerprint = await DeviceFingerprint.findOne(addTenantFilter(req, { ip: clientIP }));
 
     if (fingerprint && !fingerprint.exemptFromSecurity) {
       if (fingerprint.banned) {
@@ -162,13 +164,13 @@ router.post('/auto-login', authLimiter, async (req, res) => {
     }
 
     // [1] Check if user exists with this exact name
-    let userToLogin = await User.findOne({
+    let userToLogin = await User.findOne(addTenantFilter(req, {
       name: { $regex: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') }
-    });
+    }));
 
     // [2] If no exact name match, check if there's a linked user for this device/IP (Fuzzy fallback)
     if (!userToLogin) {
-      const linkedFingerprint = await DeviceFingerprint.findOne({ ip: clientIP });
+      const linkedFingerprint = await DeviceFingerprint.findOne(addTenantFilter(req, { ip: clientIP }));
       if (linkedFingerprint && linkedFingerprint.linkedUsername) {
         // [[ARABIC_COMMENT]] التحقق من تطابق جزئي مع الاسم المسجل سابقاً لهذا الجهاز
         const nameParts = name.trim().split(/\s+/).filter(p => p.length > 1);
@@ -178,7 +180,7 @@ router.post('/auto-login', authLimiter, async (req, res) => {
         
         if (isFuzzyMatch) {
            // نجد المستخدم المسجل سابقاً
-           userToLogin = await User.findOne({ name: linkedFingerprint.linkedUsername });
+           userToLogin = await User.findOne(addTenantFilter(req, { name: linkedFingerprint.linkedUsername }));
            if (userToLogin) {
              console.log(`[AUTH] 🔄 Fuzzy match found for linked device. Mapping "${name}" to existing user "${userToLogin.name}"`);
            }
@@ -201,14 +203,14 @@ router.post('/auto-login', authLimiter, async (req, res) => {
 
       // Generate token
       const token = jwt.sign(
-        { userId: userToLogin._id, role: userToLogin.role },
+        { userId: userToLogin._id, tenantId: req.tenant?.id || 'default', role: userToLogin.role },
         process.env.JWT_SECRET,
         { expiresIn: '7d' }
       );
 
       // تحديث البصمة لتشمل الاسم الأخير المستخدم (للمستقبل)
       await DeviceFingerprint.findOneAndUpdate(
-        { ip: clientIP },
+        addTenantFilter(req, { ip: clientIP }),
         { $set: { linkedUsername: userToLogin.name, deviceId: deviceId || '', failedAttempts: 0 } },
         { upsert: true, new: true }
       );
@@ -239,21 +241,22 @@ router.post('/auto-login', authLimiter, async (req, res) => {
       lastLoginIP: clientIP,
       lastLoginAt: new Date(),
       deviceId: deviceId || '',
-      createdVia: 'auto-registration'
+      createdVia: 'auto-registration',
+      tenantId: getTenantId(req)
     });
 
     await newUser.save();
 
     // Generate token
     const token = jwt.sign(
-      { userId: newUser._id, role: newUser.role },
+      { userId: newUser._id, tenantId: req.tenant?.id || 'default', role: newUser.role },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     // ربط الجهاز بحساب العميل الجديد (upsert - لا تكرار)
     await DeviceFingerprint.findOneAndUpdate(
-      { ip: clientIP },
+      addTenantFilter(req, { ip: clientIP }),
       { $set: { linkedUsername: name.trim(), deviceId: deviceId || '', failedAttempts: 0 } },
       { upsert: true, new: true }
     );
@@ -306,7 +309,7 @@ router.post('/login', authLimiter, async (req, res) => {
     let fingerprint = null;
 
     if (role === 'buyer') {
-      fingerprint = await DeviceFingerprint.findOne({ ip: clientIP });
+      fingerprint = await DeviceFingerprint.findOne(addTenantFilter(req, { ip: clientIP }));
       if (fingerprint && !fingerprint.exemptFromSecurity) {
         if (fingerprint.banned) {
           return sendResponse(res, forbiddenResponse('تم حظرك من هذا الجهاز. لمراسلة الإدارة استخدم الرمز بالأسفل.'));
@@ -324,14 +327,14 @@ router.post('/login', authLimiter, async (req, res) => {
 
     // استخدام findOne بدل find لتفادي جلب كل المستخدمين
     const safeKey = searchKey.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const user = await User.findOne({
+    const user = await User.findOne(addTenantFilter(req, {
       $or: [
         { email: searchKey.toLowerCase() },
         { username: searchKey.toLowerCase() },
         { phone: searchKey },
         { name: { $regex: new RegExp(`.*${safeKey}.*`, 'i') } }
       ]
-    }).select('+password').lean(false);
+    })).select('+password').lean(false);
 
     if (!user) {
       console.warn(`[AUTH] User not found: ${searchKey}`);
@@ -367,6 +370,7 @@ router.post('/login', authLimiter, async (req, res) => {
     const token = jwt.sign(
       {
         userId: user._id,
+        tenantId: req.tenant?.id || 'default',
         email: user.email,
         role: user.role,
         permissions: user.permissions || []
@@ -376,13 +380,13 @@ router.post('/login', authLimiter, async (req, res) => {
     );
 
     // تحديث وقت الدخول + AuditLog — fire-and-forget لا ننتظرهما
-    User.updateOne({ _id: user._id }, { $set: { lastLoginAt: new Date() } }).catch(() => { });
+    User.updateOne(addTenantFilter(req, { _id: user._id }), { $set: { lastLoginAt: new Date() } }).catch(() => { });
     AuditLog.logUserAction(user, 'LOGIN', 'User', 'Successful login', { ipAddress: req.ip, result: 'SUCCESS' }).catch(() => { });
 
     if (role === 'buyer') {
       // upsert لمنع التكرار - تحديث السجل الموجود بدلاً من إنشاء جديد
       await DeviceFingerprint.findOneAndUpdate(
-        { ip: clientIP },
+        addTenantFilter(req, { ip: clientIP }),
         { $set: { linkedUsername: searchKey, deviceId: deviceId || '', failedAttempts: 0 } },
         { upsert: true, new: true }
       );
@@ -418,7 +422,7 @@ router.post('/logout', requireAuthAPI, async (req, res) => {
   try {
     const User = getModel(req, 'User');
     const AuditLog = getModel(req, 'AuditLog');
-    const user = await User.findById(req.user.userId);
+    const user = await User.findOne(addTenantFilter(req, { _id: req.user.userId }));
 
     if (user) {
       user.activeSessionId = '';
@@ -453,7 +457,7 @@ router.post('/logout', requireAuthAPI, async (req, res) => {
 router.post('/refresh', requireAuthAPI, async (req, res) => {
   try {
     const User = getModel(req, 'User');
-    const user = await User.findById(req.user.userId);
+    const user = await User.findOne(addTenantFilter(req, { _id: req.user.userId }));
 
     if (!user || user.status !== 'active') {
       return sendResponse(res, unauthorizedResponse('User not found or inactive'));
@@ -463,6 +467,7 @@ router.post('/refresh', requireAuthAPI, async (req, res) => {
     const token = jwt.sign(
       {
         userId: user._id,
+        tenantId: req.tenant?.id || 'default',
         email: user.email,
         role: user.role,
         permissions: user.permissions
@@ -546,6 +551,7 @@ router.post('/change-password', requireAuthAPI, async (req, res) => {
     const token = jwt.sign(
       {
         userId: user._id,
+        tenantId: req.tenant?.id || 'default',
         email: user.email,
         role: user.role,
         permissions: user.permissions || []

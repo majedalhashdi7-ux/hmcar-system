@@ -32,7 +32,7 @@ const TYPE_CONFIG: Record<string, { icon: LucideIcon; color: string; bg: string 
     AUCTION: { icon: Gavel, color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
 };
 
-const MOCK_NOTIFICATIONS: Notification[] = [];
+const _MOCK_NOTIFICATIONS: Notification[] = [];
 
 const FILTER_LABELS: Record<string, { en: string; ar: string }> = {
     ALL: { en: 'ALL', ar: 'الكل' },
@@ -298,7 +298,7 @@ export default function AdminNotifications() {
                             exit={{ opacity: 0, scale: 0.95 }}
                             className="bg-zinc-950 border border-white/10 p-8 rounded-3xl w-full max-w-lg relative"
                         >
-                            <button onClick={() => setShowBroadcastModal(false)} className="absolute top-6 right-6 text-white/40 hover:text-white transition-all"><X className="w-6 h-6" /></button>
+                            <button onClick={() => setShowBroadcastModal(false)} aria-label="Close" className="absolute top-6 right-6 text-white/40 hover:text-white transition-all"><X className="w-6 h-6" /></button>
                             <h2 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-3 text-cinematic-neon-blue">
                                 <Send className="w-6 h-6" />
                                 {isRTL ? 'إرسال إشعار للكل' : 'NEW BROADCAST'}

@@ -89,7 +89,7 @@ function AdminSocialSettings() {
     setConfig(prev => ({ ...prev, links: prev.links.filter(l => (l.platform || '').toLowerCase() !== key) }));
   };
 
-  const removeLink = (idx: number) => {
+  const _removeLink = (idx: number) => {
     setConfig(prev => ({ ...prev, links: prev.links.filter((_, i) => i !== idx) }));
   };
 

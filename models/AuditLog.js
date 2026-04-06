@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const auditLogSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // المستخدم الذي قام بالعملية
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -111,6 +118,10 @@ const auditLogSchema = new mongoose.Schema({
 });
 
 // Indexes
+// Composite indexes for multi-tenant queries
+auditLogSchema.index({ tenantId: 1, createdAt: -1 });
+auditLogSchema.index({ tenantId: 1, user: 1 });
+auditLogSchema.index({ tenantId: 1, action: 1 });
 auditLogSchema.index({ user: 1, createdAt: -1 });
 auditLogSchema.index({ action: 1, createdAt: -1 });
 auditLogSchema.index({ target: 1, createdAt: -1 });

@@ -150,36 +150,24 @@ const AlertModal = ({
     isRTL: boolean;
     loading: boolean;
 }) => {
-    const [form, setForm] = useState<FormData>(EMPTY_FORM);
+    const [form, setForm] = useState<FormData>(() => initial ? {
+        name: initial.name,
+        make: initial.criteria.make || '',
+        model: initial.criteria.model || '',
+        yearMin: initial.criteria.yearMin || null,
+        yearMax: initial.criteria.yearMax || null,
+        priceMin: initial.criteria.priceMin || null,
+        priceMax: initial.criteria.priceMax || null,
+        fuelType: initial.criteria.fuelType || '',
+        transmission: initial.criteria.transmission || '',
+        category: initial.criteria.category || '',
+        condition: initial.criteria.condition || '',
+        listingType: initial.criteria.listingType || '',
+        inApp: initial.channels?.inApp !== false,
+        email: initial.channels?.email === true,
+        frequency: initial.frequency || 'immediate'
+    } : EMPTY_FORM);
     const [error, setError] = useState('');
-
-    useEffect(() => {
-        if (open) {
-            if (initial) {
-                // eslint-disable-next-line
-                setForm({
-                    name: initial.name,
-                    make: initial.criteria.make || '',
-                    model: initial.criteria.model || '',
-                    yearMin: initial.criteria.yearMin || null,
-                    yearMax: initial.criteria.yearMax || null,
-                    priceMin: initial.criteria.priceMin || null,
-                    priceMax: initial.criteria.priceMax || null,
-                    fuelType: initial.criteria.fuelType || '',
-                    transmission: initial.criteria.transmission || '',
-                    category: initial.criteria.category || '',
-                    condition: initial.criteria.condition || '',
-                    listingType: initial.criteria.listingType || '',
-                    inApp: initial.channels?.inApp !== false,
-                    email: initial.channels?.email === true,
-                    frequency: initial.frequency || 'immediate'
-                });
-            } else {
-                setForm(EMPTY_FORM);
-            }
-            setError('');
-        }
-    }, [open, initial]);
 
     const set: FieldSetter = (key, value) => setForm(p => ({ ...p, [key]: value }));
 
@@ -607,7 +595,7 @@ export default function SmartAlertsPage() {
                 });
                 showToast(isRTL ? '✓ تم تحديث التنبيه' : '✓ Alert updated');
             } else {
-                await api.smartAlerts.create(form);
+                await api.smartAlerts.create(form as unknown as Record<string, unknown>);
                 showToast(isRTL ? '✓ تم إنشاء التنبيه الذكي!' : '✓ Smart alert created!');
             }
             setModalOpen(false);
@@ -793,6 +781,7 @@ export default function SmartAlertsPage() {
 
             {/* Modal */}
             <AlertModal
+                key={`${editAlert?._id ?? 'new'}-${String(modalOpen)}`}
                 open={modalOpen}
                 onClose={() => { setModalOpen(false); setEditAlert(null); }}
                 onSave={handleSave}

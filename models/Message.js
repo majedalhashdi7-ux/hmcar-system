@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   sender: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -43,6 +50,10 @@ const messageSchema = new mongoose.Schema({
 });
 
 // Index for faster queries
+// Composite indexes for multi-tenant queries
+messageSchema.index({ tenantId: 1, sender: 1 });
+messageSchema.index({ tenantId: 1, receiver: 1 });
+messageSchema.index({ tenantId: 1, createdAt: -1 });
 messageSchema.index({ sender: 1, receiver: 1, createdAt: -1 });
 messageSchema.index({ receiver: 1, read: false });
 

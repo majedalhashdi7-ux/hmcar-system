@@ -65,7 +65,7 @@ function SearchContent() {
                     page: 1,
                     limit: 100,
                     q: q,
-                    category: brand !== '' ? brand : undefined
+                    ...(brand !== '' && { category: brand })
                 }).catch(() => ({ data: { parts: [] } }));
 
                 // [[ARABIC_COMMENT]] استخراج البيانات من المستوى الصحيح

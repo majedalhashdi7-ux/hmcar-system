@@ -2,12 +2,13 @@
 
 const express = require('express');
 const router = express.Router();
-const Invoice = require('../../../models/Invoice');
+const { getModel, addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI } = require('../../../middleware/auth');
 
 // GET /api/v2/invoices - جلب الفواتير (للأدمن فقط)
 router.get('/', requireAuthAPI, async (req, res) => {
     try {
+        const Invoice = getModel(req, 'Invoice');
         if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ success: false, error: 'Unauthorized access' });
         }
@@ -15,13 +16,15 @@ router.get('/', requireAuthAPI, async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
         const skip = (page - 1) * limit;
 
+        const filter = addTenantFilter(req, {});
+
         const [invoices, total] = await Promise.all([
-            Invoice.find()
+            Invoice.find(filter)
                 .sort({ createdAt: -1 })
                 .limit(parseInt(limit))
                 .skip(skip)
                 .lean(),
-            Invoice.countDocuments()
+            Invoice.countDocuments(filter)
         ]);
 
         res.json({
@@ -45,8 +48,9 @@ router.get('/', requireAuthAPI, async (req, res) => {
 // GET /api/v2/invoices/next-number - جلب رقم الفاتورة التالي
 router.get('/next-number', requireAuthAPI, async (req, res) => {
   try {
+    const Invoice = getModel(req, 'Invoice');
     const year = new Date().getFullYear();
-    const count = await Invoice.countDocuments({ createdAt: { $gte: new Date(year, 0, 1) } });
+    const count = await Invoice.countDocuments(addTenantFilter(req, { createdAt: { $gte: new Date(year, 0, 1) } }));
     const nextNumber = `HM-INV-${year}-${(count + 1).toString().padStart(4, '0')}`;
     res.json({ success: true, data: nextNumber });
   } catch (error) {

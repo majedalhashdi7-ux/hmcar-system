@@ -17,6 +17,13 @@ const backupErrorSchema = new mongoose.Schema({
 });
 
 const backupSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // اسم النسخة الاحتياطية
   name: {
     type: String,

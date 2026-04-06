@@ -1,4 +1,4 @@
-import HomeClient, { type CarType } from "./home-client";
+import HomeClient from "./home-client";
 
 export default function Page() {
   // SSR was causing a slow TTFB or hanging the Suspense boundary.

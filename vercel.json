@@ -21,10 +21,9 @@
         "OPTIONS"
       ],
       "headers": {
-        "Access-Control-Allow-Origin": "https://daood.okigo.net",
+        "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With,X-Tenant-ID",
-        "Access-Control-Allow-Credentials": "true",
         "Access-Control-Max-Age": "86400"
       },
       "status": 204,

@@ -20,8 +20,7 @@
 import { motion } from 'framer-motion';
 import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, User, Globe, Phone, DollarSign, Camera, LayoutDashboard, Shield, Megaphone } from 'lucide-react';
-import Link from 'next/link';
+import { User, Globe, Phone, DollarSign, Camera, LayoutDashboard, Shield, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -81,7 +80,7 @@ function AdminSettingsContent() {
     const [siteInfo, setSiteInfo] = useState<SiteInfo>({ siteName: 'HM CAR', siteDescription: '', logoUrl: '', faviconUrl: '' });
     const [homeContent, setHomeContent] = useState<HomeContent>({ heroTitle: '', heroSubtitle: '', heroVideoUrl: '' });
     const [features, setFeatures] = useState<Feature[]>([]);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const [marketingPixels, setMarketingPixels] = useState<any>({ googleAnalyticsId: '', metaPixelId: '', snapchatPixelId: '', tiktokPixelId: '' });
 
     // ── تحميل البيانات عند الفتح ──
@@ -151,7 +150,7 @@ function AdminSettingsContent() {
     const handleSaveSocialLinks = async (silent = false) => {
         if (!silent) { setLoading(true); setMessage({ type: '', text: '' }); }
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             await api.settings.updateSocialLinks({ socialLinks: socialLinks as any });
             if (!silent) setMessage({ type: 'success', text: isRTL ? 'تم حفظ روابط التواصل' : 'Social links saved' });
         } catch (error) {
@@ -162,7 +161,7 @@ function AdminSettingsContent() {
     const handleSaveContactInfo = async (silent = false) => {
         if (!silent) { setLoading(true); setMessage({ type: '', text: '' }); }
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             await api.settings.updateContactInfo({ contactInfo: contactInfo as any });
             if (!silent) setMessage({ type: 'success', text: isRTL ? 'تم حفظ معلومات الاتصال' : 'Contact info saved' });
         } catch (error) {
@@ -173,7 +172,7 @@ function AdminSettingsContent() {
     const handleSaveCurrencySettings = async (silent = false) => {
         if (!silent) { setLoading(true); setMessage({ type: '', text: '' }); }
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             await api.settings.updateCurrencySettings({ currencySettings: currencySettings as any });
             if (!silent) setMessage({ type: 'success', text: isRTL ? 'تم حفظ إعدادات العملة' : 'Currency settings saved' });
         } catch (error) {
@@ -184,7 +183,7 @@ function AdminSettingsContent() {
     const handleSaveSiteInfo = async (silent = false) => {
         if (!silent) { setLoading(true); setMessage({ type: '', text: '' }); }
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             await api.settings.updateSiteInfo({ siteInfo: siteInfo as any });
             if (!silent) setMessage({ type: 'success', text: isRTL ? 'تم حفظ معلومات الموقع' : 'Site info saved' });
         } catch (error) {
@@ -195,7 +194,7 @@ function AdminSettingsContent() {
     const handleSaveHomeContent = async (silent = false) => {
         if (!silent) { setLoading(true); setMessage({ type: '', text: '' }); }
         try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             await api.settings.updateHomeContent({ homeContent: homeContent as any });
             if (!silent) setMessage({ type: 'success', text: isRTL ? 'تم حفظ محتوى الصفحة الرئيسية' : 'Home content saved' });
         } catch (error) {

@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { getModel } = require('../../../tenants/tenant-model-helper');
+const { getModel, addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI, requirePermissionAPI } = require('../../../middleware/auth');
 const SmartAlertService = require('../../../services/SmartAlertService');
 const { cacheResponse, invalidateCache } = require('../../../middleware/cache');
@@ -214,12 +214,12 @@ router.get('/', cacheResponse(300), async (req, res, next) => {
         const skip = (page - 1) * limit;
 
         const [cars, total] = await Promise.all([
-            Car.find(filter)
+            Car.find(addTenantFilter(req, filter))
                 .sort({ createdAt: -1 })
                 .limit(parseInt(limit))
                 .skip(skip)
                 .lean(),
-            Car.countDocuments(filter)
+            Car.countDocuments(addTenantFilter(req, filter))
         ]);
 
         // [[ARABIC_COMMENT]] جلب سعر الصرف من الإعدادات بدلاً من القيمة الثابتة
@@ -279,7 +279,7 @@ router.get('/makes', cacheResponse(1800), async (req, res, next) => {
         const includeInactive = String(req.query.includeInactive || 'false') === 'true';
         const filter = includeInactive ? {} : { isActive: true, isSold: false };
 
-        const makes = await Car.distinct('make', filter);
+        const makes = await Car.distinct('make', addTenantFilter(req, filter));
         const cleaned = makes
             .map(m => (typeof m === 'string' ? m.trim() : m))
             .filter(Boolean)
@@ -295,7 +295,7 @@ router.get('/makes', cacheResponse(1800), async (req, res, next) => {
 router.get('/:id', cacheResponse(600), async (req, res, next) => {
     try {
         const Car = getModel(req, 'Car');
-        const car = await Car.findById(req.params.id)
+        const car = await Car.findOne(addTenantFilter(req, { _id: req.params.id }))
             .populate('agency')
             .lean();
 
@@ -320,7 +320,7 @@ router.post('/', requireAuthAPI, requirePermissionAPI('manage_cars'), invalidate
         const SiteSettings = getModel(req, 'SiteSettings');
         const settings = await SiteSettings.getSettings();
         const payload = normalizeCarPricing(req.body, settings?.currencySettings);
-        const car = new Car(payload);
+        const car = new Car({ ...payload, tenantId: getTenantId(req) });
         await car.save();
 
         // Log car creation
@@ -359,7 +359,7 @@ router.put('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), invalida
         const Car = getModel(req, 'Car');
         const AuditLog = getModel(req, 'AuditLog');
         const SiteSettings = getModel(req, 'SiteSettings');
-        const oldCar = await Car.findById(req.params.id);
+        const oldCar = await Car.findOne(addTenantFilter(req, { _id: req.params.id }));
         if (!oldCar) {
             return sendResponse(res, notFoundResponse('Car'));
         }
@@ -375,8 +375,8 @@ router.put('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), invalida
         delete normalizedPayload.createdAt;
         delete normalizedPayload.updatedAt;
 
-        const car = await Car.findByIdAndUpdate(
-            req.params.id,
+        const car = await Car.findOneAndUpdate(
+            addTenantFilter(req, { _id: req.params.id }),
             normalizedPayload,
             { new: true, runValidators: true }
         );
@@ -411,7 +411,7 @@ router.put('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), invalida
 router.delete('/:id', requireAuthAPI, requirePermissionAPI('manage_cars'), invalidateCache('/api/v2/cars*'), async (req, res, next) => {
     try {
         const Car = getModel(req, 'Car');
-        const car = await Car.findByIdAndDelete(req.params.id);
+        const car = await Car.findOneAndDelete(addTenantFilter(req, { _id: req.params.id }));
 
         if (!car) {
             return sendResponse(res, notFoundResponse('Car'));
@@ -434,8 +434,8 @@ router.patch('/:id/sold', requireAuthAPI, requirePermissionAPI('manage_cars'), i
         const AuditLog = getModel(req, 'AuditLog');
         const { soldPrice, buyerNote } = req.body;
 
-        const car = await Car.findByIdAndUpdate(
-            req.params.id,
+        const car = await Car.findOneAndUpdate(
+            addTenantFilter(req, { _id: req.params.id }),
             {
                 isSold: true,
                 isActive: false,
@@ -460,7 +460,8 @@ router.patch('/:id/sold', requireAuthAPI, requirePermissionAPI('manage_cars'), i
                 after: { isSold: true, soldAt: car.soldAt, soldPrice: car.soldPrice },
                 ipAddress: req.ip,
                 userAgent: req.get('User-Agent'),
-                sessionId: req.sessionID || 'api'
+                sessionId: req.sessionID || 'api',
+                tenantId: getTenantId(req)
             });
         } catch (logErr) {
             console.error('AuditLog error:', logErr);

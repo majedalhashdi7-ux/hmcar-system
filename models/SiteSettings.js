@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const siteSettingsSchema = new mongoose.Schema({
+    // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+    tenantId: {
+        type: String,
+        required: true,
+        default: 'default',
+        index: true
+    },
     // مفتاح فريد للإعدادات (دائماً 'main')
     key: { type: String, default: 'main', unique: true },
 

@@ -2,6 +2,13 @@
 const mongoose = require('mongoose');
 
 const liveAuctionRequestSchema = new mongoose.Schema({
+    // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+    tenantId: {
+        type: String,
+        required: true,
+        default: 'default',
+        index: true
+    },
     // ربط الطلب بمستخدم مسجل (اختياري إذا كان العميل يزور الموقع كضيف)
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     

@@ -5,6 +5,13 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // الاسم المعروض للمستخدم
   name: { type: String, trim: true, required: true },
   // صورة الملف الشخصي (رابط محلي تحت /uploads أو رابط Cloudinary)
@@ -103,6 +110,14 @@ const userSchema = new mongoose.Schema({
     default: 'manual'
   }
 }, { timestamps: true });
+
+// [[ARABIC_COMMENT]] إضافة فهارس (Indexes) لتحسين سرعة الاستعلامات
+// Composite indexes for multi-tenant queries
+userSchema.index({ tenantId: 1, email: 1 }, { sparse: true });
+userSchema.index({ tenantId: 1, username: 1 }, { sparse: true });
+userSchema.index({ tenantId: 1, phone: 1 }, { sparse: true });
+userSchema.index({ tenantId: 1, role: 1 });
+userSchema.index({ tenantId: 1, status: 1 });
 
 userSchema.pre('save', async function (next) {
   // تشفير كلمة المرور عند الإنشاء/التعديل فقط (إذا كانت password تم تعديلها)

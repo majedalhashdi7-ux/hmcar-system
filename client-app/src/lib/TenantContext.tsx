@@ -1,6 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { 
+  getTenantConfig, 
+  getTenantApiUrl,
+  TENANT_CONFIGS,
+  DEFAULT_TENANT_ID 
+} from './tenant-config';
 
 // ── Types ──
 export interface TenantTheme {
@@ -54,7 +60,10 @@ const TenantContext = createContext<TenantContextType>({
 
 // ── Provider ──
 export function TenantProvider({ children }: { children: React.ReactNode }) {
-  const [tenant, setTenant] = useState<TenantData | null>(null);
+  // Initialize with domain-detected tenant config for immediate availability
+  const initialTenant = typeof window !== 'undefined' ? getTenantConfig() : null;
+  
+  const [tenant, setTenant] = useState<TenantData | null>(initialTenant);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -63,10 +72,22 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       setError(null);
 
-      const baseUrl = (typeof window !== 'undefined' && window.location.hostname !== 'localhost') 
-          ? '' 
-          : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001');
+      // Use domain-based config as the starting point
+      const domainConfig = typeof window !== 'undefined' 
+        ? getTenantConfig() 
+        : getDefaultTenant();
+      
+      // Apply domain config immediately for better UX
+      setTenant(domainConfig);
+      if (typeof document !== 'undefined') {
+        applyTheme(domainConfig.theme);
+        updateFavicon(domainConfig.favicon);
+        document.title = domainConfig.name || 'HM CAR';
+      }
 
+      const baseUrl = getTenantApiUrl();
+
+      // Fetch additional tenant data from API
       const response = await fetch(`${baseUrl}/api/v2/tenant/info`, {
         headers: {
           'Content-Type': 'application/json',
@@ -81,23 +102,27 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json();
       
       if (data.success && data.data) {
-        setTenant(data.data);
+        // Merge API data with domain config (API data takes precedence)
+        const mergedTenant = { ...domainConfig, ...data.data };
+        setTenant(mergedTenant);
         
         // تطبيق الثيم على المتصفح
-        applyTheme(data.data.theme);
+        applyTheme(mergedTenant.theme);
         
         // تحديث favicon
-        updateFavicon(data.data.favicon);
+        updateFavicon(mergedTenant.favicon);
         
         // تحديث عنوان الصفحة
-        document.title = data.data.name || 'HM CAR';
+        document.title = mergedTenant.name || 'HM CAR';
       }
     } catch (err) {
       console.error('خطأ في تحميل بيانات المعرض:', err);
       setError(err instanceof Error ? err.message : 'خطأ غير معروف');
       
-      // استخدام بيانات افتراضية في حالة الفشل
-      setTenant(getDefaultTenant());
+      // Domain config is already set, but ensure we have a fallback
+      if (!tenant) {
+        setTenant(getDefaultTenant());
+      }
     } finally {
       setLoading(false);
     }
@@ -105,6 +130,7 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     fetchTenant();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -150,9 +176,7 @@ function applyTheme(theme: TenantTheme) {
 function updateFavicon(faviconUrl: string) {
   if (typeof document === 'undefined') return;
 
-  const baseUrl = (typeof window !== 'undefined' && window.location.hostname !== 'localhost') 
-      ? '' 
-      : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001');
+  const baseUrl = getTenantApiUrl();
 
   const fullUrl = faviconUrl.startsWith('http') ? faviconUrl : `${baseUrl}${faviconUrl}`;
 
@@ -166,30 +190,6 @@ function updateFavicon(faviconUrl: string) {
 }
 
 function getDefaultTenant(): TenantData {
-  return {
-    id: 'hmcar',
-    name: 'HM CAR',
-    nameEn: 'HM CAR',
-    description: 'منصة مزادات ومبيعات السيارات الفاخرة',
-    descriptionEn: 'Premium Car Auction & Sales Platform',
-    logo: '/uploads/tenants/hmcar/logo.png',
-    favicon: '/uploads/tenants/hmcar/favicon.ico',
-    theme: {
-      primaryColor: '#D4AF37',
-      secondaryColor: '#1a1a2e',
-      accentColor: '#e94560',
-      backgroundColor: '#0f0f23',
-      textColor: '#ffffff',
-    },
-    contact: {
-      whatsapp: '+967781007805',
-      email: 'info@hmcar.com',
-      phone: '+967781007805',
-    },
-    settings: {
-      currency: 'SAR',
-      language: 'ar',
-      direction: 'rtl',
-    },
-  };
+  // Use the tenant config from tenant-config.ts for consistency
+  return TENANT_CONFIGS[DEFAULT_TENANT_ID];
 }

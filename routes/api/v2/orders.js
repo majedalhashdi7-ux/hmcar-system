@@ -2,8 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const Order = require('../../../models/Order');
-const SiteSettings = require('../../../models/SiteSettings');
+const { getModel, addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 const { requireAuthAPI } = require('../../../middleware/auth');
 
 function toFiniteNumber(value) {
@@ -14,6 +13,7 @@ function toFiniteNumber(value) {
 // GET /api/v2/orders - جلب طلبات المستخدم (أو الكل للأدمن)
 router.get('/', requireAuthAPI, async (req, res) => {
     try {
+        const Order = getModel(req, 'Order');
         const userId = req.user.userId || req.user._id;
         const { status, page = 1, limit = 10 } = req.query;
 
@@ -22,6 +22,7 @@ router.get('/', requireAuthAPI, async (req, res) => {
             filter = {};
         }
 
+        filter = addTenantFilter(req, filter);
         if (status) filter.status = status;
 
         const skip = (page - 1) * limit;
@@ -58,6 +59,8 @@ router.get('/', requireAuthAPI, async (req, res) => {
 // [[ARABIC_COMMENT]] تم إضافة المصادقة لمنع إنشاء طلبات مزيفة
 router.post('/', requireAuthAPI, async (req, res) => {
     try {
+        const Order = getModel(req, 'Order');
+        const SiteSettings = getModel(req, 'SiteSettings');
         const { items, pricing, notes, channel = 'whatsapp' } = req.body;
         const buyerId = req.user.userId || req.user._id;
         const settings = await SiteSettings.getSettings().catch(() => null);
@@ -138,23 +141,25 @@ router.post('/', requireAuthAPI, async (req, res) => {
             pricing: normalizedPricing,
             notes,
             channel,
-            status: 'pending'
+            status: 'pending',
+            tenantId: getTenantId(req)
         });
 
         await newOrder.save();
 
         // [[ARABIC_COMMENT]] إرسال إشعار لكافة المشرفين عند وجود طلب جديد
         try {
-            const User = require('../../../models/User');
-            const UserNotification = require('../../../models/UserNotification');
+            const User = getModel(req, 'User');
+            const UserNotification = getModel(req, 'UserNotification');
 
-            const admins = await User.find({ role: { $in: ['admin', 'super_admin'] } }).select('_id');
+            const admins = await User.find(addTenantFilter(req, { role: { $in: ['admin', 'super_admin'] } })).select('_id');
             const notifications = admins.map(admin => ({
                 user: admin._id,
                 title: 'طلب شراء جديد',
                 message: `وصل طلب جديد برقم ${orderNumber} لـ ${items[0]?.titleSnapshot}`,
                 type: 'info',
                 actionUrl: `/admin/orders/${newOrder._id}`,
+                tenantId: getTenantId(req)
             }));
 
             if (notifications.length > 0) {
@@ -178,8 +183,9 @@ router.post('/', requireAuthAPI, async (req, res) => {
 // GET /api/v2/orders/:id - جلب تفاصيل طلب محدد
 router.get('/:id', requireAuthAPI, async (req, res) => {
     try {
+        const Order = getModel(req, 'Order');
         const userId = req.user.userId || req.user._id;
-        const query = { _id: req.params.id };
+        const query = addTenantFilter(req, { _id: req.params.id });
         if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             query.buyer = userId;
         }
@@ -197,12 +203,13 @@ router.get('/:id', requireAuthAPI, async (req, res) => {
 // PATCH /api/v2/orders/:id/status - تحديث حالة الطلب (admin only)
 router.patch('/:id/status', requireAuthAPI, async (req, res) => {
     try {
+        const Order = getModel(req, 'Order');
         if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
             return res.status(403).json({ success: false, error: 'Admin access required' });
         }
 
         const { status } = req.body;
-        const order = await Order.findById(req.params.id);
+        const order = await Order.findOne(addTenantFilter(req, { _id: req.params.id }));
         if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
 
         const oldStatus = order.status;

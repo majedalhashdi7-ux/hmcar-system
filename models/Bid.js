@@ -4,6 +4,13 @@
 const mongoose = require('mongoose');
 
 const bidSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // مرجع السيارة المرتبط بهذه المزايدة
   carId: { type: mongoose.Schema.Types.ObjectId, ref: 'Car', required: true },
   // مرجع المستخدم الذي أدخل المزايدة
@@ -15,5 +22,11 @@ const bidSchema = new mongoose.Schema({
   // تاريخ المزايدة
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
+
+// [[ARABIC_COMMENT]] إضافة فهارس (Indexes) لتحسين سرعة الاستعلامات
+// Composite indexes for multi-tenant queries
+bidSchema.index({ tenantId: 1, carId: 1 });
+bidSchema.index({ tenantId: 1, userId: 1 });
+bidSchema.index({ tenantId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Bid', bidSchema);

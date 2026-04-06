@@ -186,6 +186,7 @@ export default function MyBidsPage() {
 
                                             {/* Image */}
                                             <div className="lg:col-span-3 relative overflow-hidden h-52 lg:h-auto">
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img
                                                     src={bid.auction.image}
                                                     alt={bid.auction.title}

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Package, AlertCircle, Share2 as Share2Icon, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';

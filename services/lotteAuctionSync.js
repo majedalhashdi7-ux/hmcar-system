@@ -2,6 +2,7 @@
 
 const puppeteer = require('puppeteer');
 const SiteSettings = require('../models/SiteSettings');
+const socketModule = require('../modules/socket');
 
 let intervalHandle = null;
 let lastRunAt = null;
@@ -129,7 +130,7 @@ async function scrapeLotte(auctionUrl, username, password) {
   }
 }
 
-async function runOnce({ auctionUrl, username, password, endsAt, io }) {
+async function runOnce({ auctionUrl, username, password, endsAt, io, tenantId = 'default' }) {
   if (isRunning) return;
   isRunning = true;
   try {
@@ -140,7 +141,12 @@ async function runOnce({ auctionUrl, username, password, endsAt, io }) {
       snap.status = 'ended';
       snap.updatedAt = new Date().toISOString();
       await writeSnapshot(snap);
-      if (io) io.emit('externalAuction:snapshot', snap);
+      // استخدام emitToTenantRoom للعزل بين المعارض
+      if (io && tenantId) {
+        socketModule.emitToTenantRoom(tenantId, 'auction_sync', 'externalAuction:snapshot', snap);
+      } else if (io) {
+        io.emit('externalAuction:snapshot', snap);
+      }
       return;
     }
 
@@ -158,7 +164,12 @@ async function runOnce({ auctionUrl, username, password, endsAt, io }) {
     lastError = null;
 
     await writeSnapshot(snapshot);
-    if (io) io.emit('externalAuction:snapshot', snapshot);
+    // استخدام emitToTenantRoom للعزل بين المعارض
+    if (io && tenantId) {
+      socketModule.emitToTenantRoom(tenantId, 'auction_sync', 'externalAuction:snapshot', snapshot);
+    } else if (io) {
+      io.emit('externalAuction:snapshot', snapshot);
+    }
   } catch (e) {
     lastError = e;
     const snap = await readSnapshot();
@@ -166,7 +177,12 @@ async function runOnce({ auctionUrl, username, password, endsAt, io }) {
     snap.updatedAt = new Date().toISOString();
     snap.error = String(e && e.message ? e.message : e);
     await writeSnapshot(snap);
-    if (io) io.emit('externalAuction:snapshot', snap);
+    // استخدام emitToTenantRoom للعزل بين المعارض
+    if (io && tenantId) {
+      socketModule.emitToTenantRoom(tenantId, 'auction_sync', 'externalAuction:snapshot', snap);
+    } else if (io) {
+      io.emit('externalAuction:snapshot', snap);
+    }
   } finally {
     isRunning = false;
   }
@@ -179,17 +195,17 @@ function stopSync() {
   }
 }
 
-async function startOrUpdateSync({ auctionUrl, username, password, endsAt, io }) {
+async function startOrUpdateSync({ auctionUrl, username, password, endsAt, io, tenantId = 'default' }) {
   stopSync();
 
   const endValue = endsAt ? new Date(endsAt).toISOString() : '';
   await saveSetting('externalAuctionEndsAt', endValue);
   await saveSetting('liveAuctionUrl', auctionUrl || '');
 
-  await runOnce({ auctionUrl, username, password, endsAt: endValue, io });
+  await runOnce({ auctionUrl, username, password, endsAt: endValue, io, tenantId });
 
   intervalHandle = setInterval(() => {
-    runOnce({ auctionUrl, username, password, endsAt: endValue, io });
+    runOnce({ auctionUrl, username, password, endsAt: endValue, io, tenantId });
   }, 60 * 1000);
 
   return true;

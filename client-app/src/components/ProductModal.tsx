@@ -157,7 +157,7 @@ export default function ProductModal({ product, onClose, whatsappNumber }: Produ
                     buyerPhone = u?.phone || '';
                     buyerEmail = u?.email || '';
                 }
-            } catch (e) { }
+            } catch { }
         }
 
         // [[ARABIC_COMMENT]] إذا قطعة غيار والعميل غير مسجل - أحوله لصفحة كونسيرج

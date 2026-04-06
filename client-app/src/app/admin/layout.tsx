@@ -1,11 +1,26 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminNavbar from '@/components/AdminNavbar';
 import { useLanguage } from '@/lib/LanguageContext';
 
+const ADMIN_ROLES = ['admin', 'super_admin', 'manager'];
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { isRTL } = useLanguage();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const token = localStorage.getItem('hm_token');
+        const role = localStorage.getItem('hm_user_role') || (() => {
+            try { return JSON.parse(localStorage.getItem('hm_user') || '{}').role; } catch { return null; }
+        })();
+        if (!token || !ADMIN_ROLES.includes(role)) {
+            router.replace('/login?role=admin');
+        }
+    }, [router]);
 
     return (
         <div className="relative min-h-screen text-white bg-[#070711]" dir={isRTL ? 'rtl' : 'ltr'}>

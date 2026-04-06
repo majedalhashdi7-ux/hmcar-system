@@ -4,6 +4,13 @@
 const mongoose = require('mongoose');
 
 const carSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // مالك/بائع السيارة (عادة أدمن في هذا المشروع)
   seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   title: { type: String, required: true }, // مثال: Toyota Corolla 2018
@@ -49,6 +56,11 @@ const carSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // [[ARABIC_COMMENT]] إضافة فهارس (Indexes) لتحسين سرعة الاستعلامات
+// Composite indexes for multi-tenant queries
+carSchema.index({ tenantId: 1, isActive: 1 });
+carSchema.index({ tenantId: 1, listingType: 1 });
+carSchema.index({ tenantId: 1, source: 1 });
+carSchema.index({ tenantId: 1, seller: 1 });
 carSchema.index({ isActive: 1, listingType: 1, createdAt: -1 });
 carSchema.index({ make: 1, model: 1, year: -1 });
 carSchema.index({ price: 1, priceUsd: 1 });

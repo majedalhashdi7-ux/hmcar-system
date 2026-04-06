@@ -3,6 +3,13 @@
 const mongoose = require('mongoose');
 
 const roleSchema = new mongoose.Schema({
+  // معرّف المستأجر (Tenant ID) للفصل بين بيانات المستأجرين
+  tenantId: {
+    type: String,
+    required: true,
+    default: 'default',
+    index: true
+  },
   // اسم الدور
   name: {
     type: String,

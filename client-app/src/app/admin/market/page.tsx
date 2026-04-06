@@ -218,12 +218,15 @@ function MarketHubContent() {
                                                     <Car className="w-8 h-8 text-white/20" />
                                                 </div>
                                             ) : (
+                                                <>
+                                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                                 <img
                                                     src={imageSrc}
                                                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700"
                                                     alt={auc.car?.title || 'Auction car'}
                                                     onError={() => setImageErrors(prev => ({ ...prev, [imageKey]: true }))}
                                                 />
+                                                </>
                                             );
                                         })()}
                                         {auc.status === 'running' && <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(255,0,0,0.8)]" />}

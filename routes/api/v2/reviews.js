@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const Review = require('../../../models/Review');
 const { requireAuthAPI, requireAdmin } = require('../../../middleware/auth');
+const { addTenantFilter, getTenantId } = require('../../../tenants/tenant-model-helper');
 
 // الحصول على جميع التقييمات المعتمدة
 router.get('/', async (req, res) => {
@@ -13,13 +14,13 @@ router.get('/', async (req, res) => {
         const skip = (page - 1) * limit;
 
         const [reviews, total] = await Promise.all([
-            Review.find({ status: 'approved' })
+            Review.find(addTenantFilter(req, { status: 'approved' }))
                 .populate('user', 'name')
                 .populate('car', 'title make model')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
-            Review.countDocuments({ status: 'approved' })
+            Review.countDocuments(addTenantFilter(req, { status: 'approved' }))
         ]);
 
         res.json({
@@ -50,7 +51,7 @@ router.get('/car/:carId', async (req, res) => {
     try {
         const { carId } = req.params;
 
-        const reviews = await Review.find({ car: carId, status: 'approved' })
+        const reviews = await Review.find(addTenantFilter(req, { car: carId, status: 'approved' }))
             .populate('user', 'name')
             .sort({ createdAt: -1 });
 
@@ -95,7 +96,7 @@ router.post('/', requireAuthAPI, async (req, res) => {
         }
 
         // التحقق من عدم وجود تقييم سابق
-        const existing = await Review.findOne({ user: userId, car: carId });
+        const existing = await Review.findOne(addTenantFilter(req, { user: userId, car: carId }));
         if (existing) {
             return res.status(400).json({ success: false, error: 'لديك تقييم سابق لهذه السيارة' });
         }
@@ -105,7 +106,8 @@ router.post('/', requireAuthAPI, async (req, res) => {
             car: carId,
             rating,
             comment: comment || '',
-            status: 'pending'
+            status: 'pending',
+            tenantId: getTenantId(req)
         });
 
         res.status(201).json({
@@ -129,8 +131,8 @@ router.patch('/:id/status', requireAuthAPI, requireAdmin, async (req, res) => {
             return res.status(400).json({ success: false, error: 'حالة غير صالحة' });
         }
 
-        const review = await Review.findByIdAndUpdate(
-            id,
+        const review = await Review.findOneAndUpdate(
+            addTenantFilter(req, { _id: id }),
             { status },
             { new: true }
         );
@@ -158,7 +160,7 @@ router.delete('/:id', requireAuthAPI, async (req, res) => {
         const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
 
         const query = isAdmin ? { _id: id } : { _id: id, user: userId };
-        const review = await Review.findOneAndDelete(query);
+        const review = await Review.findOneAndDelete(addTenantFilter(req, query));
 
         if (!review) {
             return res.status(404).json({ success: false, error: 'التقييم غير موجود' });
@@ -185,13 +187,13 @@ router.get('/admin/all', requireAuthAPI, requireAdmin, async (req, res) => {
         const query = status !== 'all' ? { status } : {};
 
         const [reviews, total] = await Promise.all([
-            Review.find(query)
+            Review.find(addTenantFilter(req, query))
                 .populate('user', 'name email')
                 .populate('car', 'title make model')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),
-            Review.countDocuments(query)
+            Review.countDocuments(addTenantFilter(req, query))
         ]);
 
         res.json({

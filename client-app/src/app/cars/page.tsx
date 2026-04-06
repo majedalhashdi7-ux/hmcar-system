@@ -11,7 +11,6 @@ import CarCard from '@/components/CarCard';
 import { api } from '@/lib/api-original';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/lib/LanguageContext';
-import { useSettings } from '@/lib/SettingsContext';
 import { useAuth } from '@/lib/AuthContext';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
